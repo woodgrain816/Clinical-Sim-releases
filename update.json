@@ -1,13 +1,21 @@
 {
-  "version": "1.38",
+  "version": "1.39",
   "minNative": 1,
-  "title": "Big screen goes properly full screen",
+  "title": "Big screen: monitor-sized keys",
   "major": false,
   "notes": [
-    "The device showing the monitor now hides the status and navigation bars and stays landscape - the monitor uses the whole screen",
-    "In a browser, the first tap also switches to full screen"
+    "On a tablet or TV the monitor now has real-monitor-sized softkeys, a bigger header, bed tabs, waveform labels and alarm limits - easy to read and press from across the room"
   ],
   "changelog": [
+    {
+      "v": "1.39",
+      "date": "2026-10-03",
+      "major": false,
+      "title": "Big screen: monitor-sized keys",
+      "notes": [
+        "On a tablet or TV the monitor now has real-monitor-sized softkeys, a bigger header, bed tabs, waveform labels and alarm limits - easy to read and press from across the room"
+      ]
+    },
     {
       "v": "1.38",
       "date": "2026-10-03",
@@ -485,7 +493,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.38.html",
-  "sha256": "2daafa15f4334febf4bf010470c3ad2ed7718b99121920d27347066cc948656f",
-  "size": 4600030
+  "page": "clinicalsim-1.39.html",
+  "sha256": "3450c9a316ac08d15aea8866d112bd4f6f4fc1ad398b5bc9c27f2b93bdd22095",
+  "size": 4601821
 }
