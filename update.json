@@ -1,11 +1,22 @@
 {
-  "version": "1.22",
+  "version": "1.23",
   "minNative": 1,
   "notes": [
-    "Fixed: the Update available window opened behind the Menu, so there was no way to press Install",
-    "Fixed: Settings in the Menu could be swiped sideways - every row now fits the screen"
+    "The Menu and More panels have a Done button pinned at the top, always visible while you scroll",
+    "The phone Back button closes the Menu, More and Find first",
+    "Tapping the dark area above a panel still closes it too"
   ],
   "changelog": [
+    {
+      "v": "1.23",
+      "date": "2026-10-02",
+      "title": "Easy to close the Menu",
+      "notes": [
+        "The Menu and More panels have a Done button pinned at the top, always visible while you scroll",
+        "The phone Back button closes the Menu, More and Find first",
+        "Tapping the dark area above a panel still closes it too"
+      ]
+    },
     {
       "v": "1.22",
       "date": "2026-10-02",
@@ -305,7 +316,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.22.html",
-  "sha256": "78bb0dabd936d035bdbf80fb81603a75898b1cac3a295c99d8f114a927d78c25",
-  "size": 4418063
+  "page": "clinicalsim-1.23.html",
+  "sha256": "c420810ff9712fecacdc2fcb7db0f36b91eea71fac75048ad5526c228b617f21",
+  "size": 4420000
 }
