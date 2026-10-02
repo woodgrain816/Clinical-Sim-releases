@@ -1,11 +1,22 @@
 {
-  "version": "1.20",
+  "version": "1.21",
   "minNative": 1,
   "notes": [
-    "Procedures is now on the bottom tab bar (Chart, Talk, Assess, Meds, Orders, Procedures, More)",
-    "The Emergency button is red everywhere"
+    "New: a pause button at the top right; it turns into an amber play button while paused",
+    "Tap the yellow PAUSED banner to carry on",
+    "Fixed: crackling music on phones - phones now use lighter instruments and a bigger audio buffer"
   ],
   "changelog": [
+    {
+      "v": "1.21",
+      "date": "2026-10-02",
+      "title": "Pause button, smoother music",
+      "notes": [
+        "New: a pause button at the top right; it turns into an amber play button while paused",
+        "Tap the yellow PAUSED banner to carry on",
+        "Fixed: crackling music on phones - phones now use lighter instruments and a bigger audio buffer"
+      ]
+    },
     {
       "v": "1.20",
       "date": "2026-10-02",
@@ -286,7 +297,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.20.html",
-  "sha256": "e4a6f1e930785fa107dd1fa9e4c20fbb12efa5cbf1794c610720c6f3b0102ee0",
-  "size": 4414689
+  "page": "clinicalsim-1.21.html",
+  "sha256": "81a93e9fa53a3052a78ef0630feffdc2caf9861887089b571229e22f3a4c1d5a",
+  "size": 4417061
 }
