@@ -1,18 +1,39 @@
 {
-  "version": "1.36",
+  "version": "1.37",
   "minNative": 1,
-  "title": "New icon, gray dropdowns and a working Monitor button",
-  "major": false,
+  "title": "Big screen: the monitor on a tablet or TV",
+  "major": true,
   "notes": [
-    "A new app icon: a live heart monitor, one beat being drawn at 72. It is now a proper Android adaptive icon, so the phone no longer puts it on a white tile (the icon comes with the next app install from the download link; everything else updates as usual)",
-    "Every dropdown (mode, case, saved patients, music, phone display...) now opens a gray list that matches the app - no more white pop-up boxes",
-    "Sign in, the account card and the patient files are gray like the rest of the app",
-    "Monitor button fixed: switching the monitor off now stays off (the phone used to switch it straight back on), it shows Starting... while it boots, starts faster, and a tap while it is busy is no longer ignored",
-    "Monitor and Pause show the right state even with no patient",
-    "The intro's name now comes up as the heartbeat sweep finishes - no dark pause - and the intro is a few seconds shorter",
-    "Intro: the box round the C is now a true square and the underline sits right under the name"
+    "NEW - Big screen (Menu - Monitor - Big screen): your phone stays the controls and the bedside monitor shows full screen on a tablet, another phone, a laptop or a TV on the same Wi-Fi. Start a session on the phone, type its session number on the other device. A TV plugged in by HDMI or screen-mirrored shows the monitor by itself. Silence and Start NBP on the big screen work too. (Needs the new app installed from the download link on both devices.)",
+    "The monitor scales properly on big screens - the whole thing grows together instead of tiny text on a huge TV",
+    "Medical accuracy pass, checked against current US guidelines: about 40 drug fixes (correct US doses no longer flagged as overdoses, e.g. Narcan 4 mg nasal, oral potassium, Keppra and magnesium loading doses; routes that do not exist in the US removed; wrong teaching notes corrected)",
+    "Tests that diagnose a condition now show it (DVT ultrasound, STEMI cath, stroke MRI, CHF echo and more) instead of coming back normal",
+    "Epinephrine IV push into a patient with a pulse is now caught (anaphylaxis is 0.5 mg IM); oxygen at 1-4 L/min in COPD is correct care, not an error",
+    "The BMP includes calcium, magnesium can be ordered, blood cultures grow the right kind of bug for the source, the ECG shows the rhythm they are in now, and lab names are US (BUN, T. bili)",
+    "Realistic American patients: names that go together and fit the decade they were born, interpreter languages that match (mostly Spanish), and jobs that fit their age",
+    "No more same patient over and over: every launch deals fresh cases, and recent conditions and names are not repeated",
+    "Training content: Fahrenheit temperatures, potassium in mEq/L, US spelling, and a few contradictions fixed",
+    "Compression coaching now holds you to 100-120 a minute"
   ],
   "changelog": [
+    {
+      "v": "1.37",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Big screen: the monitor on a tablet or TV",
+      "notes": [
+        "NEW - Big screen (Menu - Monitor - Big screen): your phone stays the controls and the bedside monitor shows full screen on a tablet, another phone, a laptop or a TV on the same Wi-Fi. Start a session on the phone, type its session number on the other device. A TV plugged in by HDMI or screen-mirrored shows the monitor by itself. Silence and Start NBP on the big screen work too. (Needs the new app installed from the download link on both devices.)",
+        "The monitor scales properly on big screens - the whole thing grows together instead of tiny text on a huge TV",
+        "Medical accuracy pass, checked against current US guidelines: about 40 drug fixes (correct US doses no longer flagged as overdoses, e.g. Narcan 4 mg nasal, oral potassium, Keppra and magnesium loading doses; routes that do not exist in the US removed; wrong teaching notes corrected)",
+        "Tests that diagnose a condition now show it (DVT ultrasound, STEMI cath, stroke MRI, CHF echo and more) instead of coming back normal",
+        "Epinephrine IV push into a patient with a pulse is now caught (anaphylaxis is 0.5 mg IM); oxygen at 1-4 L/min in COPD is correct care, not an error",
+        "The BMP includes calcium, magnesium can be ordered, blood cultures grow the right kind of bug for the source, the ECG shows the rhythm they are in now, and lab names are US (BUN, T. bili)",
+        "Realistic American patients: names that go together and fit the decade they were born, interpreter languages that match (mostly Spanish), and jobs that fit their age",
+        "No more same patient over and over: every launch deals fresh cases, and recent conditions and names are not repeated",
+        "Training content: Fahrenheit temperatures, potassium in mEq/L, US spelling, and a few contradictions fixed",
+        "Compression coaching now holds you to 100-120 a minute"
+      ]
+    },
     {
       "v": "1.36",
       "date": "2026-10-03",
@@ -462,7 +483,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.36.html",
-  "sha256": "e6ca3442304356a9ae8f2e9d47942db5333d86c751c64994e8efeb8a70f7a5b8",
-  "size": 4557132
+  "page": "clinicalsim-1.37.html",
+  "sha256": "8901d2ab43aa5903cee1d97f20fd41a2738fa33f954ac473dec93bc9005ce615",
+  "size": 4599305
 }
