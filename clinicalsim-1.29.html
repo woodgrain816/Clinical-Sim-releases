@@ -1,6 +1,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clinical Sim</title>
-<script>window.CS_VERSION="1.24";window.CS_CHANGELOG=[{"v":"1.24","date":"2026-10-02","title":"Updates that do not fail","notes":["Fixed: Check for updates sometimes failed with HTTP 404 right after a new version came out - older versions now stay on the server for a while, so it always finds one","If it still cannot reach the update, it says why instead of blaming the internet"]},{"v":"1.23","date":"2026-10-02","title":"Easy to close the Menu","notes":["The Menu and More panels have a Done button pinned at the top, always visible while you scroll","The phone Back button closes the Menu, More and Find first","Tapping the dark area above a panel still closes it too"]},{"v":"1.22","date":"2026-10-02","title":"Updates you can install","notes":["Fixed: the Update available window opened behind the Menu, so there was no way to press Install","Fixed: Settings in the Menu could be swiped sideways - every row now fits the screen"]},{"v":"1.21","date":"2026-10-02","title":"Pause button, smoother music","notes":["New: a pause button at the top right; it turns into an amber play button while paused","Tap the yellow PAUSED banner to carry on","Fixed: crackling music on phones - phones now use lighter instruments and a bigger audio buffer"]},{"v":"1.20","date":"2026-10-02","title":"Procedures one tap away","notes":["Procedures is now on the bottom tab bar (Chart, Talk, Assess, Meds, Orders, Procedures, More)","The Emergency button is red everywhere"]},{"v":"1.19","date":"2026-10-02","title":"A clearer, clinical layout","notes":["New phone layout: a short header (New patient, Find, Emergency, Menu) and a tab bar at the bottom - Chart, Talk, Assess, Meds, Orders, More. Everything else is in Menu, grouped: Patient, Monitor, Help & learning, Settings","New: Find anything (the magnifying glass, or Ctrl+K on a PC) - type a drug, test, procedure or setting (\"foley\", \"cbc\", \"tylenol\", \"chest x-ray\") and it takes you there and highlights it","A calmer clinical look: navy and teal, medical line icons (stethoscope, syringe, pill...) instead of emoji; Beginner no longer adds cartoon faces to what the patient says","Music keeps playing properly during a case: it no longer fades out for every yellow alarm - only dips a little for red ones, and Options → Music → Lower for red alarms turns even that off"]},{"v":"1.18","date":"2026-10-01","title":"Simple vitals bar","notes":["Options → Phone display → Simple vitals bar: one slim row (HR, SpO₂, NBP, RR, etCO₂, Temp) pinned to the top while you scroll","Tap HR, SpO₂, RR or etCO₂ to open its live trace under the bar - ECG, pleth, respiration or capnogram - to check the rhythm or spot a missing wave. Tap again to close","A number flashes red while its alarm is sounding"]},{"v":"1.17","date":"2026-10-01","title":"Music, and a longer intro","notes":["New: background music - 7 original soundtracks, each a full 3-4 minute song (intro, verses, choruses, builds, key changes) that varies every time it comes round. Options → Music: pick the style, set the volume, mute","Styles: Cinematic (Vital Signs - the intro theme, extended), Funk, Electronic, Pop, Synthwave, Lo-fi, Ambient","The intro is longer (about 16 s) and its music carries straight on into the app; the beat is the heartbeat on screen","Music dips while a monitor alarm is sounding, and pauses when you leave the app","New: Options → Phone display - Simple vitals, Monitor (numbers) or Monitor (full, with waves)"]},{"v":"1.16","date":"2026-10-01","title":"A new logo in the intro","notes":["The intro logo: the C of CLINICAL SIM sits in a box whose bottom edge is level with the underline, which runs under the rest of the name","New: Options → Intro → Play it now, to watch (and hear) the intro again any time"]},{"v":"1.15","date":"2026-10-01","title":"The intro has a soundtrack","notes":["New: an original soundtrack for the intro - a low drone, a swelling chord that brightens when the name appears, and a soft heartbeat on every beat the trace writes. Options → Intro → With its soundtrack turns it off"]},{"v":"1.14","date":"2026-10-01","title":"Check for updates works","notes":["Options → Updates → Check for updates now works: new versions download straight into the app, no more installing APK files"]},{"v":"1.13","date":"2026-10-01","title":"Google sign-in fixed on phones","notes":["Fixed: signing in with Google on a phone ended with \"Sign-in did not finish: Failed to fetch\". Android pauses the app while Chrome is open, so the sign-in now comes back through the Return to Clinical Sim button instead"]},{"v":"1.12","date":"2026-10-01","title":"A real monitor start-up, and a better intro","notes":["The monitor now powers on and off like the real one: a start-up self-test before the screen comes up, a fade to black when switched off, and the button ignores taps while it is starting or shutting down - so the screen can never be flickered bright and dark","Switching off now fades everything - numbers and waveforms too, not just the background","New intro: a steady normal sinus rhythm at 72 written across the screen in real time, the way a monitor draws it (P, QRS and T on every beat), with CLINICAL SIM and its underline lit by the same light","Tapping the screen or pressing a key still skips the intro; Options → Intro turns it off","The chart now uses the full width of wide screens"]},{"v":"1.11","date":"2026-10-01","title":"Sign in, a new look, and a lot more real","notes":["New: Sign in with Google (Training → top of the sidebar) — your progress follows you between PC and phone and survives reinstalling","New animated intro and a new app icon. Options → Intro to turn the intro off","Patients now fit their illness: realistic age and sex for every condition (no more men with ectopic pregnancies), and a history that matches","How they arrived: walk-in, family, ambulance with a real EMS handoff (and what EMS already gave), police, nursing home, found down. Talk tab: question whoever brought them — the scene, last known well, drugs, mood, suicide talk","Real people at real rates: some swear, grab, refuse you as their nurse, vomit, wet the bed or throw the tray — often with a medical cause you can fix. Care → Behavior & safety to respond (de-escalate, security, hand off with SBAR)","Defibrillator: the real crash-cart sequence (prep, pads, energy, SYNC, charge, clear, shock); VF does not always convert first time; SYNC will not fire in VF; pacing really captures; a talking AED","Monitor now matches the MX800 manual: apnea and RR alarms, real arrest alarm names (*** Asystole, *** Vent Fib/Tach), SpO₂ No Pulse, yellow NBP alarms, Silence acknowledges, audible latching","New training modules: Defibrillator/AED/pacing, Code status, Medication safety, History taking and patients who lie (more coming)","Getting around now grows with the course: 7 stages, each with a timed hands-on test","Fixed: the monitor came back as a stretched strip after minimising; DNR deaths can be cared for (curtains, family, a hand to hold)"]},{"v":"1.10","date":"2026-10-01","title":"Oxygen you control, lines you can remove","notes":["Oxygen is now real titration: pick the device and set the flow (nasal 1–6 L, mask, Venturi adapters, non-rebreather, high-flow 10–60 L at any FiO₂). Under-running a non-rebreather or high-flow is caught","Ventilator settings when intubated: rate, tidal volume, PEEP and FiO₂ all change the physiology. Big tidal volumes are flagged; weaning the FiO₂ to target is rewarded","New: Attached list under the patient bar — every line, tube and device, each removable. Extubation follows real criteria, with a spontaneous breathing trial; extubate too early and they stop breathing","IV drugs now need IV (or IO/central) access; pulling the only line stops the infusions","New Options setting: patient arrives with an IV (EMS placed it) and/or the monitor already on. Never in training cases","Fixed: the chart kept saying \"respiratory rate of four, snoring airway\" after intubation — the exam and nurse notes now describe the patient as they are now","Fixed: a ventilated overdose kept getting worse — the ventilator now counts as treating it","Fixed: the monitor power button jumped position when switched on/off","The top bar, vitals and patient name now stay pinned when you scroll (PC)","Monitor training: new lesson on latched alarms (why it can say SpO₂ Low at 100% — Philips factory default latching; press Silence to acknowledge)"]},{"v":"1.9","date":"2026-10-01","title":"Know it, or you don't pass","notes":["Fixed: the right answer was usually the longest one (half of all questions, up to 98% in some topics). Every question bank was rewritten — now it is the longest only 14% of the time, so length tells you nothing","Anti-cheat: quiz questions are timed (90 s, exam 75 s), leaving the app mid-question (ChatGPT, camera, anything) forfeits it — three strikes voids the attempt; no copying question text; screenshots blocked on the phone during tests","Guess detection: answers faster than the question can be read count as guesses; three in a practice set voids the set","Cases: throwing random drugs or a pile of unrelated tests at a patient is now a critical error","Progress is saved after every answer, with a spare copy; reopening returns you to the exact page; a test left half-way picks up where it stopped. Reset now needs you to type RESET","New: your license — name, M.D., rank from Pre-clinical student to Attending, earned only by finishing everything cleanly. Clearly marked as a simulation, not a real license; an edited save voids it","New: tap any underlined word for a plain-English definition (1,334 terms)","New: Ask the teacher — type any question; answers come from the course (on the PC the local AI explains them in plain words). Off during tests and solo cases","New module: Substances — what they actually do. Vaping, smoking, cannabis, alcohol, opioids and fentanyl pills, stimulants, nitrous, inhalants and how addiction works, with the exact mechanisms. Open any time"]},{"v":"1.8.1","date":"2026-10-01","title":"Training fixes on the phone","notes":["The tour now scrolls what it wants you to tap onto the screen (body, CBC and the rest were landing below the screen on phones), and its box never covers the target","One tap on the body counts as examining in the tour and cases","Exit moved to the top-left; a Next button sits top-right","Exiting and reopening Training brings you back to the page you were on"]},{"v":"1.8","date":"2026-10-01","title":"Strict training, every module","notes":["Training is now strict — you have to know it to get out: 9 of 10 to master a topic (one slip max, and a hint counts as a slip), 90% on module quizzes, 90% on the final exam AND 80% in every subject, 19 of 20 drills","Every quiz and the final exam are drawn fresh each attempt from the practice banks, so they can't be memorized; the final exam gives no feedback until the end","Miss a quiz or exam question and its topic is un-mastered — you have to learn it again before the retake","Cases: a coached run (hints, Show me) teaches it but never passes; only a solo run counts — 3 readiness questions first (one miss sends you back to practice), then no checklist, no hints, real time targets, 90% with no critical error","11 new training modules, each with lessons, Khan-style practice topics, a quiz, rapid-response drills and hands-on cases: Reading the labs, Procedures and surgeries, Sepsis (SSC 2026), Stroke (AHA/ASA 2026, tenecteplase), Chest pain and ACS (2025 ACC/AHA), Bradycardia and heart blocks, Anaphylaxis, Breathing failure, DKA and HHS, Electrolytes, Overdoses and antidotes","Labs and procedures come first: you learn what a test or surgery actually is and how to read it before any case lets you order it","New ⓘ button next to every lab, scan, procedure and surgery: what it is, normal values, when to order it, how to read it, and the traps","New lab: acetaminophen level (also on the overdose panel). The coag panel now returns a PTT — heparin raises it, protamine reverses it, liver failure drags it out","New rhythm: complete heart block (3rd-degree) on the monitor","Overdose case now teaches rapid sequence intubation (etomidate or ketamine + rocuronium) instead of an awake tube","Fixes: CO2-retainer oxygen explanation corrected (V/Q mismatch and Haldane, not \"hypoxic drive\"); epinephrine anaphylaxis dose is 0.01 mg/kg IM up to 0.5 mg; dozens of guideline corrections across conditions"]},{"v":"1.7","date":"2026-10-01","title":"Real training, real medicine","notes":["Every module now teaches topic by topic like Khan Academy: lessons, then 10-question practice sets with Hint and \"I don't understand this\" (opens an in-depth explanation, then a fresh question). 8 of 10 without help masters a topic; the module quiz opens only when every topic is mastered","New module: How the drugs work — what adenosine, amiodarone, epinephrine, atropine, diltiazem, PPIs, octreotide, blood products and reversal agents actually do, and why they are given the way they are","New module: Seizures and status epilepticus (AES 2016 + ESETT doses), with two hands-on cases","New: Rapid response drills — a strip and the patient, 10 seconds to choose what to give; 18/20 to pass","New: CPR rhythm trainer — hold 100–120 compressions a minute, steady, 30 in a row","New hands-on case: a tachycardia that turns into a cardiac arrest part-way through","Practice cases count far more than quizzes: any critical error, a death or under 80% fails the case and locks it until you re-master the exact topics behind the mistake","Competency check-off: a random case with no coach, no hints, timed against real targets","Disease book: all 202 conditions — what it is, who gets it, how it presents, tests, treatment, nursing, traps, how common — plus a log of your own patients","68 new conditions at their real-life frequency (influenza, COVID, C. diff, TIA, pericarditis, hip fracture, SBP, DKA cousins, overdoses, OB emergencies and more)","148 realism fixes from a line-by-line clinical audit (US guidelines and wording; e.g. iron deficiency treated with iron, hydrocortisone in adrenal crisis, no FFP in varices, vancomycin in meningitis)","Care team: call the pharmacist (doses, allergies, interactions, reversal), respiratory therapist (airway, ABG reading), charge nurse (what you are missing) or hospitalist (they ask what YOU think)","AED mode on the crash cart, with voice prompts — analyzes, advises a shock, then 2-minute CPR cycles","Tests that work like real ones: PCR finds the actual organism, urinary infections show a real UA, type & crossmatch, tenecteplase, oral vancomycin","Skip training is possible — with a blunt warning"]},{"v":"1.6","date":"2026-09-30","title":"Training: learn everything first, then the cases","notes":["Modules 1-6 now open one at a time: each unlocks when you pass the one before it (its quiz at 80% or better)","The final exam opens once all six are passed","The hands-on practice cases (SVT, GI bleed, cardiac arrest) moved out of the lessons into their own section, which opens only after you pass the final exam","After every quiz or the exam: a button to the next step, or to retrain and retake if you are under 80%","Continue button on the Training Center page always takes you to where you are up to"]},{"v":"1.5","date":"2026-09-30","title":"Training Center","notes":["A full course (🎓 Training in the top bar): 8 modules, 41 lessons, 42 test questions, 3 hands-on cases","Getting around: a spotlight tour of every part of the screen that waits for you to actually do each step (open the tab, type in the search box, tap the drug)","Reading the monitor: every number and its normal range, alarm colours, Silence vs Pause, INOPs and -?-, stale NBP, alarm limits, shock index","Reading rhythms: 13 rhythms drawn live (sinus, tachy, brady, SVT, AF, flutter, VT, torsades, VF, asystole, PEA, paced) with how to recognise each and what to do","Tachycardia, upper GI bleed and cardiac arrest, per the 2025 AHA ACLS and ACG guidelines - each followed by a live patient with a coach that ticks off every step as you actually do it, with Show me","Final exam scored by topic (80% to pass); Retraining re-teaches only the lessons behind what you missed and re-tests it until it is right","New order: Type and crossmatch (2 units)"]},{"v":"1.4","date":"2026-09-30","title":"Leads off, probes off: the equipment acts up like real life","notes":["Most alarms on a real unit are the equipment, not the patient - now they are here too, using the exact IntelliVue messages from the manual","ECG: RA Lead Off, LA/LL/V/RL Lead Off, ECG Leads Off, ECG Noisy Signal - the HR shows -?-, the trace goes flat or noisy, and the light-blue INOP tone sounds","A single LA, LL or V lead off: -?- for 10 seconds, then the monitor falls back to another lead (the INOP stays until you fix it)","SpO2: Sensor Off, NoisySignal (movement or shivering), Low Perf (cold or shocked patient), Extd.Update (BP cuff on the same arm as the probe)","Turning, washing and toileting patients knocks things off; confused, restless or shivering patients pull and shake them; electrodes dry out after a day","While the ECG is off the monitor cannot alarm on the heart rate or rhythm - the SpO2 is your only warning. Leave the leads off and the monitor tech calls","Fixes in the Care tab (Equipment): stick the lead back on, change all the electrodes, put the probe back on, move it to the earlobe, move the BP cuff to the other arm, see which lead is off","Several INOPs at once take turns with an arrow, and the minimized strip shows them too"]},{"v":"1.3","date":"2026-09-30","title":"Alarm sounds measured from real IntelliVue monitors","notes":["Every alarm sound was measured from recordings of real IntelliVue monitors (pitch, overtones, timing, how it rings) and rebuilt to match","Traditional yellow is lower (480 Hz) and Traditional red is 960 Hz with its bright overtone; both now ring out for about a second instead of cutting off","ISO red: 5 quick pulses on 481 Hz; ISO yellow: 3 pulses on 360 Hz; INOP: 2 pulses on 240 Hz","A faint room echo between pulses, at the level measured in the recordings"]},{"v":"1.2","date":"2026-09-30","title":"Volume in Options","notes":["Options now has a Volume slider for everything that makes a sound","It is the same setting as the volume slider under the monitor, and it is remembered"]},{"v":"1.1","date":"2026-09-30","title":"IntelliVue MX800 screen, alarms and online updates","notes":["The monitor now looks and works like an IntelliVue MX800, copied from the screens in the real manual (without the branding)","Phone: the MX800 \"Big Numerics\" screen; tap the screen name to switch to Standard Waves","Touch any number to open its alarm-limits window: 10-minute trend, limit bar, yellow High/Low boxes, Alarms On/Off, wide/narrow presets","Alarm Limits and Main Setup windows, grey SmartKeys with yellow Silence/Pause Alarms and blue Main Setup/Main Screen","Alarm lamp flashes red/yellow (solid blue for an INOP); the number in alarm flashes; the crossed limit lights up","Several alarms at once take turns every 2 seconds with an arrow; a gone alarm stays on screen until you Silence it","The other beds along the top light up when they alarm; NBP shows its mode, countdown and recent readings","Minimize button: fold the monitor into one strip of numbers (on the PC the monitor window shrinks to a strip on top)","Real IntelliVue alarm sounds: Traditional (factory default) or ISO, in Options or Main Setup","Traditional: red once a second, yellow every 2 seconds. ISO: red 5 pulses + 10 s pause, yellow 3 pulses + 20 s","Red is 2 volume steps louder; an alarm nobody silences gets louder after 20 seconds; NBP MEASURE FAILED gives an INOP tone","The heartbeat beep keeps going under alarms, like the real monitor; no more flat-line tone or siren","Check for updates, and this update log"]},{"v":"1.0","date":"2026-09-30","title":"Clinical Sim on your phone","notes":["Vitals instead of the waveform monitor","Sound, beep and alarm switches, volume and Silence","Emergency crash cart opens right under the vitals"]}];</script>
+<script>window.CS_VERSION="1.29";window.CS_CHANGELOG=[{"v":"1.29","date":"2026-10-02","title":"Updates show up straight away","notes":["Fixed: Check for updates could say \"up to date\" for a few minutes after a new version came out (GitHub was handing out an old copy of the update list) - it now always asks for a fresh one"]},{"v":"1.28","date":"2026-10-02","title":"Legal notice wording","notes":["The legal notice now describes Clinical Sim as a simulation for interest and general learning - not a medical course, training program or qualification"]},{"v":"1.27","date":"2026-10-02","title":"Welcome tour and legal notice","notes":["New: a tour for first-time users - where everything is, what it does, the modes, Training, and how to email the developer. Skip it and it shows you where to find it later (Help & learning → Tour)","New: a legal notice on first launch (not medical advice, not a medical device, privacy). Read it any time in Settings → Legal"]},{"v":"1.26","date":"2026-10-02","title":"No more install warning","notes":["Fixed: V1.25 made Android warn that the app tries to bypass its security protections - the part that opened other apps is removed","Email the developer is now in Menu → Help & learning: write what happened, tap Copy message, and paste it into an email to ClinicalSimSupport@Gmail.com"]},{"v":"1.25","date":"2026-10-02","title":"Auto updates and feedback","notes":["The app checks for updates every time it opens, and asks: Install update, or Not now","New: Send feedback / report a bug (Menu → Settings, or Options on PC) - writes an email to ClinicalSimSupport@Gmail.com for you, with the app version and device so bugs can be found. Clinical Sim is in beta: please report anything that breaks","Tap a tab you are already on and it closes (phone: back to the chart; PC: the panel folds away)"]},{"v":"1.24","date":"2026-10-02","title":"Updates that do not fail","notes":["Fixed: Check for updates sometimes failed with HTTP 404 right after a new version came out - older versions now stay on the server for a while, so it always finds one","If it still cannot reach the update, it says why instead of blaming the internet"]},{"v":"1.23","date":"2026-10-02","title":"Easy to close the Menu","notes":["The Menu and More panels have a Done button pinned at the top, always visible while you scroll","The phone Back button closes the Menu, More and Find first","Tapping the dark area above a panel still closes it too"]},{"v":"1.22","date":"2026-10-02","title":"Updates you can install","notes":["Fixed: the Update available window opened behind the Menu, so there was no way to press Install","Fixed: Settings in the Menu could be swiped sideways - every row now fits the screen"]},{"v":"1.21","date":"2026-10-02","title":"Pause button, smoother music","notes":["New: a pause button at the top right; it turns into an amber play button while paused","Tap the yellow PAUSED banner to carry on","Fixed: crackling music on phones - phones now use lighter instruments and a bigger audio buffer"]},{"v":"1.20","date":"2026-10-02","title":"Procedures one tap away","notes":["Procedures is now on the bottom tab bar (Chart, Talk, Assess, Meds, Orders, Procedures, More)","The Emergency button is red everywhere"]},{"v":"1.19","date":"2026-10-02","title":"A clearer, clinical layout","notes":["New phone layout: a short header (New patient, Find, Emergency, Menu) and a tab bar at the bottom - Chart, Talk, Assess, Meds, Orders, More. Everything else is in Menu, grouped: Patient, Monitor, Help & learning, Settings","New: Find anything (the magnifying glass, or Ctrl+K on a PC) - type a drug, test, procedure or setting (\"foley\", \"cbc\", \"tylenol\", \"chest x-ray\") and it takes you there and highlights it","A calmer clinical look: navy and teal, medical line icons (stethoscope, syringe, pill...) instead of emoji; Beginner no longer adds cartoon faces to what the patient says","Music keeps playing properly during a case: it no longer fades out for every yellow alarm - only dips a little for red ones, and Options → Music → Lower for red alarms turns even that off"]},{"v":"1.18","date":"2026-10-01","title":"Simple vitals bar","notes":["Options → Phone display → Simple vitals bar: one slim row (HR, SpO₂, NBP, RR, etCO₂, Temp) pinned to the top while you scroll","Tap HR, SpO₂, RR or etCO₂ to open its live trace under the bar - ECG, pleth, respiration or capnogram - to check the rhythm or spot a missing wave. Tap again to close","A number flashes red while its alarm is sounding"]},{"v":"1.17","date":"2026-10-01","title":"Music, and a longer intro","notes":["New: background music - 7 original soundtracks, each a full 3-4 minute song (intro, verses, choruses, builds, key changes) that varies every time it comes round. Options → Music: pick the style, set the volume, mute","Styles: Cinematic (Vital Signs - the intro theme, extended), Funk, Electronic, Pop, Synthwave, Lo-fi, Ambient","The intro is longer (about 16 s) and its music carries straight on into the app; the beat is the heartbeat on screen","Music dips while a monitor alarm is sounding, and pauses when you leave the app","New: Options → Phone display - Simple vitals, Monitor (numbers) or Monitor (full, with waves)"]},{"v":"1.16","date":"2026-10-01","title":"A new logo in the intro","notes":["The intro logo: the C of CLINICAL SIM sits in a box whose bottom edge is level with the underline, which runs under the rest of the name","New: Options → Intro → Play it now, to watch (and hear) the intro again any time"]},{"v":"1.15","date":"2026-10-01","title":"The intro has a soundtrack","notes":["New: an original soundtrack for the intro - a low drone, a swelling chord that brightens when the name appears, and a soft heartbeat on every beat the trace writes. Options → Intro → With its soundtrack turns it off"]},{"v":"1.14","date":"2026-10-01","title":"Check for updates works","notes":["Options → Updates → Check for updates now works: new versions download straight into the app, no more installing APK files"]},{"v":"1.13","date":"2026-10-01","title":"Google sign-in fixed on phones","notes":["Fixed: signing in with Google on a phone ended with \"Sign-in did not finish: Failed to fetch\". Android pauses the app while Chrome is open, so the sign-in now comes back through the Return to Clinical Sim button instead"]},{"v":"1.12","date":"2026-10-01","title":"A real monitor start-up, and a better intro","notes":["The monitor now powers on and off like the real one: a start-up self-test before the screen comes up, a fade to black when switched off, and the button ignores taps while it is starting or shutting down - so the screen can never be flickered bright and dark","Switching off now fades everything - numbers and waveforms too, not just the background","New intro: a steady normal sinus rhythm at 72 written across the screen in real time, the way a monitor draws it (P, QRS and T on every beat), with CLINICAL SIM and its underline lit by the same light","Tapping the screen or pressing a key still skips the intro; Options → Intro turns it off","The chart now uses the full width of wide screens"]},{"v":"1.11","date":"2026-10-01","title":"Sign in, a new look, and a lot more real","notes":["New: Sign in with Google (Training → top of the sidebar) — your progress follows you between PC and phone and survives reinstalling","New animated intro and a new app icon. Options → Intro to turn the intro off","Patients now fit their illness: realistic age and sex for every condition (no more men with ectopic pregnancies), and a history that matches","How they arrived: walk-in, family, ambulance with a real EMS handoff (and what EMS already gave), police, nursing home, found down. Talk tab: question whoever brought them — the scene, last known well, drugs, mood, suicide talk","Real people at real rates: some swear, grab, refuse you as their nurse, vomit, wet the bed or throw the tray — often with a medical cause you can fix. Care → Behavior & safety to respond (de-escalate, security, hand off with SBAR)","Defibrillator: the real crash-cart sequence (prep, pads, energy, SYNC, charge, clear, shock); VF does not always convert first time; SYNC will not fire in VF; pacing really captures; a talking AED","Monitor now matches the MX800 manual: apnea and RR alarms, real arrest alarm names (*** Asystole, *** Vent Fib/Tach), SpO₂ No Pulse, yellow NBP alarms, Silence acknowledges, audible latching","New training modules: Defibrillator/AED/pacing, Code status, Medication safety, History taking and patients who lie (more coming)","Getting around now grows with the course: 7 stages, each with a timed hands-on test","Fixed: the monitor came back as a stretched strip after minimising; DNR deaths can be cared for (curtains, family, a hand to hold)"]},{"v":"1.10","date":"2026-10-01","title":"Oxygen you control, lines you can remove","notes":["Oxygen is now real titration: pick the device and set the flow (nasal 1–6 L, mask, Venturi adapters, non-rebreather, high-flow 10–60 L at any FiO₂). Under-running a non-rebreather or high-flow is caught","Ventilator settings when intubated: rate, tidal volume, PEEP and FiO₂ all change the physiology. Big tidal volumes are flagged; weaning the FiO₂ to target is rewarded","New: Attached list under the patient bar — every line, tube and device, each removable. Extubation follows real criteria, with a spontaneous breathing trial; extubate too early and they stop breathing","IV drugs now need IV (or IO/central) access; pulling the only line stops the infusions","New Options setting: patient arrives with an IV (EMS placed it) and/or the monitor already on. Never in training cases","Fixed: the chart kept saying \"respiratory rate of four, snoring airway\" after intubation — the exam and nurse notes now describe the patient as they are now","Fixed: a ventilated overdose kept getting worse — the ventilator now counts as treating it","Fixed: the monitor power button jumped position when switched on/off","The top bar, vitals and patient name now stay pinned when you scroll (PC)","Monitor training: new lesson on latched alarms (why it can say SpO₂ Low at 100% — Philips factory default latching; press Silence to acknowledge)"]},{"v":"1.9","date":"2026-10-01","title":"Know it, or you don't pass","notes":["Fixed: the right answer was usually the longest one (half of all questions, up to 98% in some topics). Every question bank was rewritten — now it is the longest only 14% of the time, so length tells you nothing","Anti-cheat: quiz questions are timed (90 s, exam 75 s), leaving the app mid-question (ChatGPT, camera, anything) forfeits it — three strikes voids the attempt; no copying question text; screenshots blocked on the phone during tests","Guess detection: answers faster than the question can be read count as guesses; three in a practice set voids the set","Cases: throwing random drugs or a pile of unrelated tests at a patient is now a critical error","Progress is saved after every answer, with a spare copy; reopening returns you to the exact page; a test left half-way picks up where it stopped. Reset now needs you to type RESET","New: your license — name, M.D., rank from Pre-clinical student to Attending, earned only by finishing everything cleanly. Clearly marked as a simulation, not a real license; an edited save voids it","New: tap any underlined word for a plain-English definition (1,334 terms)","New: Ask the teacher — type any question; answers come from the course (on the PC the local AI explains them in plain words). Off during tests and solo cases","New module: Substances — what they actually do. Vaping, smoking, cannabis, alcohol, opioids and fentanyl pills, stimulants, nitrous, inhalants and how addiction works, with the exact mechanisms. Open any time"]},{"v":"1.8.1","date":"2026-10-01","title":"Training fixes on the phone","notes":["The tour now scrolls what it wants you to tap onto the screen (body, CBC and the rest were landing below the screen on phones), and its box never covers the target","One tap on the body counts as examining in the tour and cases","Exit moved to the top-left; a Next button sits top-right","Exiting and reopening Training brings you back to the page you were on"]},{"v":"1.8","date":"2026-10-01","title":"Strict training, every module","notes":["Training is now strict — you have to know it to get out: 9 of 10 to master a topic (one slip max, and a hint counts as a slip), 90% on module quizzes, 90% on the final exam AND 80% in every subject, 19 of 20 drills","Every quiz and the final exam are drawn fresh each attempt from the practice banks, so they can't be memorized; the final exam gives no feedback until the end","Miss a quiz or exam question and its topic is un-mastered — you have to learn it again before the retake","Cases: a coached run (hints, Show me) teaches it but never passes; only a solo run counts — 3 readiness questions first (one miss sends you back to practice), then no checklist, no hints, real time targets, 90% with no critical error","11 new training modules, each with lessons, Khan-style practice topics, a quiz, rapid-response drills and hands-on cases: Reading the labs, Procedures and surgeries, Sepsis (SSC 2026), Stroke (AHA/ASA 2026, tenecteplase), Chest pain and ACS (2025 ACC/AHA), Bradycardia and heart blocks, Anaphylaxis, Breathing failure, DKA and HHS, Electrolytes, Overdoses and antidotes","Labs and procedures come first: you learn what a test or surgery actually is and how to read it before any case lets you order it","New ⓘ button next to every lab, scan, procedure and surgery: what it is, normal values, when to order it, how to read it, and the traps","New lab: acetaminophen level (also on the overdose panel). The coag panel now returns a PTT — heparin raises it, protamine reverses it, liver failure drags it out","New rhythm: complete heart block (3rd-degree) on the monitor","Overdose case now teaches rapid sequence intubation (etomidate or ketamine + rocuronium) instead of an awake tube","Fixes: CO2-retainer oxygen explanation corrected (V/Q mismatch and Haldane, not \"hypoxic drive\"); epinephrine anaphylaxis dose is 0.01 mg/kg IM up to 0.5 mg; dozens of guideline corrections across conditions"]},{"v":"1.7","date":"2026-10-01","title":"Real training, real medicine","notes":["Every module now teaches topic by topic like Khan Academy: lessons, then 10-question practice sets with Hint and \"I don't understand this\" (opens an in-depth explanation, then a fresh question). 8 of 10 without help masters a topic; the module quiz opens only when every topic is mastered","New module: How the drugs work — what adenosine, amiodarone, epinephrine, atropine, diltiazem, PPIs, octreotide, blood products and reversal agents actually do, and why they are given the way they are","New module: Seizures and status epilepticus (AES 2016 + ESETT doses), with two hands-on cases","New: Rapid response drills — a strip and the patient, 10 seconds to choose what to give; 18/20 to pass","New: CPR rhythm trainer — hold 100–120 compressions a minute, steady, 30 in a row","New hands-on case: a tachycardia that turns into a cardiac arrest part-way through","Practice cases count far more than quizzes: any critical error, a death or under 80% fails the case and locks it until you re-master the exact topics behind the mistake","Competency check-off: a random case with no coach, no hints, timed against real targets","Disease book: all 202 conditions — what it is, who gets it, how it presents, tests, treatment, nursing, traps, how common — plus a log of your own patients","68 new conditions at their real-life frequency (influenza, COVID, C. diff, TIA, pericarditis, hip fracture, SBP, DKA cousins, overdoses, OB emergencies and more)","148 realism fixes from a line-by-line clinical audit (US guidelines and wording; e.g. iron deficiency treated with iron, hydrocortisone in adrenal crisis, no FFP in varices, vancomycin in meningitis)","Care team: call the pharmacist (doses, allergies, interactions, reversal), respiratory therapist (airway, ABG reading), charge nurse (what you are missing) or hospitalist (they ask what YOU think)","AED mode on the crash cart, with voice prompts — analyzes, advises a shock, then 2-minute CPR cycles","Tests that work like real ones: PCR finds the actual organism, urinary infections show a real UA, type & crossmatch, tenecteplase, oral vancomycin","Skip training is possible — with a blunt warning"]},{"v":"1.6","date":"2026-09-30","title":"Training: learn everything first, then the cases","notes":["Modules 1-6 now open one at a time: each unlocks when you pass the one before it (its quiz at 80% or better)","The final exam opens once all six are passed","The hands-on practice cases (SVT, GI bleed, cardiac arrest) moved out of the lessons into their own section, which opens only after you pass the final exam","After every quiz or the exam: a button to the next step, or to retrain and retake if you are under 80%","Continue button on the Training Center page always takes you to where you are up to"]},{"v":"1.5","date":"2026-09-30","title":"Training Center","notes":["A full course (🎓 Training in the top bar): 8 modules, 41 lessons, 42 test questions, 3 hands-on cases","Getting around: a spotlight tour of every part of the screen that waits for you to actually do each step (open the tab, type in the search box, tap the drug)","Reading the monitor: every number and its normal range, alarm colours, Silence vs Pause, INOPs and -?-, stale NBP, alarm limits, shock index","Reading rhythms: 13 rhythms drawn live (sinus, tachy, brady, SVT, AF, flutter, VT, torsades, VF, asystole, PEA, paced) with how to recognise each and what to do","Tachycardia, upper GI bleed and cardiac arrest, per the 2025 AHA ACLS and ACG guidelines - each followed by a live patient with a coach that ticks off every step as you actually do it, with Show me","Final exam scored by topic (80% to pass); Retraining re-teaches only the lessons behind what you missed and re-tests it until it is right","New order: Type and crossmatch (2 units)"]},{"v":"1.4","date":"2026-09-30","title":"Leads off, probes off: the equipment acts up like real life","notes":["Most alarms on a real unit are the equipment, not the patient - now they are here too, using the exact IntelliVue messages from the manual","ECG: RA Lead Off, LA/LL/V/RL Lead Off, ECG Leads Off, ECG Noisy Signal - the HR shows -?-, the trace goes flat or noisy, and the light-blue INOP tone sounds","A single LA, LL or V lead off: -?- for 10 seconds, then the monitor falls back to another lead (the INOP stays until you fix it)","SpO2: Sensor Off, NoisySignal (movement or shivering), Low Perf (cold or shocked patient), Extd.Update (BP cuff on the same arm as the probe)","Turning, washing and toileting patients knocks things off; confused, restless or shivering patients pull and shake them; electrodes dry out after a day","While the ECG is off the monitor cannot alarm on the heart rate or rhythm - the SpO2 is your only warning. Leave the leads off and the monitor tech calls","Fixes in the Care tab (Equipment): stick the lead back on, change all the electrodes, put the probe back on, move it to the earlobe, move the BP cuff to the other arm, see which lead is off","Several INOPs at once take turns with an arrow, and the minimized strip shows them too"]},{"v":"1.3","date":"2026-09-30","title":"Alarm sounds measured from real IntelliVue monitors","notes":["Every alarm sound was measured from recordings of real IntelliVue monitors (pitch, overtones, timing, how it rings) and rebuilt to match","Traditional yellow is lower (480 Hz) and Traditional red is 960 Hz with its bright overtone; both now ring out for about a second instead of cutting off","ISO red: 5 quick pulses on 481 Hz; ISO yellow: 3 pulses on 360 Hz; INOP: 2 pulses on 240 Hz","A faint room echo between pulses, at the level measured in the recordings"]},{"v":"1.2","date":"2026-09-30","title":"Volume in Options","notes":["Options now has a Volume slider for everything that makes a sound","It is the same setting as the volume slider under the monitor, and it is remembered"]},{"v":"1.1","date":"2026-09-30","title":"IntelliVue MX800 screen, alarms and online updates","notes":["The monitor now looks and works like an IntelliVue MX800, copied from the screens in the real manual (without the branding)","Phone: the MX800 \"Big Numerics\" screen; tap the screen name to switch to Standard Waves","Touch any number to open its alarm-limits window: 10-minute trend, limit bar, yellow High/Low boxes, Alarms On/Off, wide/narrow presets","Alarm Limits and Main Setup windows, grey SmartKeys with yellow Silence/Pause Alarms and blue Main Setup/Main Screen","Alarm lamp flashes red/yellow (solid blue for an INOP); the number in alarm flashes; the crossed limit lights up","Several alarms at once take turns every 2 seconds with an arrow; a gone alarm stays on screen until you Silence it","The other beds along the top light up when they alarm; NBP shows its mode, countdown and recent readings","Minimize button: fold the monitor into one strip of numbers (on the PC the monitor window shrinks to a strip on top)","Real IntelliVue alarm sounds: Traditional (factory default) or ISO, in Options or Main Setup","Traditional: red once a second, yellow every 2 seconds. ISO: red 5 pulses + 10 s pause, yellow 3 pulses + 20 s","Red is 2 volume steps louder; an alarm nobody silences gets louder after 20 seconds; NBP MEASURE FAILED gives an INOP tone","The heartbeat beep keeps going under alarms, like the real monitor; no more flat-line tone or siren","Check for updates, and this update log"]},{"v":"1.0","date":"2026-09-30","title":"Clinical Sim on your phone","notes":["Vitals instead of the waveform monitor","Sound, beep and alarm switches, volume and Silence","Emergency crash cart opens right under the vitals"]}];</script>
 <script>/* phone: the vitals live on the panel, always */
 if(/mobile/i.test(location.hash)){ try{ localStorage.setItem("cs_vitalsHere","on") }catch(e){} }</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1368,6 +1368,53 @@ body.cx-mobile .cx-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-ind
 .cx-shead .cx-done{min-width:84px;min-height:40px;font-size:15px;justify-content:center}
 .cx-sheet{align-items:flex-end}
 .cx-sheet .cx-sb{max-height:78vh}
+
+/* a tab clicked again folds its panel away */
+.cx-closed>.pane{display:none!important}
+.tabs .tb.cx-folded{border-bottom-color:transparent!important;background:none!important;color:var(--ui-muted)!important}
+/* feedback form */
+.cx-fb{padding:0 14px 14px}
+.cx-fbp{color:var(--ui-muted);font-size:13px;line-height:1.5;margin:10px 0}
+.cx-fbl{display:flex;flex-direction:column;gap:5px;color:var(--ui-muted);font-size:12.5px;margin:10px 0}
+.cx-fbl select,.cx-fbl textarea{background:var(--ui-panel2);border:1px solid var(--ui-line);color:var(--ui-text);border-radius:8px;padding:8px;font:14px var(--ui-face)}
+.cx-fbl textarea{resize:vertical;min-height:110px}
+.cx-fbc{display:flex;gap:8px;align-items:center;color:var(--ui-muted);font-size:12.5px}
+.cx-fbb{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.cx-fbb .rx{min-height:40px;padding:8px 14px}
+.cx-fbn{color:var(--ui-faint);font-size:12px;margin:10px 0 0}
+#cxFb .cx-shead{margin:0 -14px 0;padding:10px 14px}
+/* welcome tour */
+.cxt{position:fixed;inset:0;z-index:100003;font-family:var(--ui-face)}
+.cxt.dim{background:rgba(3,8,15,.72)}
+.cxt-hole{position:fixed;border:2px solid var(--ui-accent);border-radius:10px;box-shadow:0 0 0 9999px rgba(3,8,15,.72),0 0 18px 2px rgba(20,184,166,.45);transition:all .25s ease;pointer-events:none}
+.cxt-card{position:fixed;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:12px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.6);color:var(--ui-text);transition:top .25s ease,left .25s ease}
+.cxt-n{font:600 10.5px var(--ui-face);letter-spacing:.09em;color:var(--ui-faint);text-transform:uppercase}
+.cxt-t{margin:4px 0 6px;font:600 17px var(--ui-face);color:var(--ui-text)}
+.cxt-x{font-size:14px;line-height:1.5;color:#C9D4E0}
+.cxt-x b{color:var(--ui-text)}
+.cxt-b{display:flex;align-items:center;gap:8px;margin-top:12px}
+.cxt-b span{flex:1}
+.cxt-b .rx{min-height:38px;padding:7px 14px;background:var(--ui-panel2);border:1px solid var(--ui-line);color:var(--ui-text);border-radius:8px;font:14px var(--ui-face);cursor:pointer}
+.cxt-b .rx.primary{background:var(--ui-accent);border-color:var(--ui-accent);color:#04201D;font-weight:600}
+.cxt-b .cxt-skip{background:none;border-color:transparent;color:var(--ui-muted);padding-left:0}
+.cx-wel{padding:16px 18px}
+.cx-welh{display:flex;align-items:center;gap:10px;font:600 18px var(--ui-face);color:var(--ui-text);margin-bottom:6px}
+.cx-wel p{color:#C9D4E0;font-size:14px;line-height:1.5}
+.cx-wel .cx-fbb .rx{background:var(--ui-panel2);border:1px solid var(--ui-line);color:var(--ui-text);border-radius:8px;font:14px var(--ui-face);cursor:pointer}
+.cx-wel .cx-fbb .rx.primary{background:var(--ui-accent);border-color:var(--ui-accent);color:#04201D;font-weight:600}
+/* legal notice */
+.cx-legal{z-index:100006!important;padding-top:4vh!important}
+.lg-box{display:flex;flex-direction:column;max-height:90vh;width:min(680px,calc(100vw - 20px))}
+.lg-box .cx-shead{padding:10px 16px;margin:0}
+.lg-body{overflow:auto;padding:4px 18px 10px;color:#C9D4E0;font-size:13.5px;line-height:1.55}
+.lg-body h4{margin:14px 0 4px;font:600 13.5px var(--ui-face);color:var(--ui-text)}
+.lg-body p{margin:4px 0}.lg-body ul{margin:4px 0;padding-left:20px}.lg-body li{margin:3px 0}
+.lg-body b{color:var(--ui-text)}
+.lg-lead{font-size:14.5px;margin-top:10px!important}
+.lg-small{color:var(--ui-faint);font-size:12px;margin-top:12px!important}
+.lg-foot{padding:10px 16px;border-top:1px solid var(--ui-line);display:flex;justify-content:flex-end}
+.lg-foot .rx{min-height:42px;padding:8px 18px;background:var(--ui-accent);border:1px solid var(--ui-accent);color:#04201D;font:600 15px var(--ui-face);border-radius:8px;cursor:pointer}
+.cx-legal .cx-done{background:var(--ui-panel2);border:1px solid var(--ui-line);color:var(--ui-text);border-radius:8px;padding:6px 14px;cursor:pointer}
 
 
 /* ================= phone build =================
@@ -22268,7 +22315,8 @@ const CXI={
   drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
   lungs:'<path d="M12 4v8M12 12l-3-2M12 12l3-2"/><path d="M8.5 8C5 8 3 12 3 16.5 3 19 4.5 20 6.5 20S10 18 10 15.5V10M15.5 8C19 8 21 12 21 16.5 21 19 19.5 20 17.5 20S14 18 14 15.5V10"/>',
   tube:'<path d="M9 2h6M10 2v15a2 2 0 0 0 4 0V2M10 9h4"/>',
-  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6l8.5 7 8.5-7"/>'
 };
 function cxIcon(n){ const p=CXI[n]; return p?'<span class="cx-i" aria-hidden="true"><svg viewBox="0 0 24 24">'+p+'</svg></span>':'' }
 /* put an icon at the front of a button, dropping any emoji it started with */
@@ -22304,6 +22352,12 @@ const CX_TABS={Drugs:["pill","Meds","Give a drug - search by brand or generic na
       if(m&&EMO[m[1]]){ f.nodeValue=f.nodeValue.slice(m[0].length); el.insertAdjacentHTML("afterbegin",cxIcon(EMO[m[1]])) } }) };
   scrub(document.body);
   try{ new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes,function(n){ if(n.nodeType===1){ scrub(n); if(n.parentNode) scrub(n.parentNode) } }) }) }).observe(document.body,{childList:true,subtree:true}) }catch(e){}
+
+  /* desktop: click the open tab again and the panel folds away; any tab opens it again */
+  const tabsEl=document.querySelector(".tabs"), col=tabsEl&&tabsEl.parentElement;
+  if(tabsEl&&col) tabsEl.addEventListener("click",function(e){ const b=e.target.closest(".tb"); if(!b) return;
+    if(b.getAttribute("aria-pressed")==="true"&&!col.classList.contains("cx-closed")){ col.classList.add("cx-closed"); b.classList.add("cx-folded"); e.stopImmediatePropagation(); e.preventDefault(); return }
+    col.classList.remove("cx-closed"); [].forEach.call(tabsEl.querySelectorAll(".cx-folded"),function(x){ x.classList.remove("cx-folded") }) },true);
 
   /* ---- 2. the top bar in groups ---- */
   mb.classList.add("cx");
@@ -22417,6 +22471,7 @@ const CX_TABS={Drugs:["pill","Meds","Give a drug - search by brand or generic na
     document.body.appendChild(mo);
     mo.addEventListener("click",function(e){ const b=e.target.closest("[data-k]"); if(b){ mo.classList.add("hide"); cxGoTab(b.dataset.k) } else if(e.target===mo) mo.classList.add("hide") });
     nav.addEventListener("click",function(e){ const b=e.target.closest("button"); if(!b) return; const k=b.dataset.k;
+      if(b.classList.contains("on")&&k!=="chart"&&k!=="more"){ cxShowChart(); return }   /* tap it again: it closes, back to the chart */
       if(k==="more"){ mo.classList.remove("hide"); return } if(k==="chart"){ cxShowChart(); return } cxGoTab(k) });
     /* a heading over the open pane on the phone, so you always know where you are */
     [].forEach.call(document.querySelectorAll(".pane"),function(p){ const k=p.id.replace(/^p/,""), t=CX_TABS[k]; if(!t||p.querySelector(".cx-paneh")) return;
@@ -22443,7 +22498,9 @@ const CX_TABS={Drugs:["pill","Meds","Give a drug - search by brand or generic na
 
 /* go to a tab (and on the phone, out of the chart view) */
 function cxGoTab(k){
-  const b=document.querySelector('.tabs .tb[data-p="'+k+'"]'); if(b) b.click();
+  const b=document.querySelector('.tabs .tb[data-p="'+k+'"]');
+  const col=b&&b.closest(".tabs")&&b.closest(".tabs").parentElement; if(col) col.classList.remove("cx-closed");
+  if(b){ b.classList.remove("cx-folded"); if(b.getAttribute("aria-pressed")!=="true") b.click() }
   const pg=document.getElementById("page"); if(pg) pg.classList.remove("cx-v-chart");
   const nav=document.getElementById("cxNav");
   if(nav) [].forEach.call(nav.children,function(n){ n.classList.toggle("on",n.dataset.k===k||(n.dataset.k==="more"&&["Ward","Every","Surg","Debrief"].indexOf(k)>=0)) });
@@ -22467,6 +22524,262 @@ function cxFlash(el){
   el.classList.remove("cx-flash"); void el.offsetWidth; el.classList.add("cx-flash");
   setTimeout(function(){ el.classList.remove("cx-flash") },2300);
 }
+
+/* ---------- Send feedback ----------
+   A short form - what kind of thing, what happened - that opens the person's
+   own email app with a message to Clinical Sim support already written (with
+   the version and device, so a bug can be found). Nothing is sent from here:
+   they see it and press Send themselves. */
+const CS_SUPPORT="ClinicalSimSupport@Gmail.com";
+function cxOpenExternal(url){
+  try{ if(window.chrome&&window.chrome.webview){ window.chrome.webview.postMessage("\u0001open\u0001"+url); return true } }catch(e){}
+  try{ if(!/mobile/i.test(location.hash||"")){ const a=document.createElement("a"); a.href=url; a.target="_blank"; a.rel="noopener"; document.body.appendChild(a); a.click(); a.remove(); return true } }catch(e){}
+  return false;
+}
+function cxFeedback(){
+  if(typeof document==="undefined") return;
+  let w=document.getElementById("cxFb"); if(w) w.remove();
+  w=document.createElement("div"); w.id="cxFb"; w.className="cx-pal";
+  w.innerHTML='<div class="cx-box cx-fb" role="dialog" aria-label="Send feedback"><div class="cx-shead"><span>Send feedback</span><button type="button" class="rx cx-done" id="cxFbX">Close</button></div>'+
+    '<p class="cx-fbp">Clinical Sim is in <b>beta</b>. Bugs, anything medically wrong, anything confusing, ideas - please tell us. It goes to <b>'+CS_SUPPORT+'</b>.</p>'+
+    '<label class="cx-fbl">What is it about?<select id="cxFbT"><option>Bug - something broke</option><option>Something medically wrong</option><option>Confusing / hard to find</option><option>Idea / request</option><option>Other</option></select></label>'+
+    '<label class="cx-fbl">What happened? (what you did, what you expected, what you saw)<textarea id="cxFbM" rows="6"></textarea></label>'+
+    '<label class="cx-fbc"><input type="checkbox" id="cxFbD" checked> Include the app version and device (helps find bugs)</label>'+
+    '<div class="cx-fbb"><button type="button" class="rx primary" id="cxFbS">Write the email</button><button type="button" class="rx" id="cxFbC">Copy address</button></div>'+
+    '<p class="cx-fbn" id="cxFbN">Opens your email app with the message written - you press Send.</p></div>';
+  document.body.appendChild(w);
+  const $=function(i){ return document.getElementById(i) };
+  const close=function(){ w.remove() };
+  const PHONE=/mobile/i.test(location.hash||"")&&!(window.chrome&&window.chrome.webview);
+  if(PHONE){ $("cxFbS").textContent="Copy message"; $("cxFbN").textContent="Copies the message - then open your email app, write to "+CS_SUPPORT+" and paste." }
+  $("cxFbX").onclick=close; w.addEventListener("click",function(e){ if(e.target===w) close() });
+  $("cxFbC").onclick=function(){ try{ navigator.clipboard.writeText(CS_SUPPORT); $("cxFbN").textContent="Address copied: "+CS_SUPPORT }catch(e){ $("cxFbN").textContent=CS_SUPPORT } };
+  $("cxFbS").onclick=function(){
+    const t=$("cxFbT").value, m=$("cxFbM").value.trim();
+    if(!m){ $("cxFbN").textContent="Write a line or two first."; $("cxFbM").focus(); return }
+    let body=m;
+    if($("cxFbD").checked){
+      let ver="?"; try{ ver=(window.CSApp&&CSApp.version&&CSApp.version())||window.CS_VERSION||"?" }catch(e){}
+      let pt=""; try{ const n=document.getElementById("ptName"); pt=n?n.textContent.trim():"" }catch(e){}
+      body+="\n\n---\nClinical Sim V"+ver+" · "+(/mobile/i.test(location.hash||"")?"phone":"PC")+" · "+innerWidth+"x"+innerHeight+"\n"+(navigator.userAgent||"")+(pt&&pt!=="No patient"?"\nCase on screen: "+pt:"");
+    }
+    if(PHONE){ const txt="To: "+CS_SUPPORT+"\nSubject: Clinical Sim feedback: "+t+"\n\n"+body;
+      const done=function(){ $("cxFbN").innerHTML="<b>Copied.</b> Now open your email app (Gmail), start a new email to <b>"+CS_SUPPORT+"</b> and paste." };
+      try{ navigator.clipboard.writeText(txt).then(done,function(){ $("cxFbM").value=txt; $("cxFbM").select(); $("cxFbN").textContent="Select all and copy this, then email it to "+CS_SUPPORT+"." }) }catch(e){ $("cxFbM").value=txt; $("cxFbN").textContent="Copy this and email it to "+CS_SUPPORT+"." }
+      return }
+    const url="mailto:"+CS_SUPPORT+"?subject="+encodeURIComponent("Clinical Sim feedback: "+t)+"&body="+encodeURIComponent(body.slice(0,1800));
+    if(cxOpenExternal(url)) $("cxFbN").textContent="Your email app should open now. If it does not, send it to "+CS_SUPPORT+".";
+    else $("cxFbN").innerHTML="Could not open an email app here - please email <b>"+CS_SUPPORT+"</b> (Copy address above).";
+  };
+  setTimeout(function(){ try{ $("cxFbM").focus() }catch(e){} },50);
+}
+(function(){
+  if(typeof document==="undefined"||typeof Element==="undefined") return;
+  const op=document.querySelector(".optpanel"); if(!op||!(op instanceof Element)||document.getElementById("cxFbRow")) return;
+  const r=document.createElement("div"); r.className="optrow"; r.id="cxFbRow";
+  r.innerHTML='<span>Feedback</span><span class="optbtns"><button type="button" class="rx primary" id="cxFbOpen">Send feedback / report a bug</button></span>';
+  op.insertBefore(r,op.firstChild);
+  r.querySelector("#cxFbOpen").addEventListener("click",cxFeedback);
+  const b=document.createElement("button"); b.type="button"; b.className="rx"; b.id="cxFbBtn"; b.title="Report a bug or a problem - Clinical Sim is in beta";
+  b.innerHTML=cxIcon("mail")+"Email the developer"; b.addEventListener("click",function(){ const sh=document.getElementById("cxSheet"); if(sh) sh.classList.add("hide"); cxFeedback() });
+  const host=document.getElementById("cxS3")||(document.getElementById("bTeam")&&document.getElementById("bTeam").parentNode); if(host) host.appendChild(b);
+})();
+
+
+/* ===================== the welcome tour (first launch) =====================
+   The first time the app opens it asks: "Want a quick tour?" The tour puts a
+   spotlight on the real controls, one at a time, and says what each one is
+   for: starting a patient, the monitor, the chart, every tab, Find,
+   Emergency, Pause, the modes, Training, the Team, settings and music, and
+   how to email the developer. It knows whether it is on a phone or a PC and
+   points at the right things. Replay any time: Help & learning -> Tour.
+   (Separate from Training's "Getting around", which tests you.) */
+const WELCOME_KEY="cs_welcome_v1";
+function cxTourSteps(){
+  const ph=/mobile/i.test(location.hash||"");
+  const menu=function(){ const s=document.getElementById("cxSheet"); if(s) s.classList.remove("hide"); const o=document.querySelector("#cxSheet details.opts"); if(o) o.setAttribute("open","") };
+  const nomenu=function(){ const s=document.getElementById("cxSheet"); if(s) s.classList.add("hide") };
+  const tab=function(k){ return function(){ nomenu(); if(typeof cxGoTab==="function") cxGoTab(k) } };
+  const nav=function(k){ return ph?'#cxNav [data-k="'+k+'"]':'.tabs .tb[data-p="'+k+'"]' };
+  const S=[
+    {t:"Welcome to Clinical Sim",x:"A patient simulator: real monitor, real drugs at real doses, patients who arrive the way real patients do. You are the nurse or doctor. Nothing is guarded - what you give is what they get.<br><br>This takes about two minutes. <b>Next</b> to start, or <b>Skip</b> any time.",pre:nomenu},
+    {s:"#bSimNew",t:"New patient",x:"Starts a case. Someone is brought in - by ambulance, family, police, from a nursing home - and <b>you are not told what is wrong</b>. Finding out is the job.",pre:nomenu},
+    {s:ph?".mtop":"#pvitals, .ptbar",t:ph?"The monitor":"The vitals",x:ph?"The bedside monitor (a Philips IntelliVue): heart rate, SpO₂, blood pressure, breathing, CO₂, temperature. Its alarms are the real ones. Menu → Settings → <b>Phone display</b> switches between a simple bar, the big numbers and the full screen with waveforms; in the simple bar, tap a number to see its trace.":"The bedside monitor opens in its own window (put it on a second screen if you have one). Its alarms, sounds and menus behave like the real Philips IntelliVue. <b>Vitals here</b> copies the numbers into this window too.",pre:nomenu},
+    {s:"#ptbar",t:"The patient",x:"Name, age, sex, weight, their history - and the clock. Time matters: the illness keeps going whether you act or not."},
+    {s:"#linesBar",t:"Attached",x:"Everything that is on them: IV lines, oxygen, monitoring, tubes. Each one can be taken off from here - and taking the wrong one off has consequences."},
+    {s:ph?nav("chart"):".chart",t:"The chart",x:"Everything that happens is written here: what they say, what you did, results as they come back. Read it - the clues are in it.",pre:ph?function(){ nomenu(); if(typeof cxShowChart==="function") cxShowChart() }:nomenu},
+    {s:nav("Ask"),t:"Talk",x:"Ask the patient anything, in your own words - where it hurts, what they took, how much they drink. Also whoever brought them in. <b>They are allowed to lie</b>; tests catch them out.",pre:tab("Ask")},
+    {s:nav("Body"),t:"Assess",x:"Examine them: tap the body to look, listen and feel. Tap a place again to look more carefully - some things only show up when you do. Blood draws are here too.",pre:tab("Body")},
+    {s:nav("Drugs"),t:"Meds",x:"Every drug, by brand or generic name. Pick it, set the dose and route, press <b>GIVE</b>. There are no safety limits - check your dose. Allergies and interactions are real.",pre:tab("Drugs")},
+    {s:nav("Orders"),t:"Orders",x:"Labs (CBC, BMP, troponin, gases...), imaging, ECGs, fluids and NBP. Results take realistic time unless <b>Instant results</b> is on. Tap ⓘ on any order to learn what it shows.",pre:tab("Orders")},
+    {s:nav("Proc"),t:"Procedures",x:"Oxygen (pick the device and flow), IV access, airway and the ventilator, catheters, tubes, the defibrillator and pacing.",pre:tab("Proc")},
+    ph?{s:nav("more"),t:"More",x:"Four more: <b>Bedside</b> (positioning, monitoring), <b>Care</b> (nursing care, comfort, behaviour and safety), <b>Surgery</b> (call a surgeon - who may say no) and <b>Discharge</b> (admit, transfer, send home - and your debrief).",pre:function(){ nomenu(); if(typeof cxShowChart==="function") cxShowChart() }}
+      :{s:".tabs",t:"The other tabs",x:"<b>Bedside</b> (positioning, monitoring), <b>Care</b> (nursing care, comfort, behaviour and safety), <b>Surgery</b> (call a surgeon - who may say no) and <b>Discharge</b> (admit, transfer, send home - and your debrief). Click the open tab again to fold it away.",pre:tab("Drugs")},
+    {s:ph?"#cxMFind":"#cxFindBtn",t:"Find anything",x:"Lost? Type what you want - <i>foley, cbc, tylenol, oxygen, defib</i> - and it takes you there and highlights it."+(ph?"":" Shortcut: <b>Ctrl+K</b>."),pre:nomenu},
+    {s:"#bEmerg",t:"Emergency",x:"The crash cart: defibrillator, CPR, airway, code drugs. When someone arrests, this is where you go."+(ph?"":" Shortcut: <b>E</b>."),pre:nomenu},
+    {s:ph?"#cxMPause":"#bPause",t:"Pause",x:"Stops everything - the illness, the clock, the alarms - so you can think. Tap the yellow PAUSED bar to carry on."+(ph?"":" Shortcut: <b>P</b>."),pre:nomenu},
+    {s:ph?"#cxMMenu":".cx-grp",t:ph?"The Menu":"The top bar",x:ph?"Everything else lives here, in groups: Patient, Monitor, Help & learning, Settings. <b>Done</b> or Back closes it.":"Patient, Monitor, and Help & learning - each group is labelled.",pre:nomenu},
+    {s:"#selLevel",t:"The modes",x:"<b>Beginner</b>: lots of help and gentle cases. <b>Student</b>: some prompts. <b>New grad</b>: little help. <b>Hospital (MD/RN)</b>: none - like a real shift. <b>Guide</b> controls the prompts; <b>Instant results</b> skips the waiting for tests.",pre:ph?menu:nomenu},
+    {s:"#bTrain",t:"Training",x:"The course: lessons, practice questions and timed tests, from the monitor to cardiac arrest. Strict - you have to actually know it. Finish it and you earn the Clinical Sim license. Sign in with Google there to keep your progress on every device.",pre:ph?menu:nomenu},
+    {s:"#bTeam",t:"Team",x:"Call for help: doctors, consultants, pharmacy, respiratory. Tell them what is going on (SBAR) - they answer like real colleagues.",pre:ph?menu:nomenu},
+    {s:ph?"#cxS4":"details.opts",t:"Settings",x:"Case choice, clock speed, saving a patient, sounds and volume, text size, music (7 soundtracks), the intro, "+(ph?"phone display and updates - the app checks for updates by itself each time it opens.":"and more."),pre:ph?menu:function(){ nomenu(); const o=document.querySelector(".modebar details.opts"); if(o) o.setAttribute("open","") }},
+    {s:"#cxFbBtn",t:"Email the developer",x:"Clinical Sim is in <b>beta</b>. If something breaks, is medically wrong or confusing - please say so. This writes the message for you, to <b>ClinicalSimSupport@Gmail.com</b>.",pre:ph?menu:function(){ const o=document.querySelector(".modebar details.opts"); if(o) o.removeAttribute("open") }},
+    {t:"You're ready",x:"Press <b>New patient</b> and start with what they tell you. If you get stuck, <b>Hint</b> is in the chart on easier modes.<br><br>See this tour again any time: <b>"+(ph?"Menu → ":"")+"Help & learning → Tour</b>.",pre:nomenu}
+  ];
+  return S;
+}
+function cxTour(only){
+  if(typeof document==="undefined") return;
+  cxTourEnd();
+  const steps=only||cxTourSteps(); let i=0;
+  const ov=document.createElement("div"); ov.id="cxTour"; ov.className="cxt";
+  ov.innerHTML='<div class="cxt-hole"></div><div class="cxt-card" role="dialog" aria-live="polite"><div class="cxt-n"></div><h3 class="cxt-t"></h3><div class="cxt-x"></div>'+
+    '<div class="cxt-b"><button type="button" class="rx cxt-skip">Skip tour</button><span></span><button type="button" class="rx cxt-back">Back</button><button type="button" class="rx primary cxt-next">Next</button></div></div>';
+  document.body.appendChild(ov);
+  const hole=ov.querySelector(".cxt-hole"), card=ov.querySelector(".cxt-card");
+  const target=function(st){ if(!st.s) return null; const L=document.querySelectorAll(st.s); for(let k=0;k<L.length;k++){ const e=L[k]; if(e.getClientRects().length&&getComputedStyle(e).visibility!=="hidden") return e } return null };
+  const place=function(){
+    const st=steps[i], el=target(st), vw=innerWidth, vh=innerHeight, cw=Math.min(380,vw-24);
+    card.style.width=cw+"px";
+    if(!el){ hole.style.display="none"; ov.classList.add("dim"); card.style.left=((vw-cw)/2)+"px"; card.style.top=Math.max(12,(vh-card.offsetHeight)/2)+"px"; return }
+    ov.classList.remove("dim"); hole.style.display="block";
+    const r=el.getBoundingClientRect(), p=6;
+    hole.style.left=(r.left-p)+"px"; hole.style.top=(r.top-p)+"px"; hole.style.width=(r.width+p*2)+"px"; hole.style.height=Math.min(r.height+p*2,vh*0.6)+"px";
+    const ch=card.offsetHeight, below=r.bottom+p+12, above=r.top-p-12-ch;
+    let top=below+ch<vh-8?below:above>8?above:Math.max(8,vh-ch-8);
+    let left=Math.min(Math.max(12,r.left+r.width/2-cw/2),vw-cw-12);
+    card.style.left=left+"px"; card.style.top=top+"px";
+  };
+  const show=function(){
+    const st=steps[i]; try{ if(st.pre) st.pre() }catch(e){}
+    ov.querySelector(".cxt-n").textContent=(i+1)+" of "+steps.length;
+    ov.querySelector(".cxt-t").textContent=st.t; ov.querySelector(".cxt-x").innerHTML=st.x;
+    ov.querySelector(".cxt-back").style.visibility=i?"visible":"hidden";
+    ov.querySelector(".cxt-next").textContent=i===steps.length-1?(only?"Got it":"Done"):"Next";
+    ov.querySelector(".cxt-skip").style.display=only?"none":"";
+    setTimeout(function(){ const el=target(st); if(el){ try{ el.scrollIntoView({block:"center"}) }catch(e){} } place() },140);
+  };
+  ov.querySelector(".cxt-next").onclick=function(){ if(i<steps.length-1){ i++; show() } else cxTourEnd(true) };
+  ov.querySelector(".cxt-back").onclick=function(){ if(i>0){ i--; show() } };
+  ov.querySelector(".cxt-skip").onclick=function(){ cxTourEnd(true) };
+  ov._re=function(){ place() }; window.addEventListener("resize",ov._re); window.addEventListener("scroll",ov._re,true);
+  ov._key=function(e){ if(e.key==="Escape") cxTourEnd(true); else if(e.key==="ArrowRight"||e.key==="Enter") ov.querySelector(".cxt-next").click(); else if(e.key==="ArrowLeft") ov.querySelector(".cxt-back").click(); else return; e.preventDefault(); e.stopPropagation() };
+  document.addEventListener("keydown",ov._key,true);
+  show();
+}
+function cxTourEnd(done){
+  const ov=document.getElementById("cxTour"); if(!ov) return;
+  window.removeEventListener("resize",ov._re); window.removeEventListener("scroll",ov._re,true); document.removeEventListener("keydown",ov._key,true);
+  ov.remove();
+  const s=document.getElementById("cxSheet"); if(s) s.classList.add("hide");
+  const o=document.querySelector(".modebar details.opts"); if(o&&!/mobile/i.test(location.hash||"")) o.removeAttribute("open");
+  if(typeof cxShowChart==="function"&&/mobile/i.test(location.hash||"")) cxShowChart();
+  if(done) try{ localStorage.setItem(WELCOME_KEY,"1") }catch(e){}
+}
+/* the first-launch question */
+function cxWelcomeAsk(){
+  if(document.getElementById("cxWel")) return;
+  const w=document.createElement("div"); w.id="cxWel"; w.className="cx-pal";
+  w.innerHTML='<div class="cx-box cx-wel"><div class="cx-welh"><span class="cx-logo">C</span>Welcome to Clinical Sim</div>'+
+    '<p>Want a quick tour? About two minutes: where everything is, how to get to it, what it does, the modes, and how to report a problem.</p>'+
+    '<div class="cx-fbb"><button type="button" class="rx primary" id="cxWelY">Show me around</button><button type="button" class="rx" id="cxWelN">Skip - I\'ll explore</button></div>'+
+    '<p class="cx-fbn">You can take it later: Help &amp; learning → Tour.</p></div>';
+  document.body.appendChild(w);
+  w.querySelector("#cxWelY").onclick=function(){ w.remove(); cxTour() };
+  w.querySelector("#cxWelN").onclick=function(){ w.remove(); try{ localStorage.setItem(WELCOME_KEY,"1") }catch(e){} cxTourWhere() };
+}
+(function(){
+  if(typeof document==="undefined"||typeof Element==="undefined") return;
+  if(typeof IS_CONTROL!=="undefined"&&!IS_CONTROL) return;            /* the PC monitor window does not ask */
+  /* Tour button, next to Email the developer */
+  const tb=document.createElement("button"); tb.type="button"; tb.className="rx"; tb.id="cxTourBtn"; tb.title="Show me where everything is";
+  tb.innerHTML=(typeof cxIcon==="function"?cxIcon("book"):"")+"Tour";
+  tb.addEventListener("click",function(){ const s=document.getElementById("cxSheet"); if(s) s.classList.add("hide"); cxTour() });
+  const host=document.getElementById("cxS3")||(document.getElementById("bTeam")&&document.getElementById("bTeam").parentNode); if(host) host.appendChild(tb);
+  let seen=false; try{ seen=localStorage.getItem(WELCOME_KEY)==="1" }catch(e){}
+  if(seen) return;
+  /* ask once the intro has finished */
+  const wait=setInterval(function(){ if(document.getElementById("csIntro")||document.getElementById("cxLegal")||(typeof cxLegalAccepted==="function"&&!cxLegalAccepted())) return;   /* after the intro and the legal notice */ clearInterval(wait); setTimeout(cxWelcomeAsk,500) },400);
+})();
+
+/* they skipped the tour: show them where it is, because they will want it later */
+function cxTourWhere(){
+  const ph=/mobile/i.test(location.hash||"");
+  const menu=function(){ const s=document.getElementById("cxSheet"); if(s) s.classList.remove("hide") };
+  const nomenu=function(){ const s=document.getElementById("cxSheet"); if(s) s.classList.add("hide") };
+  cxTour(ph?[
+    {s:"#cxMMenu",t:"No problem - one thing first",x:"When you want the tour, it is in the <b>Menu</b>: tap this button at the top right.",pre:nomenu},
+    {s:"#cxTourBtn",t:"Here it is",x:"<b>Tour</b>, under Help &amp; learning. Tap it any time to see where everything is. <b>Email the developer</b> is right next to it if something is wrong.",pre:menu}
+  ]:[
+    {s:"#cxTourBtn",t:"No problem - one thing first",x:"When you want the tour, it is right here: <b>Tour</b>, in Help &amp; learning on the top bar. <b>Email the developer</b> is next to it if something is wrong."}
+  ]);
+}
+
+
+/* ===================== legal notice =====================
+   Shown once, on first launch, before anything else: the person has to press
+   "I understand and agree" to go on. It can be read again any time from
+   Options / Menu -> Settings -> Legal notice. The same text is published as
+   LEGAL.md beside the app on GitHub. Bump LEGAL_KEY when the text changes in
+   substance, so everyone sees the new version once. */
+const LEGAL_KEY="cs_legal_v1";
+const LEGAL_HTML=
+'<p class="lg-lead"><b>Please read this. Clinical Sim is a simulation, made for interest and general learning. It is not a medical course, a training program or a qualification.</b></p>'+
+'<h4>1. Not medical advice, not for real patients</h4>'+
+'<p>Nothing in Clinical Sim is medical advice, a diagnosis, or a treatment recommendation. Do not use it to make decisions about a real person\'s health - yours or anyone else\'s. Doses, drugs, protocols and outcomes are simplified and may be wrong, out of date, or different from your hospital\'s policies. Always follow current clinical guidelines, your institution\'s protocols, a licensed clinician and the drug\'s official prescribing information.</p>'+
+'<p><b>If you or someone else may be having a medical emergency, call 911</b> (or your local emergency number). If you are in crisis or thinking about harming yourself, call or text <b>988</b> (US Suicide &amp; Crisis Lifeline). For poisoning, call Poison Control at <b>1-800-222-1222</b> (US).</p>'+
+'<h4>2. Not a medical device</h4>'+
+'<p>Clinical Sim is not a medical device and is not cleared or approved by the FDA or any other regulator. The monitor is a simulation; it does not measure anything and must never be used to monitor a person.</p>'+
+'<h4>3. The "license" is not a real credential</h4>'+
+'<p>The Clinical Sim license and any scores, certificates or progress in the app are for fun and self-study only. They are not a professional license, certification, continuing-education credit, or proof of competence, and must not be presented as one.</p>'+
+'<h4>4. Substances</h4>'+
+'<p>The substances module explains what drugs, alcohol, nicotine and vaping do to the body so that people understand the risks. It does not encourage or instruct anyone to use them.</p>'+
+'<h4>5. No affiliation; trademarks</h4>'+
+'<p>Clinical Sim is an independent project. It is not affiliated with, endorsed by or sponsored by Philips, any hospital, school, drug company, regulator or professional body. Philips, IntelliVue and MX800 are trademarks of Koninklijke Philips N.V.; drug brand names are trademarks of their owners. They are used only to describe what the simulation resembles.</p>'+
+'<h4>6. Provided "as is" - no warranty</h4>'+
+'<p>Clinical Sim is beta software, provided free and "as is", without warranties of any kind, express or implied, including accuracy, fitness for a particular purpose and non-infringement. It may contain errors and bugs.</p>'+
+'<h4>7. Limitation of liability</h4>'+
+'<p>To the fullest extent permitted by law, the developer is not liable for any injury, loss or damage of any kind arising from the use of, or inability to use, Clinical Sim or any information in it. You use it at your own risk and are responsible for how you use what you learn.</p>'+
+'<h4>8. Your data and privacy</h4>'+
+'<p>Clinical Sim does not sell your data and does not show ads. What it keeps:</p><ul>'+
+'<li><b>On your device:</b> your settings, saved patients and training progress.</li>'+
+'<li><b>If you sign in with Google (optional):</b> your Google account ID, email address and display name, and your training progress, stored in Google Firebase so it can follow you between devices. Only you can read your own record. Signing out stops syncing.</li>'+
+'<li><b>Updates (phone):</b> the app downloads new versions from GitHub; GitHub sees an ordinary web request.</li>'+
+'<li><b>Feedback:</b> only what you choose to email, including the app version and device details if you leave that box ticked.</li>'+
+'<li><b>The patient voice on PC</b> (optional) runs on a language model on your own computer; nothing you type to it leaves the machine.</li></ul>'+
+'<p>Do not type real patient information (names, dates of birth, record numbers or anything that could identify a real person) into Clinical Sim. To have your synced data deleted, email the address below.</p>'+
+'<h4>9. Age</h4>'+
+'<p>Clinical Sim deals with serious medical situations, death and substance use. It is intended for people 13 and older; under 18, use it with a parent, guardian or teacher.</p>'+
+'<h4>10. Changes and contact</h4>'+
+'<p>This notice may change as the app changes; if it changes in a way that matters, you will be shown it again. Questions, concerns, bug reports and data-deletion requests: <b>ClinicalSimSupport@Gmail.com</b>.</p>'+
+'<p class="lg-small">By pressing "I understand and agree" or continuing to use Clinical Sim, you accept this notice. Last updated 2 October 2026.</p>';
+
+function cxLegal(firstRun){
+  if(typeof document==="undefined") return;
+  let w=document.getElementById("cxLegal"); if(w) w.remove();
+  w=document.createElement("div"); w.id="cxLegal"; w.className="cx-pal cx-legal";
+  w.innerHTML='<div class="cx-box lg-box" role="dialog" aria-label="Legal notice"><div class="cx-shead"><span>Legal notice</span>'+(firstRun?'':'<button type="button" class="rx cx-done" id="lgX">Close</button>')+'</div>'+
+    '<div class="lg-body">'+LEGAL_HTML+'</div>'+
+    (firstRun?'<div class="lg-foot"><button type="button" class="rx primary" id="lgOk">I understand and agree</button></div>':'')+'</div>';
+  document.body.appendChild(w);
+  const x=w.querySelector("#lgX"); if(x) x.onclick=function(){ w.remove() };
+  const ok=w.querySelector("#lgOk"); if(ok) ok.onclick=function(){ try{ localStorage.setItem(LEGAL_KEY,"1") }catch(e){} w.remove() };
+  if(!firstRun) w.addEventListener("click",function(e){ if(e.target===w) w.remove() });
+}
+function cxLegalAccepted(){ try{ return localStorage.getItem(LEGAL_KEY)==="1" }catch(e){ return true } }
+(function(){
+  if(typeof document==="undefined"||typeof Element==="undefined") return;
+  if(typeof IS_CONTROL!=="undefined"&&!IS_CONTROL) return;          /* the PC monitor window does not ask */
+  /* Settings -> Legal notice */
+  const op=document.querySelector(".optpanel");
+  if(op&&op instanceof Element&&!document.getElementById("lgRow")){
+    const r=document.createElement("div"); r.className="optrow"; r.id="lgRow";
+    r.innerHTML='<span>Legal</span><span class="optbtns"><button type="button" class="rx" id="lgOpen">Legal notice, privacy &amp; disclaimer</button></span>';
+    op.appendChild(r); r.querySelector("#lgOpen").addEventListener("click",function(){ cxLegal(false) });
+  }
+  if(cxLegalAccepted()) return;
+  const wait=setInterval(function(){ if(document.getElementById("csIntro")) return; clearInterval(wait); cxLegal(true) },300);
+})();
 
 
 /* ---------- wire the two windows together ---------- */
@@ -22913,7 +23226,7 @@ if(/mobile/i.test(location.hash)){ (function(){
     $("bUpd").addEventListener("click",function(){
       if(!APP){ upStat.textContent="Updates work in the phone app"; return }
       if(APP.updateUrl().indexOf("https://")!==0){ askSource(); return }
-      upStat.textContent="Checking…"; APP.check();
+      upStat.textContent="Checking…"; freshCheck();
     });
     const r3=document.createElement("div"); r3.className="optrow";
     r3.innerHTML='<span>Update source</span><span class="optbtns"><button class="rx" type="button" id="bUpdSrc">Set…</button> <em id="updSrc"></em></span>';
@@ -22924,6 +23237,10 @@ if(/mobile/i.test(location.hash)){ (function(){
   /* where updates come from: a GitHub username is enough - the files live in
      its public repo "clinical-sim-updates" - or paste a full https address */
   function srcUrl(){ return APP?APP.updateUrl():"" }
+  /* GitHub keeps update.json in its cache for up to 5 minutes, so a new version could
+     read as "up to date". Ask for it with a new address each time (?t=now), which
+     the cache has never seen - the page it names is found relative to it as before. */
+  function freshCheck(){ const u=srcUrl().split("?")[0]; if(u.indexOf("https://")===0) try{ APP.setUpdateUrl(u+"?t="+Date.now()) }catch(e){} APP.check() }
   function paintSrc(){ const e=$("updSrc"); if(!e) return; const u=srcUrl();
     const p=u.split("/");   /* https: , , raw.githubusercontent.com , user , clinical-sim-updates , ... */
     const gh=p[2]==="raw.githubusercontent.com"&&p[4]==="clinical-sim-updates";
@@ -22941,8 +23258,13 @@ if(/mobile/i.test(location.hash)){ (function(){
   }
 
   /* the wrapper answers here */
+  /* every time the app opens it checks by itself; it only speaks up if there is a new version */
+  let autoChk=false;
+  if(APP&&srcUrl().indexOf("https://")===0) setTimeout(function(){ autoChk=true; try{ freshCheck() }catch(e){ autoChk=false } },2500);
   window.csUpdate=function(r){
     if(!upStat) return;
+    const auto=autoChk; if(r.state!=="installed") autoChk=false;
+    if(auto&&(r.state==="current"||r.state==="error")){ if(r.state==="current") upStat.textContent="Up to date (V"+r.current+")"; return }
     if(r.state==="current"){ upStat.textContent="Up to date (V"+r.current+")"; return }
     if(r.state==="error"){ upStat.textContent=""; show("Couldn't check for updates",'<p>'+esc(r.error||"No connection")+'</p>'+(/HTTP 404|HTTP 5\d\d|checksum|sha/i.test(String(r.error||""))?'<p class="mdim">A new version is still being published. Wait a couple of minutes, then try again.</p>':'<p class="mdim">Check the phone is online and try again.</p>')); return }
     if(r.state==="installed"){ show("Installing…",'<p>Clinical Sim V'+esc(r.version)+' is installed. Restarting…</p>',[]); return }
@@ -22951,7 +23273,7 @@ if(/mobile/i.test(location.hash)){ (function(){
       const newer=(m.changelog||[]).filter(function(e){ return cmpV(e.v,r.current)>0 });
       show("Update available — V"+m.version,
         '<p class="mdim">You have V'+esc(r.current)+'. '+(SIM.on?'<b>Installing restarts the app — the current patient will be lost.</b>':'')+'</p>'+logHtml(newer.length?newer:[{v:m.version,notes:m.notes||[]}]),
-        [["Later",null],["Install update",function(){ show("Downloading…",'<p>Getting Clinical Sim V'+esc(m.version)+'…</p>',[]); APP.install() },true]]);
+        [["Not now",null],["Install update",function(){ show("Downloading…",'<p>Getting Clinical Sim V'+esc(m.version)+'…</p>',[]); APP.install() },true]]);
     }
   };
   function cmpV(a,b){ a=String(a).split("."); b=String(b).split(".");
