@@ -1,11 +1,26 @@
 {
-  "version": "1.16",
+  "version": "1.17",
   "minNative": 1,
   "notes": [
-    "The intro logo: the C of CLINICAL SIM sits in a box whose bottom edge is level with the underline, which runs under the rest of the name",
-    "New: Options → Intro → Play it now, to watch (and hear) the intro again any time"
+    "New: background music - 7 original soundtracks, each a full 3-4 minute song (intro, verses, choruses, builds, key changes) that varies every time it comes round. Options → Music: pick the style, set the volume, mute",
+    "Styles: Cinematic (Vital Signs - the intro theme, extended), Funk, Electronic, Pop, Synthwave, Lo-fi, Ambient",
+    "The intro is longer (about 16 s) and its music carries straight on into the app; the beat is the heartbeat on screen",
+    "Music dips while a monitor alarm is sounding, and pauses when you leave the app",
+    "New: Options → Phone display - Simple vitals, Monitor (numbers) or Monitor (full, with waves)"
   ],
   "changelog": [
+    {
+      "v": "1.17",
+      "date": "2026-10-01",
+      "title": "Music, and a longer intro",
+      "notes": [
+        "New: background music - 7 original soundtracks, each a full 3-4 minute song (intro, verses, choruses, builds, key changes) that varies every time it comes round. Options → Music: pick the style, set the volume, mute",
+        "Styles: Cinematic (Vital Signs - the intro theme, extended), Funk, Electronic, Pop, Synthwave, Lo-fi, Ambient",
+        "The intro is longer (about 16 s) and its music carries straight on into the app; the beat is the heartbeat on screen",
+        "Music dips while a monitor alarm is sounding, and pauses when you leave the app",
+        "New: Options → Phone display - Simple vitals, Monitor (numbers) or Monitor (full, with waves)"
+      ]
+    },
     {
       "v": "1.16",
       "date": "2026-10-01",
@@ -244,7 +259,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.16.html",
-  "sha256": "81b0a44773d50a32101d1205c6d9095a7e585f3ebba800fa9a46508854582559",
-  "size": 4339718
+  "page": "clinicalsim-1.17.html",
+  "sha256": "4d81008fb47ff54d3e4d060405fe651f8f200c19643a02c9ddf7b36cfb16e882",
+  "size": 4376110
 }
