@@ -1,13 +1,33 @@
 {
-  "version": "1.33",
+  "version": "1.34",
   "minNative": 1,
-  "title": "A new score, and feedback that sends itself",
-  "major": true,
+  "title": "More realistic medicine",
+  "major": false,
   "notes": [
-    "New music: six cues re-scored like a medical drama - grand piano, strings, cellos, timpani, a ticking clock and the heartbeat. Diagnosis (mystery), Code Blue (tension), Recovery (emotional), Rounds (documentary), Night Shift (calm), Rainfall (ambient). Vital Signs is unchanged",
-    "Email the developer now sends from inside the app - write it, press Send, done. Add your email if you want a reply. (Copy instead is still there if you are offline)"
+    "Allergies cross-react like they really do: a penicillin allergy now covers amoxicillin and Augmentin, cephalosporins cover cefepime, sulfa means Bactrim (not furosemide), and a contrast allergy reacts to a CT angiogram too",
+    "Serotonin syndrome now needs two serotonergic drugs (or a real overdose of one) - linezolid alone no longer sets it off",
+    "Oral potassium 40 mEq is a normal dose, so it is no longer flagged as 4x too much (an IV bag of 40 still is)",
+    "Acetaminophen is counted over a rolling 24 hours, so yesterday's doses drop off",
+    "Kidney stones, pancreatitis, burns and other big pains now actually hurt - 8 to 10 out of 10 until you treat them",
+    "Cardiac arrest: VF only ends with a shock. In PEA/asystole the pulse comes back at the pulse check, not in the middle of compressions",
+    "US infection-control wording: N95 respirator, isolation gown and face shield"
   ],
   "changelog": [
+    {
+      "v": "1.34",
+      "date": "2026-10-02",
+      "major": false,
+      "title": "More realistic medicine",
+      "notes": [
+        "Allergies cross-react like they really do: a penicillin allergy now covers amoxicillin and Augmentin, cephalosporins cover cefepime, sulfa means Bactrim (not furosemide), and a contrast allergy reacts to a CT angiogram too",
+        "Serotonin syndrome now needs two serotonergic drugs (or a real overdose of one) - linezolid alone no longer sets it off",
+        "Oral potassium 40 mEq is a normal dose, so it is no longer flagged as 4x too much (an IV bag of 40 still is)",
+        "Acetaminophen is counted over a rolling 24 hours, so yesterday's doses drop off",
+        "Kidney stones, pancreatitis, burns and other big pains now actually hurt - 8 to 10 out of 10 until you treat them",
+        "Cardiac arrest: VF only ends with a shock. In PEA/asystole the pulse comes back at the pulse check, not in the middle of compressions",
+        "US infection-control wording: N95 respirator, isolation gown and face shield"
+      ]
+    },
     {
       "v": "1.33",
       "date": "2026-10-02",
@@ -413,7 +433,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.33.html",
-  "sha256": "4ac58b2da1c631dfd30ab17cdb16160c76636baefad9c00997f41028997991c5",
-  "size": 4487776
+  "page": "clinicalsim-1.34.html",
+  "sha256": "e00c0a16e72143bb2344eb36ca35fecaad271b4cd7489ae6a6fd524632814cfc",
+  "size": 4489816
 }
