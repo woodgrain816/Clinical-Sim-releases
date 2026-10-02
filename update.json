@@ -1,21 +1,23 @@
 {
-  "version": "1.37",
+  "version": "1.38",
   "minNative": 1,
-  "title": "Big screen: the monitor on a tablet or TV",
-  "major": true,
+  "title": "Big screen goes properly full screen",
+  "major": false,
   "notes": [
-    "NEW - Big screen (Menu - Monitor - Big screen): your phone stays the controls and the bedside monitor shows full screen on a tablet, another phone, a laptop or a TV on the same Wi-Fi. Start a session on the phone, type its session number on the other device. A TV plugged in by HDMI or screen-mirrored shows the monitor by itself. Silence and Start NBP on the big screen work too. (Needs the new app installed from the download link on both devices.)",
-    "The monitor scales properly on big screens - the whole thing grows together instead of tiny text on a huge TV",
-    "Medical accuracy pass, checked against current US guidelines: about 40 drug fixes (correct US doses no longer flagged as overdoses, e.g. Narcan 4 mg nasal, oral potassium, Keppra and magnesium loading doses; routes that do not exist in the US removed; wrong teaching notes corrected)",
-    "Tests that diagnose a condition now show it (DVT ultrasound, STEMI cath, stroke MRI, CHF echo and more) instead of coming back normal",
-    "Epinephrine IV push into a patient with a pulse is now caught (anaphylaxis is 0.5 mg IM); oxygen at 1-4 L/min in COPD is correct care, not an error",
-    "The BMP includes calcium, magnesium can be ordered, blood cultures grow the right kind of bug for the source, the ECG shows the rhythm they are in now, and lab names are US (BUN, T. bili)",
-    "Realistic American patients: names that go together and fit the decade they were born, interpreter languages that match (mostly Spanish), and jobs that fit their age",
-    "No more same patient over and over: every launch deals fresh cases, and recent conditions and names are not repeated",
-    "Training content: Fahrenheit temperatures, potassium in mEq/L, US spelling, and a few contradictions fixed",
-    "Compression coaching now holds you to 100-120 a minute"
+    "The device showing the monitor now hides the status and navigation bars and stays landscape - the monitor uses the whole screen",
+    "In a browser, the first tap also switches to full screen"
   ],
   "changelog": [
+    {
+      "v": "1.38",
+      "date": "2026-10-03",
+      "major": false,
+      "title": "Big screen goes properly full screen",
+      "notes": [
+        "The device showing the monitor now hides the status and navigation bars and stays landscape - the monitor uses the whole screen",
+        "In a browser, the first tap also switches to full screen"
+      ]
+    },
     {
       "v": "1.37",
       "date": "2026-10-03",
@@ -483,7 +485,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.37.html",
-  "sha256": "8901d2ab43aa5903cee1d97f20fd41a2738fa33f954ac473dec93bc9005ce615",
-  "size": 4599305
+  "page": "clinicalsim-1.38.html",
+  "sha256": "2daafa15f4334febf4bf010470c3ad2ed7718b99121920d27347066cc948656f",
+  "size": 4600030
 }
