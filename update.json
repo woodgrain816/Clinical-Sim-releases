@@ -1,10 +1,18 @@
 {
-  "version": "1.14",
+  "version": "1.15",
   "minNative": 1,
   "notes": [
-    "Options → Updates → Check for updates now works: new versions download straight into the app, no more installing APK files"
+    "New: an original soundtrack for the intro - a low drone, a swelling chord that brightens when the name appears, and a soft heartbeat on every beat the trace writes. Options → Intro → With its soundtrack turns it off"
   ],
   "changelog": [
+    {
+      "v": "1.15",
+      "date": "2026-10-01",
+      "title": "The intro has a soundtrack",
+      "notes": [
+        "New: an original soundtrack for the intro - a low drone, a swelling chord that brightens when the name appears, and a soft heartbeat on every beat the trace writes. Options → Intro → With its soundtrack turns it off"
+      ]
+    },
     {
       "v": "1.14",
       "date": "2026-10-01",
@@ -226,7 +234,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.14.html",
-  "sha256": "f48c25d8ecc6096bda12b77a80568779c8406437233e4e2cbede93823d410edb",
-  "size": 4329350
+  "page": "clinicalsim-1.15.html",
+  "sha256": "b5cca543ef4845d0209f039eaa2542699c35417509f4fa061f82bc9ce8c0bb44",
+  "size": 4335900
 }
