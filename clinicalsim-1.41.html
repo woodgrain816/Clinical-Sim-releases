@@ -1677,6 +1677,10 @@ body.cx-mobile .cx-nav button .cx-i{width:20px;height:20px}
 /* the big screen keeps a real power button: in the top-right corner ALWAYS (never the middle), bigger, works the controls' monitor */
 html.cs-mirror .screen .monpwr,html.cs-mirror .screen.iv .monpwr{width:calc(30px*var(--ms,1));height:calc(30px*var(--ms,1));font-size:calc(15px*var(--ms,1));opacity:.85;top:4px;bottom:auto;right:6px;z-index:40}
 html.cs-mirror .screen .monpwr .led{width:calc(6px*var(--ms,1));height:calc(6px*var(--ms,1))}
+html.cs-mirror .screen.off .monpwr{opacity:1;top:50%;right:50%;transform:translate(50%,-50%);width:calc(64px*var(--ms,1));height:calc(64px*var(--ms,1));font-size:calc(30px*var(--ms,1))}
+/* a drawn power symbol: the FB character is missing from many tablet/TV fonts (it showed as a crossed box) */
+.screen .monpwr .pwi{width:58%;height:58%;display:block;margin:auto;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
+.screen .monpwr{display:flex;align-items:center;justify-content:center;padding:0}
 
 
 /* ================= phone build =================
@@ -16208,7 +16212,7 @@ function monPowerTick(scr){
   if(!document.getElementById("monPwr")&&typeof document.createElement==="function"){
     const b=document.createElement("button");
     b.id="monPwr"; b.type="button"; b.className="monpwr"; b.title="Power";
-    b.innerHTML='<span class="led"></span>&#x23FB;';
+    b.innerHTML='<span class="led"></span><svg class="pwi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>';
     b.addEventListener("click",function(e){ e.stopPropagation(); monPowerPress() });
     scr.appendChild(b);
     b.classList.toggle("on",!S.monOff);
