@@ -1,14 +1,22 @@
 {
-  "version": "1.17",
+  "version": "1.18",
   "minNative": 1,
   "notes": [
-    "New: background music - 7 original soundtracks, each a full 3-4 minute song (intro, verses, choruses, builds, key changes) that varies every time it comes round. Options → Music: pick the style, set the volume, mute",
-    "Styles: Cinematic (Vital Signs - the intro theme, extended), Funk, Electronic, Pop, Synthwave, Lo-fi, Ambient",
-    "The intro is longer (about 16 s) and its music carries straight on into the app; the beat is the heartbeat on screen",
-    "Music dips while a monitor alarm is sounding, and pauses when you leave the app",
-    "New: Options → Phone display - Simple vitals, Monitor (numbers) or Monitor (full, with waves)"
+    "Options → Phone display → Simple vitals bar: one slim row (HR, SpO₂, NBP, RR, etCO₂, Temp) pinned to the top while you scroll",
+    "Tap HR, SpO₂, RR or etCO₂ to open its live trace under the bar - ECG, pleth, respiration or capnogram - to check the rhythm or spot a missing wave. Tap again to close",
+    "A number flashes red while its alarm is sounding"
   ],
   "changelog": [
+    {
+      "v": "1.18",
+      "date": "2026-10-01",
+      "title": "Simple vitals bar",
+      "notes": [
+        "Options → Phone display → Simple vitals bar: one slim row (HR, SpO₂, NBP, RR, etCO₂, Temp) pinned to the top while you scroll",
+        "Tap HR, SpO₂, RR or etCO₂ to open its live trace under the bar - ECG, pleth, respiration or capnogram - to check the rhythm or spot a missing wave. Tap again to close",
+        "A number flashes red while its alarm is sounding"
+      ]
+    },
     {
       "v": "1.17",
       "date": "2026-10-01",
@@ -259,7 +267,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.17.html",
-  "sha256": "4d81008fb47ff54d3e4d060405fe651f8f200c19643a02c9ddf7b36cfb16e882",
-  "size": 4376110
+  "page": "clinicalsim-1.18.html",
+  "sha256": "afca157e3d41bc9d0ad0f6c047b4be3850fb3f6f8d2eacd55d1ea70d943b5aa5",
+  "size": 4382039
 }
