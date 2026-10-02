@@ -1,13 +1,20 @@
 {
-  "version": "1.19",
+  "version": "1.20",
   "minNative": 1,
   "notes": [
-    "New phone layout: a short header (New patient, Find, Emergency, Menu) and a tab bar at the bottom - Chart, Talk, Assess, Meds, Orders, More. Everything else is in Menu, grouped: Patient, Monitor, Help & learning, Settings",
-    "New: Find anything (the magnifying glass, or Ctrl+K on a PC) - type a drug, test, procedure or setting (\"foley\", \"cbc\", \"tylenol\", \"chest x-ray\") and it takes you there and highlights it",
-    "A calmer clinical look: navy and teal, medical line icons (stethoscope, syringe, pill...) instead of emoji; Beginner no longer adds cartoon faces to what the patient says",
-    "Music keeps playing properly during a case: it no longer fades out for every yellow alarm - only dips a little for red ones, and Options → Music → Lower for red alarms turns even that off"
+    "Procedures is now on the bottom tab bar (Chart, Talk, Assess, Meds, Orders, Procedures, More)",
+    "The Emergency button is red everywhere"
   ],
   "changelog": [
+    {
+      "v": "1.20",
+      "date": "2026-10-02",
+      "title": "Procedures one tap away",
+      "notes": [
+        "Procedures is now on the bottom tab bar (Chart, Talk, Assess, Meds, Orders, Procedures, More)",
+        "The Emergency button is red everywhere"
+      ]
+    },
     {
       "v": "1.19",
       "date": "2026-10-02",
@@ -279,7 +286,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.19.html",
-  "sha256": "8670088206d9abe94b4ecab2b6564f07951f371dcded9b4996ecedcaa9252d28",
-  "size": 4414104
+  "page": "clinicalsim-1.20.html",
+  "sha256": "e4a6f1e930785fa107dd1fa9e4c20fbb12efa5cbf1794c610720c6f3b0102ee0",
+  "size": 4414689
 }
