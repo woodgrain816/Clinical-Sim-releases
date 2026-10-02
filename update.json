@@ -1,13 +1,31 @@
 {
-  "version": "1.31",
+  "version": "1.32",
   "minNative": 1,
+  "title": "Update notifications, training times, no overlaps",
+  "major": true,
   "notes": [
-    "Training home: one Up next card with a Continue button, your progress, and your path as a single list - the long rules are folded into How passing works",
-    "Each module is three steps - Learn, Practice, Quiz - with a step bar and one Next step button that always does the right next thing",
-    "All modules button on every Training page; on phones the module strip at the top is gone (just a slim sign-in line)",
-    "Same rules as before - only the layout changed"
+    "New: update notifications - choose All updates, Major updates only, or None (asked after the tour; change it in Settings → Update notifications). It never notifies you about anything else",
+    "New: time estimates in Training - the whole course, each module, each lesson, each practice topic and quiz, and how much you have left",
+    "First launch now goes: legal notice → tour → notifications",
+    "Fixed: the full monitor on phones was squashed into a narrow screen so labels, numbers and keys ran into each other - it is now drawn like the real monitor and scaled to fit",
+    "Fixed: small overlaps on the big-numbers screen (patient name and clock, Temp limits) and the power button covering a bed tab",
+    "Fixed: \"N weeks pregnant\" in a patient history was never recognised"
   ],
   "changelog": [
+    {
+      "v": "1.32",
+      "date": "2026-10-02",
+      "major": true,
+      "title": "Update notifications, training times, no overlaps",
+      "notes": [
+        "New: update notifications - choose All updates, Major updates only, or None (asked after the tour; change it in Settings → Update notifications). It never notifies you about anything else",
+        "New: time estimates in Training - the whole course, each module, each lesson, each practice topic and quiz, and how much you have left",
+        "First launch now goes: legal notice → tour → notifications",
+        "Fixed: the full monitor on phones was squashed into a narrow screen so labels, numbers and keys ran into each other - it is now drawn like the real monitor and scaled to fit",
+        "Fixed: small overlaps on the big-numbers screen (patient name and clock, Temp limits) and the power button covering a bed tab",
+        "Fixed: \"N weeks pregnant\" in a patient history was never recognised"
+      ]
+    },
     {
       "v": "1.31",
       "date": "2026-10-02",
@@ -389,7 +407,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.31.html",
-  "sha256": "c16f12eaf3fab0095517689fe9b57556cc8197807aca975d461047ebdd0e63b0",
-  "size": 4472900
+  "page": "clinicalsim-1.32.html",
+  "sha256": "03f0539940c7ba8231d5b80d836cde03a870142cad061d06faea871d0bf5c5c3",
+  "size": 4482279
 }
