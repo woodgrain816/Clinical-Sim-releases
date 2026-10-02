@@ -1,17 +1,27 @@
 {
-  "version": "1.43",
+  "version": "1.44",
   "minNative": 1,
-  "title": "One search for everything, and Guidance you can switch on",
-  "major": false,
+  "title": "Quick actions, and a Next step that tells you what to do",
+  "major": true,
   "notes": [
-    "Search everything at the top: oxygen, suction, morphine, blood cultures, a pillow, examine the chest - type it and Do it, straight from the results. (A search bug that dropped every letter 's' is fixed - that is why suction could not be found.)",
-    "Guidance: On / Off switch next to the search. On, it coaches like a preceptor - what to check, what to do when they seize or the heart rate is 160, urgent prompts across the top - and says when a move was a good call. It is on by default at every level",
-    "Suction the airway (Yankauer) - in Procedures, the crash cart and the search; suctioning an unprotected airway prevents aspiration when they vomit",
-    "Neuro check: GCS, pupils, strength and speech, as a nurse would do it",
-    "Talking to the patient: nothing is 'taken as' a different question any more. Tell them no food or drink and they react to that; say yes and they thank you; talk nonsense and they ask if you're out of your mind - and keep it up and they demand a different nurse",
-    "With a local AI model installed, the patient is told to react to exactly what was said - including nonsense or rudeness"
+    "Quick actions, always on screen under the top bar (PC and phone): IV, Oxygen (cannula, mask, non-rebreather, high-flow), Suction, a 1 L bolus, Fingerstick glucose, Monitor on, Vitals bar (numbers only) and the Crash cart. Each shows what's in place - IV in, which oxygen, monitor on",
+    "Next step: with Guidance on, the single most important thing to do now is always shown right under the quick buttons - red when it's urgent (no pulse, seizing, no IV in a sick patient). Tap it for the full list",
+    "Guidance is on by default at every level (it was off above Student)",
+    "The 'Continue your case?' box no longer pops up while you're already caring for a patient"
   ],
   "changelog": [
+    {
+      "v": "1.44",
+      "date": "2026-10-02",
+      "major": true,
+      "title": "Quick actions, and a Next step that tells you what to do",
+      "notes": [
+        "Quick actions, always on screen under the top bar (PC and phone): IV, Oxygen (cannula, mask, non-rebreather, high-flow), Suction, a 1 L bolus, Fingerstick glucose, Monitor on, Vitals bar (numbers only) and the Crash cart. Each shows what's in place - IV in, which oxygen, monitor on",
+        "Next step: with Guidance on, the single most important thing to do now is always shown right under the quick buttons - red when it's urgent (no pulse, seizing, no IV in a sick patient). Tap it for the full list",
+        "Guidance is on by default at every level (it was off above Student)",
+        "The 'Continue your case?' box no longer pops up while you're already caring for a patient"
+      ]
+    },
     {
       "v": "1.43",
       "date": "2026-10-02",
@@ -552,7 +562,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.43.html",
-  "sha256": "a249fdff1da53cddd833a151dff0c98a27baed8dbe9a30f7fe60c8e985245e63",
-  "size": 4684703
+  "page": "clinicalsim-1.44.html",
+  "sha256": "59cbd70a5cea7d9944e6d54c8894dac867f00858edf22a3051cc59f41421748a",
+  "size": 4695000
 }
