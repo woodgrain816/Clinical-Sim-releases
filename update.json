@@ -1,12 +1,31 @@
 {
-  "version": "1.39",
+  "version": "1.40",
   "minNative": 1,
-  "title": "Big screen: monitor-sized keys",
-  "major": false,
+  "title": "Search by meaning, an easier phone layout, warmed fluids",
+  "major": true,
   "notes": [
-    "On a tablet or TV the monitor now has real-monitor-sized softkeys, a bigger header, bed tabs, waveform labels and alarm limits - easy to read and press from across the room"
+    "Search by what you mean: type warm, warmed, heated or cold and you get EVERYTHING that warms the patient - rewarming, warmed saline and LR, blankets, the room, a heat pack, a warm drink - across every tab. Works for airway, breathing, pain, bleeding, pee, comfort, falls, fever and more, in Find and in the new search boxes",
+    "Search boxes at the top of Procedures, Care and Bedside, with matches from the other tabs listed right underneath",
+    "Phone: opening a tab folds the monitor into the slim vitals bar so the tab gets the screen - no more scrolling past the monitor. Tap a vital for its live trace. Back on Chart, the full monitor returns",
+    "Care and Bedside are on the bottom bar now",
+    "Warmed normal saline and warmed lactated Ringer's (fluid warmer, 104-107.6 F). Active rewarming now says what it is (forced-air blanket + warmed IV fluids). In hypothermia, warmed fluids count and room-temperature ones do not",
+    "Big screen: an Aa button on the monitor to make it bigger or smaller (remembered), and the NBP block no longer overlaps"
   ],
   "changelog": [
+    {
+      "v": "1.40",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Search by meaning, an easier phone layout, warmed fluids",
+      "notes": [
+        "Search by what you mean: type warm, warmed, heated or cold and you get EVERYTHING that warms the patient - rewarming, warmed saline and LR, blankets, the room, a heat pack, a warm drink - across every tab. Works for airway, breathing, pain, bleeding, pee, comfort, falls, fever and more, in Find and in the new search boxes",
+        "Search boxes at the top of Procedures, Care and Bedside, with matches from the other tabs listed right underneath",
+        "Phone: opening a tab folds the monitor into the slim vitals bar so the tab gets the screen - no more scrolling past the monitor. Tap a vital for its live trace. Back on Chart, the full monitor returns",
+        "Care and Bedside are on the bottom bar now",
+        "Warmed normal saline and warmed lactated Ringer's (fluid warmer, 104-107.6 F). Active rewarming now says what it is (forced-air blanket + warmed IV fluids). In hypothermia, warmed fluids count and room-temperature ones do not",
+        "Big screen: an Aa button on the monitor to make it bigger or smaller (remembered), and the NBP block no longer overlaps"
+      ]
+    },
     {
       "v": "1.39",
       "date": "2026-10-03",
@@ -493,7 +512,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.39.html",
-  "sha256": "3450c9a316ac08d15aea8866d112bd4f6f4fc1ad398b5bc9c27f2b93bdd22095",
-  "size": 4601821
+  "page": "clinicalsim-1.40.html",
+  "sha256": "6c15125769fcab4b29fc25a6d6083ddc349c42a699523ddc814561eca1c57fa6",
+  "size": 4626084
 }
