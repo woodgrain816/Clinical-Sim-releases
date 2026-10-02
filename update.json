@@ -1,12 +1,20 @@
 {
-  "version": "1.21",
+  "version": "1.22",
   "minNative": 1,
   "notes": [
-    "New: a pause button at the top right; it turns into an amber play button while paused",
-    "Tap the yellow PAUSED banner to carry on",
-    "Fixed: crackling music on phones - phones now use lighter instruments and a bigger audio buffer"
+    "Fixed: the Update available window opened behind the Menu, so there was no way to press Install",
+    "Fixed: Settings in the Menu could be swiped sideways - every row now fits the screen"
   ],
   "changelog": [
+    {
+      "v": "1.22",
+      "date": "2026-10-02",
+      "title": "Updates you can install",
+      "notes": [
+        "Fixed: the Update available window opened behind the Menu, so there was no way to press Install",
+        "Fixed: Settings in the Menu could be swiped sideways - every row now fits the screen"
+      ]
+    },
     {
       "v": "1.21",
       "date": "2026-10-02",
@@ -297,7 +305,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.21.html",
-  "sha256": "81a93e9fa53a3052a78ef0630feffdc2caf9861887089b571229e22f3a4c1d5a",
-  "size": 4417061
+  "page": "clinicalsim-1.22.html",
+  "sha256": "78bb0dabd936d035bdbf80fb81603a75898b1cac3a295c99d8f114a927d78c25",
+  "size": 4418063
 }
