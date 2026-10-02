@@ -12,6 +12,8 @@ A realistic patient simulator: a Philips IntelliVue MX800-style bedside monitor,
 
 ## Install (Android)
 Download **[ClinicalSim.apk](ClinicalSim.apk)** and open it on your phone (allow installs from your browser if asked).
+
+**Windows PC / laptop:** download **[ClinicalSim-PC.zip](ClinicalSim-PC.zip)**, right-click it → Extract All, then open **ClinicalSim.exe** in the extracted folder. If Windows says "Windows protected your PC", click More info → Run anyway.
 After that the app checks this page for updates every time it opens and asks before installing.
 
 ## What helps in a bug report
@@ -21,4 +23,5 @@ After that the app checks this page for updates every time it opens and asks bef
 
 ## Files here
 - `ClinicalSim.apk` — the Android app
+- `ClinicalSim-PC.zip` — the Windows app
 - `update.json` + `clinicalsim-<version>.html` — the update channel the app reads (checked against a SHA-256)
