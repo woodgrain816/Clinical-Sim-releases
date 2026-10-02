@@ -1,10 +1,18 @@
 {
-  "version": "1.29",
+  "version": "1.30",
   "minNative": 1,
   "notes": [
-    "Fixed: Check for updates could say \"up to date\" for a few minutes after a new version came out (GitHub was handing out an old copy of the update list) - it now always asks for a fresh one"
+    "Fixed: right after a new version came out, Check for updates could still say \"up to date\" for several minutes. It now asks GitHub for the newest version directly, so it finds it at once"
   ],
   "changelog": [
+    {
+      "v": "1.30",
+      "date": "2026-10-02",
+      "title": "Updates show up straight away (for real)",
+      "notes": [
+        "Fixed: right after a new version came out, Check for updates could still say \"up to date\" for several minutes. It now asks GitHub for the newest version directly, so it finds it at once"
+      ]
+    },
     {
       "v": "1.29",
       "date": "2026-10-02",
@@ -367,7 +375,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.29.html",
-  "sha256": "fb7857420728e5443ef9c32b108ad2c2d7fb06fc0ddb135b809b0eb89aa59dde",
-  "size": 4454746
+  "page": "clinicalsim-1.30.html",
+  "sha256": "700ac827d91a0e6c30eac801f5b2cc1b30f0ff365dae3a3652ee91b60f31b516",
+  "size": 4455815
 }
