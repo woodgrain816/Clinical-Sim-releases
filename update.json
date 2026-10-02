@@ -1,11 +1,22 @@
 {
-  "version": "1.24",
+  "version": "1.25",
   "minNative": 1,
   "notes": [
-    "Fixed: Check for updates sometimes failed with HTTP 404 right after a new version came out - older versions now stay on the server for a while, so it always finds one",
-    "If it still cannot reach the update, it says why instead of blaming the internet"
+    "The app checks for updates every time it opens, and asks: Install update, or Not now",
+    "New: Send feedback / report a bug (Menu → Settings, or Options on PC) - writes an email to ClinicalSimSupport@Gmail.com for you, with the app version and device so bugs can be found. Clinical Sim is in beta: please report anything that breaks",
+    "Tap a tab you are already on and it closes (phone: back to the chart; PC: the panel folds away)"
   ],
   "changelog": [
+    {
+      "v": "1.25",
+      "date": "2026-10-02",
+      "title": "Auto updates and feedback",
+      "notes": [
+        "The app checks for updates every time it opens, and asks: Install update, or Not now",
+        "New: Send feedback / report a bug (Menu → Settings, or Options on PC) - writes an email to ClinicalSimSupport@Gmail.com for you, with the app version and device so bugs can be found. Clinical Sim is in beta: please report anything that breaks",
+        "Tap a tab you are already on and it closes (phone: back to the chart; PC: the panel folds away)"
+      ]
+    },
     {
       "v": "1.24",
       "date": "2026-10-02",
@@ -324,7 +335,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.24.html",
-  "sha256": "b573c11f533adbc281f43175911a3d884d6b87b75e5b016f79ad9fbdb83b8a7e",
-  "size": 4420501
+  "page": "clinicalsim-1.25.html",
+  "sha256": "88fc88594b369620e3375d45eede6143ad8aa6c44f49245a57b974866fc19995",
+  "size": 4427774
 }
