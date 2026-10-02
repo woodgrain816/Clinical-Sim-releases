@@ -5,7 +5,10 @@
   "major": false,
   "notes": [
     "Big screen from a computer: in the Clinical Sim PC app, Menu or Monitor -> Big screen -> Start a session. The laptop keeps the chart and a tablet joins with the session number and shows the monitor full screen",
-    "A Music: On / Off button next to Find - one tap mutes the soundtrack, the monitor still beeps"
+    "A Music: On / Off button next to Find - one tap mutes the soundtrack, the monitor still beeps",
+    "IV access in one tap: a bar at the top of Meds and Procedures says whether the patient has a line, with Place IV (and IO) right there - it turns green once the IV is in",
+    "IM injections for more drugs: ondansetron, metoclopramide, dexamethasone, vitamin K, phenobarbital, magnesium, atropine, diazepam, folic acid, pyridoxine, leucovorin, methotrexate, clindamycin, cefepime, deferoxamine, physostigmine, hydralazine and furosemide (pick IM in the route box next to GIVE)",
+    "Big screen: the power button works from the tablet or TV and turns the monitor on and off for real, with a proper power icon"
   ],
   "changelog": [
     {
@@ -14,7 +17,10 @@
       "title": "Laptop as the controls, and a music switch",
       "notes": [
         "Big screen from a computer: in the Clinical Sim PC app, Menu or Monitor -> Big screen -> Start a session. The laptop keeps the chart and a tablet joins with the session number and shows the monitor full screen",
-        "A Music: On / Off button next to Find - one tap mutes the soundtrack, the monitor still beeps"
+        "A Music: On / Off button next to Find - one tap mutes the soundtrack, the monitor still beeps",
+        "IV access in one tap: a bar at the top of Meds and Procedures says whether the patient has a line, with Place IV (and IO) right there - it turns green once the IV is in",
+        "IM injections for more drugs: ondansetron, metoclopramide, dexamethasone, vitamin K, phenobarbital, magnesium, atropine, diazepam, folic acid, pyridoxine, leucovorin, methotrexate, clindamycin, cefepime, deferoxamine, physostigmine, hydralazine and furosemide (pick IM in the route box next to GIVE)",
+        "Big screen: the power button works from the tablet or TV and turns the monitor on and off for real, with a proper power icon"
       ]
     },
     {
@@ -518,6 +524,6 @@
     }
   ],
   "page": "clinicalsim-1.41.html",
-  "sha256": "9f7b92d7363b9b66f13ffed26256dcd7ca021fd41dcf66f327ca9074001e475e",
-  "size": 4631762
+  "sha256": "01c8c74bf7195dd6372e818035fa1415249b5d52416f5adfb72612bdd7780c94",
+  "size": 4635308
 }
