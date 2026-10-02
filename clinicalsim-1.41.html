@@ -1674,6 +1674,11 @@ body.cx-mobile .cx-nav button .cx-i{width:20px;height:20px}
 #cxMusBtn.cx-off{opacity:.75}
 #cxMusBtn.cx-off .cx-i{opacity:.55}
 
+/* the big screen keeps a real power button: bigger, easy to find, works the controls' monitor */
+html.cs-mirror .screen .monpwr,html.cs-mirror .screen.iv .monpwr{width:calc(30px*var(--ms,1));height:calc(30px*var(--ms,1));font-size:calc(15px*var(--ms,1));opacity:.85;top:4px;bottom:auto;right:6px;z-index:40}
+html.cs-mirror .screen .monpwr .led{width:calc(6px*var(--ms,1));height:calc(6px*var(--ms,1))}
+html.cs-mirror .screen.off .monpwr{opacity:1;top:50%;right:50%;transform:translate(50%,-50%);width:calc(64px*var(--ms,1));height:calc(64px*var(--ms,1));font-size:calc(30px*var(--ms,1))}
+
 
 /* ================= phone build =================
    No waveform monitor: the engine still runs its (hidden) monitor so the pulse
@@ -24372,6 +24377,17 @@ if(MIRROR&&typeof document!=="undefined"&&typeof Element!=="undefined") (functio
     if(c==="silence"||c==="pause") send(c);
     else if(c==="nbp"){ send("nbp"); e.stopPropagation(); e.preventDefault() }
   },true);
+  let pwrHold=0;
+  document.addEventListener("click",function(e){
+    const p=e.target&&e.target.closest&&e.target.closest("#monPwr"); if(!p) return;
+    e.stopPropagation(); e.preventDefault();
+    if(S.monBooting||S.monStopping) return;
+    const want=!!S.monOff;
+    send(want?"power:on":"power:off");
+    /* both screens run the same start-up; don't let a state packet from mid-way flip it back */
+    pwrHold=Date.now()+((typeof MONPWR!=="undefined"?(want?MONPWR.boot:MONPWR.fadeOff):4)*1000)+2500;
+    try{ monPowerPress(want) }catch(err){}
+  },true);
 
   let off=null, last=0, failN=0, okOnce=false, busy=false;
   const apply=function(j){
@@ -24381,7 +24397,7 @@ if(MIRROR&&typeof document!=="undefined"&&typeof Element!=="undefined") (functio
     const d=(j.simT||0)-S.sim; off=off==null?d:off+(d-off)*0.2;
     if(R.rhythm&&R.rhythm!==S.rhythm){ try{ setRhythm(R.rhythm) }catch(e){ S.rhythm=R.rhythm } }
     if(!!R.standby!==!!S.standby){ try{ setStandby(!!R.standby) }catch(e){} }
-    if(!!R.monOff!==!!S.monOff){ try{ monPowerSet(!R.monOff) }catch(e){ S.monOff=!!R.monOff } }
+    if(!!R.monOff!==!!S.monOff&&Date.now()>pwrHold&&!S.monBooting&&!S.monStopping){ try{ monPowerSet(!R.monOff) }catch(e){ S.monOff=!!R.monOff } }
     if(!!R.frozen!==!!S.frozen){ try{ setPaused(!!R.frozen) }catch(e){} }
     for(const k in R){
       if(k==="rhythm"||k==="standby"||k==="monOff"||k==="frozen"||CONN_LOCAL[k]) continue;
@@ -24437,7 +24453,8 @@ function connFeed(){
   try{ A.connState(JSON.stringify(connPack())) }catch(e){}
   let cmds=[]; try{ cmds=JSON.parse(A.connCmds()||"[]") }catch(e){}
   cmds.forEach(function(c){
-    try{ if(c==="silence") ivSilence(); else if(c==="pause") ivPause(); else if(c==="nbp") nbpStart() }catch(e){}
+    try{ if(c==="silence") ivSilence(); else if(c==="pause") ivPause(); else if(c==="nbp") nbpStart();
+      else if(c==="power:on"||c==="power:off") monPowerPress(c==="power:on") }catch(e){}
   });
   let mute=CONN.mute; try{ const m=localStorage.getItem("cs_conn_mute"); if(m!=null) mute=m==="1" }catch(e){}
   const watching=!!(info.viewer||info.tv);
