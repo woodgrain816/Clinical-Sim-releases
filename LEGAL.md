@@ -1,6 +1,6 @@
 # Clinical Sim - Legal notice, privacy and disclaimer
 
-**Please read this. Clinical Sim is a simulation for education and training only.**
+**Please read this. Clinical Sim is a simulation, made for interest and general learning. It is not a medical course, a training program or a qualification.**
 
 ## 1. Not medical advice, not for real patients
 Nothing in Clinical Sim is medical advice, a diagnosis, or a treatment recommendation. Do not use it to make decisions about a real person's health - yours or anyone else's. Doses, drugs, protocols and outcomes are simplified and may be wrong, out of date, or different from your hospital's policies. Always follow current clinical guidelines, your institution's protocols, a licensed clinician and the drug's official prescribing information.

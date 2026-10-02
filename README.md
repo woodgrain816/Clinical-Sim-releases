@@ -8,7 +8,7 @@
 
 A realistic patient simulator: a Philips IntelliVue MX800-style bedside monitor, real drugs at real doses, patients who arrive the way real patients do, and a training course with a license at the end.
 
-**For education and training only — not medical advice, not a medical device, and not for use with real patients.** Read the full **[Legal notice, privacy and disclaimer](LEGAL.md)** before using it. In an emergency call 911.
+**A simulation for interest and general learning — not a medical course or qualification, not medical advice, not a medical device, and not for use with real patients.** Read the full **[Legal notice, privacy and disclaimer](LEGAL.md)** before using it. In an emergency call 911.
 
 ## Install (Android)
 Download **[ClinicalSim.apk](ClinicalSim.apk)** and open it on your phone (allow installs from your browser if asked).

@@ -1,18 +1,25 @@
 {
-  "version": "1.27",
+  "version": "1.28",
   "minNative": 1,
   "notes": [
-    "New: a tour for first-time users - where everything is, what it does, the modes, Training, and how to email the developer. Skip it and it shows you where to find it later (Help & learning → Tour)",
-    "New: a legal notice on first launch (education only, not medical advice, not a medical device, privacy). Read it any time in Settings → Legal"
+    "The legal notice now describes Clinical Sim as a simulation for interest and general learning - not a medical course, training program or qualification"
   ],
   "changelog": [
+    {
+      "v": "1.28",
+      "date": "2026-10-02",
+      "title": "Legal notice wording",
+      "notes": [
+        "The legal notice now describes Clinical Sim as a simulation for interest and general learning - not a medical course, training program or qualification"
+      ]
+    },
     {
       "v": "1.27",
       "date": "2026-10-02",
       "title": "Welcome tour and legal notice",
       "notes": [
         "New: a tour for first-time users - where everything is, what it does, the modes, Training, and how to email the developer. Skip it and it shows you where to find it later (Help & learning → Tour)",
-        "New: a legal notice on first launch (education only, not medical advice, not a medical device, privacy). Read it any time in Settings → Legal"
+        "New: a legal notice on first launch (not medical advice, not a medical device, privacy). Read it any time in Settings → Legal"
       ]
     },
     {
@@ -352,7 +359,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.27.html",
-  "sha256": "30275f0eef176d033c871d5f6d0c78b9760574ad6bec8167fcf89120196a068b",
-  "size": 4453769
+  "page": "clinicalsim-1.28.html",
+  "sha256": "cdefeeb51d1fc65f0665b2f85e38fb418668f08c49efb04695dd2c1c18cdb671",
+  "size": 4454056
 }
