@@ -1,19 +1,30 @@
 {
-  "version": "1.42",
+  "version": "1.43",
   "minNative": 1,
-  "title": "Fixes from the first RN test",
+  "title": "One search for everything, and Guidance you can switch on",
   "major": false,
   "notes": [
-    "Call a specialist: neurology, cardiology, pulmonology, ICU, GI, surgery, nephrology, ID, endocrinology, poison control, hematology, OB/GYN and psychiatry - from the Team button or the top of Orders. Ask them to come and see the patient (neurology does a full neuro exam), what test or treatment they'd want, whether the patient needs the ICU, or type a question in your own words",
-    "Telling the patient something (the diagnosis, that they're staying overnight, what you're about to do) now gets a reaction instead of being mistaken for a question",
-    "A clear banner when the patient has left: you're done - start the next patient, or find out straight away how they did",
-    "New patient asks first if someone is still in your care instead of replacing them",
-    "CPR: the big screen now shows the compressions on the trace (no more flat line with a heart rate of 130); holding the space bar no longer counts as dozens of compressions; the space bar works during a code even if a text box still had the cursor",
-    "End-tidal CO2 in cardiac arrest: only reads once someone is ventilating (bag-valve-mask or a tube), and falls to near zero within seconds when compressions stop",
-    "PC app: the monitor window keeps running at full speed when it is covered or minimized (the chart stopped updating, drugs seemed not to go in, CPR timing was off)",
-    "Pause Alarms and Silence answer instantly on the big screen"
+    "Search everything at the top: oxygen, suction, morphine, blood cultures, a pillow, examine the chest - type it and Do it, straight from the results. (A search bug that dropped every letter 's' is fixed - that is why suction could not be found.)",
+    "Guidance: On / Off switch next to the search. On, it coaches like a preceptor - what to check, what to do when they seize or the heart rate is 160, urgent prompts across the top - and says when a move was a good call. It is on by default at every level",
+    "Suction the airway (Yankauer) - in Procedures, the crash cart and the search; suctioning an unprotected airway prevents aspiration when they vomit",
+    "Neuro check: GCS, pupils, strength and speech, as a nurse would do it",
+    "Talking to the patient: nothing is 'taken as' a different question any more. Tell them no food or drink and they react to that; say yes and they thank you; talk nonsense and they ask if you're out of your mind - and keep it up and they demand a different nurse",
+    "With a local AI model installed, the patient is told to react to exactly what was said - including nonsense or rudeness"
   ],
   "changelog": [
+    {
+      "v": "1.43",
+      "date": "2026-10-02",
+      "title": "One search for everything, and Guidance you can switch on",
+      "notes": [
+        "Search everything at the top: oxygen, suction, morphine, blood cultures, a pillow, examine the chest - type it and Do it, straight from the results. (A search bug that dropped every letter 's' is fixed - that is why suction could not be found.)",
+        "Guidance: On / Off switch next to the search. On, it coaches like a preceptor - what to check, what to do when they seize or the heart rate is 160, urgent prompts across the top - and says when a move was a good call. It is on by default at every level",
+        "Suction the airway (Yankauer) - in Procedures, the crash cart and the search; suctioning an unprotected airway prevents aspiration when they vomit",
+        "Neuro check: GCS, pupils, strength and speech, as a nurse would do it",
+        "Talking to the patient: nothing is 'taken as' a different question any more. Tell them no food or drink and they react to that; say yes and they thank you; talk nonsense and they ask if you're out of your mind - and keep it up and they demand a different nurse",
+        "With a local AI model installed, the patient is told to react to exactly what was said - including nonsense or rudeness"
+      ]
+    },
     {
       "v": "1.42",
       "date": "2026-10-02",
@@ -541,7 +552,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.42.html",
-  "sha256": "00b99015309a4892c28d3cce48e3806d4d04933bc8c02dc7f4013377ad52a3af",
-  "size": 4660905
+  "page": "clinicalsim-1.43.html",
+  "sha256": "a249fdff1da53cddd833a151dff0c98a27baed8dbe9a30f7fe60c8e985245e63",
+  "size": 4684703
 }
