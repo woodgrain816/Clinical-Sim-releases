@@ -1,11 +1,20 @@
 {
-  "version": "1.26",
+  "version": "1.27",
   "minNative": 1,
   "notes": [
-    "Fixed: V1.25 made Android warn that the app tries to bypass its security protections - the part that opened other apps is removed",
-    "Email the developer is now in Menu → Help & learning: write what happened, tap Copy message, and paste it into an email to ClinicalSimSupport@Gmail.com"
+    "New: a tour for first-time users - where everything is, what it does, the modes, Training, and how to email the developer. Skip it and it shows you where to find it later (Help & learning → Tour)",
+    "New: a legal notice on first launch (education only, not medical advice, not a medical device, privacy). Read it any time in Settings → Legal"
   ],
   "changelog": [
+    {
+      "v": "1.27",
+      "date": "2026-10-02",
+      "title": "Welcome tour and legal notice",
+      "notes": [
+        "New: a tour for first-time users - where everything is, what it does, the modes, Training, and how to email the developer. Skip it and it shows you where to find it later (Help & learning → Tour)",
+        "New: a legal notice on first launch (education only, not medical advice, not a medical device, privacy). Read it any time in Settings → Legal"
+      ]
+    },
     {
       "v": "1.26",
       "date": "2026-10-02",
@@ -343,7 +352,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.26.html",
-  "sha256": "16d37b2ce1318c512fb1f4d7a72662ada2b4b689b544853a5f7305a61b78f157",
-  "size": 4429452
+  "page": "clinicalsim-1.27.html",
+  "sha256": "30275f0eef176d033c871d5f6d0c78b9760574ad6bec8167fcf89120196a068b",
+  "size": 4453769
 }
