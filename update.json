@@ -1,12 +1,24 @@
 {
-  "version": "1.18",
+  "version": "1.19",
   "minNative": 1,
   "notes": [
-    "Options → Phone display → Simple vitals bar: one slim row (HR, SpO₂, NBP, RR, etCO₂, Temp) pinned to the top while you scroll",
-    "Tap HR, SpO₂, RR or etCO₂ to open its live trace under the bar - ECG, pleth, respiration or capnogram - to check the rhythm or spot a missing wave. Tap again to close",
-    "A number flashes red while its alarm is sounding"
+    "New phone layout: a short header (New patient, Find, Emergency, Menu) and a tab bar at the bottom - Chart, Talk, Assess, Meds, Orders, More. Everything else is in Menu, grouped: Patient, Monitor, Help & learning, Settings",
+    "New: Find anything (the magnifying glass, or Ctrl+K on a PC) - type a drug, test, procedure or setting (\"foley\", \"cbc\", \"tylenol\", \"chest x-ray\") and it takes you there and highlights it",
+    "A calmer clinical look: navy and teal, medical line icons (stethoscope, syringe, pill...) instead of emoji; Beginner no longer adds cartoon faces to what the patient says",
+    "Music keeps playing properly during a case: it no longer fades out for every yellow alarm - only dips a little for red ones, and Options → Music → Lower for red alarms turns even that off"
   ],
   "changelog": [
+    {
+      "v": "1.19",
+      "date": "2026-10-02",
+      "title": "A clearer, clinical layout",
+      "notes": [
+        "New phone layout: a short header (New patient, Find, Emergency, Menu) and a tab bar at the bottom - Chart, Talk, Assess, Meds, Orders, More. Everything else is in Menu, grouped: Patient, Monitor, Help & learning, Settings",
+        "New: Find anything (the magnifying glass, or Ctrl+K on a PC) - type a drug, test, procedure or setting (\"foley\", \"cbc\", \"tylenol\", \"chest x-ray\") and it takes you there and highlights it",
+        "A calmer clinical look: navy and teal, medical line icons (stethoscope, syringe, pill...) instead of emoji; Beginner no longer adds cartoon faces to what the patient says",
+        "Music keeps playing properly during a case: it no longer fades out for every yellow alarm - only dips a little for red ones, and Options → Music → Lower for red alarms turns even that off"
+      ]
+    },
     {
       "v": "1.18",
       "date": "2026-10-01",
@@ -267,7 +279,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.18.html",
-  "sha256": "afca157e3d41bc9d0ad0f6c047b4be3850fb3f6f8d2eacd55d1ea70d943b5aa5",
-  "size": 4382039
+  "page": "clinicalsim-1.19.html",
+  "sha256": "8670088206d9abe94b4ecab2b6564f07951f371dcded9b4996ecedcaa9252d28",
+  "size": 4414104
 }
