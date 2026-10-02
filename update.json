@@ -1,18 +1,31 @@
 {
-  "version": "1.34",
+  "version": "1.35",
   "minNative": 1,
-  "title": "More realistic medicine",
-  "major": false,
+  "title": "Never lose a case - and five new songs",
+  "major": true,
   "notes": [
-    "Allergies cross-react like they really do: a penicillin allergy now covers amoxicillin and Augmentin, cephalosporins cover cefepime, sulfa means Bactrim (not furosemide), and a contrast allergy reacts to a CT angiogram too",
-    "Serotonin syndrome now needs two serotonergic drugs (or a real overdose of one) - linezolid alone no longer sets it off",
-    "Oral potassium 40 mEq is a normal dose, so it is no longer flagged as 4x too much (an IV bag of 40 still is)",
-    "Acetaminophen is counted over a rolling 24 hours, so yesterday's doses drop off",
-    "Kidney stones, pancreatitis, burns and other big pains now actually hurt - 8 to 10 out of 10 until you treat them",
-    "Cardiac arrest: VF only ends with a shock. In PEA/asystole the pulse comes back at the pulse check, not in the middle of compressions",
-    "US infection-control wording: N95 respirator, isolation gown and face shield"
+    "Your case saves itself every few seconds and the moment you leave the app. Close it by accident and next time, right after the intro, it asks: Continue your case? - showing the patient file (name, age, MRN, what brought them in)",
+    "New Cases page (Menu - Patient - Cases): every saved patient as a patient file, with Continue, Delete and Save this patient now",
+    "Sign in with Google is now easy to find (top of the Menu) and has a proper account page. Signed in, your current case is kept in your account too, so a new phone or a reinstall loses nothing",
+    "Five new soundtracks with a whole band - guitars, brass, choir, taiko, a real drum kit, synth basses, organ: Unknown Toxin (heavy mystery), Trauma Bay (fast drum and bass), Good News (funk), Lab Results (electronic), Rapid Response (epic orchestral). 12 in all",
+    "The intro always plays Vital Signs; after it, the soundtrack you picked plays, and it is remembered",
+    "The tour now shows Cases, your account and where to change the music"
   ],
   "changelog": [
+    {
+      "v": "1.35",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Never lose a case - and five new songs",
+      "notes": [
+        "Your case saves itself every few seconds and the moment you leave the app. Close it by accident and next time, right after the intro, it asks: Continue your case? - showing the patient file (name, age, MRN, what brought them in)",
+        "New Cases page (Menu - Patient - Cases): every saved patient as a patient file, with Continue, Delete and Save this patient now",
+        "Sign in with Google is now easy to find (top of the Menu) and has a proper account page. Signed in, your current case is kept in your account too, so a new phone or a reinstall loses nothing",
+        "Five new soundtracks with a whole band - guitars, brass, choir, taiko, a real drum kit, synth basses, organ: Unknown Toxin (heavy mystery), Trauma Bay (fast drum and bass), Good News (funk), Lab Results (electronic), Rapid Response (epic orchestral). 12 in all",
+        "The intro always plays Vital Signs; after it, the soundtrack you picked plays, and it is remembered",
+        "The tour now shows Cases, your account and where to change the music"
+      ]
+    },
     {
       "v": "1.34",
       "date": "2026-10-02",
@@ -433,7 +446,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.34.html",
-  "sha256": "e00c0a16e72143bb2344eb36ca35fecaad271b4cd7489ae6a6fd524632814cfc",
-  "size": 4489816
+  "page": "clinicalsim-1.35.html",
+  "sha256": "fa11677bdfa524734440f91cf733f428de2f6552be8c9ae87737a70cc38f14e7",
+  "size": 4545021
 }
