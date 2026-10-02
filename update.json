@@ -1,17 +1,22 @@
 {
-  "version": "1.40",
+  "version": "1.41",
   "minNative": 1,
-  "title": "Search by meaning, an easier phone layout, warmed fluids",
-  "major": true,
+  "title": "Laptop as the controls, and a music switch",
+  "major": false,
   "notes": [
-    "Search by what you mean: type warm, warmed, heated or cold and you get EVERYTHING that warms the patient - rewarming, warmed saline and LR, blankets, the room, a heat pack, a warm drink - across every tab. Works for airway, breathing, pain, bleeding, pee, comfort, falls, fever and more, in Find and in the new search boxes",
-    "Search boxes at the top of Procedures, Care and Bedside, with matches from the other tabs listed right underneath",
-    "Phone: opening a tab folds the monitor into the slim vitals bar so the tab gets the screen - no more scrolling past the monitor. Tap a vital for its live trace. Back on Chart, the full monitor returns",
-    "Care and Bedside are on the bottom bar now",
-    "Warmed normal saline and warmed lactated Ringer's (fluid warmer, 104-107.6 F). Active rewarming now says what it is (forced-air blanket + warmed IV fluids). In hypothermia, warmed fluids count and room-temperature ones do not",
-    "Big screen: an Aa button on the monitor to make it bigger or smaller (remembered), and the NBP block no longer overlaps"
+    "Big screen from a computer: in the Clinical Sim PC app, Menu or Monitor -> Big screen -> Start a session. The laptop keeps the chart and a tablet joins with the session number and shows the monitor full screen",
+    "A Music: On / Off button next to Find - one tap mutes the soundtrack, the monitor still beeps"
   ],
   "changelog": [
+    {
+      "v": "1.41",
+      "date": "2026-10-02",
+      "title": "Laptop as the controls, and a music switch",
+      "notes": [
+        "Big screen from a computer: in the Clinical Sim PC app, Menu or Monitor -> Big screen -> Start a session. The laptop keeps the chart and a tablet joins with the session number and shows the monitor full screen",
+        "A Music: On / Off button next to Find - one tap mutes the soundtrack, the monitor still beeps"
+      ]
+    },
     {
       "v": "1.40",
       "date": "2026-10-03",
@@ -512,7 +517,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.40.html",
-  "sha256": "6c15125769fcab4b29fc25a6d6083ddc349c42a699523ddc814561eca1c57fa6",
-  "size": 4626084
+  "page": "clinicalsim-1.41.html",
+  "sha256": "576b37d8e2462152547fd329475e1f971cca1997cfba0dfb9d4fa56d86aad499",
+  "size": 4629625
 }
