@@ -1,17 +1,23 @@
 {
-  "version": "1.32",
+  "version": "1.33",
   "minNative": 1,
-  "title": "Update notifications, training times, no overlaps",
+  "title": "A new score, and feedback that sends itself",
   "major": true,
   "notes": [
-    "New: update notifications - choose All updates, Major updates only, or None (asked after the tour; change it in Settings → Update notifications). It never notifies you about anything else",
-    "New: time estimates in Training - the whole course, each module, each lesson, each practice topic and quiz, and how much you have left",
-    "First launch now goes: legal notice → tour → notifications",
-    "Fixed: the full monitor on phones was squashed into a narrow screen so labels, numbers and keys ran into each other - it is now drawn like the real monitor and scaled to fit",
-    "Fixed: small overlaps on the big-numbers screen (patient name and clock, Temp limits) and the power button covering a bed tab",
-    "Fixed: \"N weeks pregnant\" in a patient history was never recognised"
+    "New music: six cues re-scored like a medical drama - grand piano, strings, cellos, timpani, a ticking clock and the heartbeat. Diagnosis (mystery), Code Blue (tension), Recovery (emotional), Rounds (documentary), Night Shift (calm), Rainfall (ambient). Vital Signs is unchanged",
+    "Email the developer now sends from inside the app - write it, press Send, done. Add your email if you want a reply. (Copy instead is still there if you are offline)"
   ],
   "changelog": [
+    {
+      "v": "1.33",
+      "date": "2026-10-02",
+      "major": true,
+      "title": "A new score, and feedback that sends itself",
+      "notes": [
+        "New music: six cues re-scored like a medical drama - grand piano, strings, cellos, timpani, a ticking clock and the heartbeat. Diagnosis (mystery), Code Blue (tension), Recovery (emotional), Rounds (documentary), Night Shift (calm), Rainfall (ambient). Vital Signs is unchanged",
+        "Email the developer now sends from inside the app - write it, press Send, done. Add your email if you want a reply. (Copy instead is still there if you are offline)"
+      ]
+    },
     {
       "v": "1.32",
       "date": "2026-10-02",
@@ -407,7 +413,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.32.html",
-  "sha256": "03f0539940c7ba8231d5b80d836cde03a870142cad061d06faea871d0bf5c5c3",
-  "size": 4482279
+  "page": "clinicalsim-1.33.html",
+  "sha256": "4ac58b2da1c631dfd30ab17cdb16160c76636baefad9c00997f41028997991c5",
+  "size": 4487776
 }

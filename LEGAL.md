@@ -31,7 +31,7 @@ Clinical Sim does not sell your data and does not show ads. What it keeps:
 - **On your device:** your settings, saved patients and training progress.
 - **If you sign in with Google (optional):** your Google account ID, email address and display name, and your training progress, stored in Google Firebase so it can follow you between devices. Only you can read your own record. Signing out stops syncing.
 - **Updates (phone):** the app downloads new versions from GitHub; GitHub sees an ordinary web request.
-- **Feedback:** only what you choose to email, including the app version and device details if you leave that box ticked.
+- **Feedback (Email the developer):** only what you write, your email address if you choose to give one, and the app version and device if you leave that box ticked. It is sent through FormSubmit (formsubmit.co), an email-forwarding service, to ClinicalSimSupport@Gmail.com.
 - **The patient voice on PC** (optional) runs on a language model on your own computer; nothing you type to it leaves the machine.
 
 Do not type real patient information (names, dates of birth, record numbers or anything that could identify a real person) into Clinical Sim. To have your synced data deleted, email the address below.
