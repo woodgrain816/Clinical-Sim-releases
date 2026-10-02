@@ -1,12 +1,20 @@
 {
-  "version": "1.23",
+  "version": "1.24",
   "minNative": 1,
   "notes": [
-    "The Menu and More panels have a Done button pinned at the top, always visible while you scroll",
-    "The phone Back button closes the Menu, More and Find first",
-    "Tapping the dark area above a panel still closes it too"
+    "Fixed: Check for updates sometimes failed with HTTP 404 right after a new version came out - older versions now stay on the server for a while, so it always finds one",
+    "If it still cannot reach the update, it says why instead of blaming the internet"
   ],
   "changelog": [
+    {
+      "v": "1.24",
+      "date": "2026-10-02",
+      "title": "Updates that do not fail",
+      "notes": [
+        "Fixed: Check for updates sometimes failed with HTTP 404 right after a new version came out - older versions now stay on the server for a while, so it always finds one",
+        "If it still cannot reach the update, it says why instead of blaming the internet"
+      ]
+    },
     {
       "v": "1.23",
       "date": "2026-10-02",
@@ -316,7 +324,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.23.html",
-  "sha256": "c420810ff9712fecacdc2fcb7db0f36b91eea71fac75048ad5526c228b617f21",
-  "size": 4420000
+  "page": "clinicalsim-1.24.html",
+  "sha256": "b573c11f533adbc281f43175911a3d884d6b87b75e5b016f79ad9fbdb83b8a7e",
+  "size": 4420501
 }
