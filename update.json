@@ -1,16 +1,34 @@
 {
-  "version": "1.41",
+  "version": "1.42",
   "minNative": 1,
-  "title": "Laptop as the controls, and a music switch",
+  "title": "Fixes from the first RN test",
   "major": false,
   "notes": [
-    "Big screen from a computer: in the Clinical Sim PC app, Menu or Monitor -> Big screen -> Start a session. The laptop keeps the chart and a tablet joins with the session number and shows the monitor full screen",
-    "A Music: On / Off button next to Find - one tap mutes the soundtrack, the monitor still beeps",
-    "IV access in one tap: a bar at the top of Meds and Procedures says whether the patient has a line, with Place IV (and IO) right there - it turns green once the IV is in",
-    "IM injections for more drugs: ondansetron, metoclopramide, dexamethasone, vitamin K, phenobarbital, magnesium, atropine, diazepam, folic acid, pyridoxine, leucovorin, methotrexate, clindamycin, cefepime, deferoxamine, physostigmine, hydralazine and furosemide (pick IM in the route box next to GIVE)",
-    "Big screen: the power button works from the tablet or TV and turns the monitor on and off for real, with a proper power icon"
+    "Call a specialist: neurology, cardiology, pulmonology, ICU, GI, surgery, nephrology, ID, endocrinology, poison control, hematology, OB/GYN and psychiatry - from the Team button or the top of Orders. Ask them to come and see the patient (neurology does a full neuro exam), what test or treatment they'd want, whether the patient needs the ICU, or type a question in your own words",
+    "Telling the patient something (the diagnosis, that they're staying overnight, what you're about to do) now gets a reaction instead of being mistaken for a question",
+    "A clear banner when the patient has left: you're done - start the next patient, or find out straight away how they did",
+    "New patient asks first if someone is still in your care instead of replacing them",
+    "CPR: the big screen now shows the compressions on the trace (no more flat line with a heart rate of 130); holding the space bar no longer counts as dozens of compressions; the space bar works during a code even if a text box still had the cursor",
+    "End-tidal CO2 in cardiac arrest: only reads once someone is ventilating (bag-valve-mask or a tube), and falls to near zero within seconds when compressions stop",
+    "PC app: the monitor window keeps running at full speed when it is covered or minimized (the chart stopped updating, drugs seemed not to go in, CPR timing was off)",
+    "Pause Alarms and Silence answer instantly on the big screen"
   ],
   "changelog": [
+    {
+      "v": "1.42",
+      "date": "2026-10-02",
+      "title": "Fixes from the first RN test",
+      "notes": [
+        "Call a specialist: neurology, cardiology, pulmonology, ICU, GI, surgery, nephrology, ID, endocrinology, poison control, hematology, OB/GYN and psychiatry - from the Team button or the top of Orders. Ask them to come and see the patient (neurology does a full neuro exam), what test or treatment they'd want, whether the patient needs the ICU, or type a question in your own words",
+        "Telling the patient something (the diagnosis, that they're staying overnight, what you're about to do) now gets a reaction instead of being mistaken for a question",
+        "A clear banner when the patient has left: you're done - start the next patient, or find out straight away how they did",
+        "New patient asks first if someone is still in your care instead of replacing them",
+        "CPR: the big screen now shows the compressions on the trace (no more flat line with a heart rate of 130); holding the space bar no longer counts as dozens of compressions; the space bar works during a code even if a text box still had the cursor",
+        "End-tidal CO2 in cardiac arrest: only reads once someone is ventilating (bag-valve-mask or a tube), and falls to near zero within seconds when compressions stop",
+        "PC app: the monitor window keeps running at full speed when it is covered or minimized (the chart stopped updating, drugs seemed not to go in, CPR timing was off)",
+        "Pause Alarms and Silence answer instantly on the big screen"
+      ]
+    },
     {
       "v": "1.41",
       "date": "2026-10-02",
@@ -523,7 +541,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.41.html",
-  "sha256": "01c8c74bf7195dd6372e818035fa1415249b5d52416f5adfb72612bdd7780c94",
-  "size": 4635308
+  "page": "clinicalsim-1.42.html",
+  "sha256": "00b99015309a4892c28d3cce48e3806d4d04933bc8c02dc7f4013377ad52a3af",
+  "size": 4660905
 }
