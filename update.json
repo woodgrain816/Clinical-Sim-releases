@@ -1,12 +1,20 @@
 {
-  "version": "1.25",
+  "version": "1.26",
   "minNative": 1,
   "notes": [
-    "The app checks for updates every time it opens, and asks: Install update, or Not now",
-    "New: Send feedback / report a bug (Menu → Settings, or Options on PC) - writes an email to ClinicalSimSupport@Gmail.com for you, with the app version and device so bugs can be found. Clinical Sim is in beta: please report anything that breaks",
-    "Tap a tab you are already on and it closes (phone: back to the chart; PC: the panel folds away)"
+    "Fixed: V1.25 made Android warn that the app tries to bypass its security protections - the part that opened other apps is removed",
+    "Email the developer is now in Menu → Help & learning: write what happened, tap Copy message, and paste it into an email to ClinicalSimSupport@Gmail.com"
   ],
   "changelog": [
+    {
+      "v": "1.26",
+      "date": "2026-10-02",
+      "title": "No more install warning",
+      "notes": [
+        "Fixed: V1.25 made Android warn that the app tries to bypass its security protections - the part that opened other apps is removed",
+        "Email the developer is now in Menu → Help & learning: write what happened, tap Copy message, and paste it into an email to ClinicalSimSupport@Gmail.com"
+      ]
+    },
     {
       "v": "1.25",
       "date": "2026-10-02",
@@ -335,7 +343,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.25.html",
-  "sha256": "88fc88594b369620e3375d45eede6143ad8aa6c44f49245a57b974866fc19995",
-  "size": 4427774
+  "page": "clinicalsim-1.26.html",
+  "sha256": "16d37b2ce1318c512fb1f4d7a72662ada2b4b689b544853a5f7305a61b78f157",
+  "size": 4429452
 }
