@@ -4,7 +4,7 @@
 > **PLEASE report bugs**, anything medically wrong, and anything confusing — I can't find them all myself, and every report gets read and fixed.
 >
 > **Email: [ClinicalSimSupport@Gmail.com](mailto:ClinicalSimSupport@Gmail.com)**
-> or in the app: **Menu → Settings → Send feedback / report a bug** (it fills in your app version and device for you).
+> or in the app: **Menu → Help & learning → Email the developer** (it writes the message, with your app version and device, for you).
 
 A realistic patient simulator: a Philips IntelliVue MX800-style bedside monitor, real drugs at real doses, patients who arrive the way real patients do, and a training course with a license at the end.
 
