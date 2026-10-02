@@ -24290,12 +24290,15 @@ if(MIRROR&&typeof document!=="undefined"&&typeof Element!=="undefined") (functio
     try{ Object.defineProperty(window,"devicePixelRatio",{configurable:true,get:function(){ return real*K }}) }catch(e){}
     setTimeout(function(){ window.dispatchEvent(new Event("resize")) },50);
   }else if(window===window.top&&!CONN_HASH("inner")&&innerWidth>CONN_DESIGN()*1.05){
-    const k=innerWidth/CONN_DESIGN();
+    /* scale by whichever runs out first: a wide, short window must not squash the
+       monitor into 1440 x 600 where the numbers pile up on each other */
+    const kOf=function(){ return Math.max(1,Math.min(innerWidth/CONN_DESIGN(),innerHeight/(CONN_DESIGN()*0.5625))) };
+    const k=kOf();
     const f=document.createElement("iframe");
     f.src=location.pathname+location.search+location.hash+"&inner=1&k="+k.toFixed(4)+(pin&&!CONN_HASH("pin")?"&pin="+encodeURIComponent(pin):"");
     f.setAttribute("allow","autoplay");
     f.style.cssText="position:fixed;left:0;top:0;border:0;background:#000;transform-origin:0 0;z-index:2147483000";
-    const fit=function(){ const kk=Math.max(1,innerWidth/CONN_DESIGN()); f.style.width=(innerWidth/kk)+"px"; f.style.height=(innerHeight/kk)+"px"; f.style.transform="scale("+kk+")" };
+    const fit=function(){ const kk=kOf(); f.style.width=(innerWidth/kk)+"px"; f.style.height=(innerHeight/kk)+"px"; f.style.transform="scale("+kk+")" };
     fit(); window.addEventListener("resize",fit);
     document.body.appendChild(f);
     const pg=document.getElementById("page"); if(pg) pg.style.visibility="hidden";
@@ -24307,10 +24310,12 @@ if(MIRROR&&typeof document!=="undefined"&&typeof Element!=="undefined") (functio
   /* the Aa size control: everything on the monitor grows or shrinks together; remembered on this screen */
   (function(){
     const root=document.documentElement;
-    const def=Math.max(innerWidth,innerHeight)<=1600?1.35:1.0;
-    let ms=def; try{ const v=parseFloat(localStorage.getItem("cs_mirror_size")); if(v>=0.7&&v<=1.7) ms=v }catch(e){}
+    /* a tablet gets bigger type; a TV is already scaled up whole, so it starts at 1 */
+    const scaled=!!CONN_HASH("k"), KEY=scaled?"cs_mirror_size_tv":"cs_mirror_size";
+    const def=(!scaled&&Math.max(innerWidth,innerHeight)<=1600)?1.35:1.0;
+    let ms=def; try{ const v=parseFloat(localStorage.getItem(KEY)); if(v>=0.7&&v<=1.7) ms=v }catch(e){}
     const apply=function(v){ ms=Math.max(0.7,Math.min(1.7,v)); root.style.setProperty("--ms",ms.toFixed(2)); root.style.setProperty("--msn",(1+(ms-1)*0.45).toFixed(3));
-      try{ localStorage.setItem("cs_mirror_size",ms.toFixed(2)) }catch(e){} paint(); setTimeout(function(){ window.dispatchEvent(new Event("resize")) },60) };
+      try{ localStorage.setItem(KEY,ms.toFixed(2)) }catch(e){} paint(); setTimeout(function(){ window.dispatchEvent(new Event("resize")) },60) };
     const btn=document.createElement("button"); btn.type="button"; btn.className="cmr-size"; btn.textContent="Aa"; btn.title="Make the monitor bigger or smaller";
     const pan=document.createElement("div"); pan.className="cmr-panel";
     const P=[["Small",1.0],["Medium",1.3],["Large",1.5],["Extra large",1.7]];
