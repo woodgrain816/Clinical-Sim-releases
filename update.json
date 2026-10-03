@@ -1,12 +1,27 @@
 {
-  "version": "1.56",
+  "version": "1.57",
   "minNative": 1,
-  "title": "Jake always knows your name",
+  "title": "Jake actually talks back on phones",
   "major": false,
   "notes": [
-    "Asking Jake 'what's my name?' or 'do you remember me?' is answered from his memory every time — the AI sometimes mixed up whose name was whose and told you his own"
+    "On phones (no AI model), Jake used to answer almost everything with 'Fair.' or 'Ha. Yeah.' — he now understands far more: greetings, his name and yours, how he's doing, his age, hometown, girlfriend, dog, hockey, why he became a doctor, jokes, how you're doing, school and tests, feeling tired, stressed or sad, compliments and insults, thanks and goodbyes",
+    "'I'm Damon' now teaches him your name (not just 'my name is…'), and 'I'm tired' doesn't",
+    "He doesn't repeat the exact same line twice in a row, and when he really doesn't follow he says so and gives you something to talk about",
+    "If you ever mention hurting yourself, he stops and points you to someone you trust or 988"
   ],
   "changelog": [
+    {
+      "v": "1.57",
+      "date": "2026-10-03",
+      "major": false,
+      "title": "Jake actually talks back on phones",
+      "notes": [
+        "On phones (no AI model), Jake used to answer almost everything with 'Fair.' or 'Ha. Yeah.' — he now understands far more: greetings, his name and yours, how he's doing, his age, hometown, girlfriend, dog, hockey, why he became a doctor, jokes, how you're doing, school and tests, feeling tired, stressed or sad, compliments and insults, thanks and goodbyes",
+        "'I'm Damon' now teaches him your name (not just 'my name is…'), and 'I'm tired' doesn't",
+        "He doesn't repeat the exact same line twice in a row, and when he really doesn't follow he says so and gives you something to talk about",
+        "If you ever mention hurting yourself, he stops and points you to someone you trust or 988"
+      ]
+    },
     {
       "v": "1.56",
       "date": "2026-10-03",
@@ -723,7 +738,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.56.html",
-  "sha256": "1c19a0610dbc8bbf61cd4676b80522b40850c9751670320a209cbad6ce2b4818",
-  "size": 4904758
+  "page": "clinicalsim-1.57.html",
+  "sha256": "4d612123b88e44cdb02e5477ddd21b3f2b920ee8e0d163678497f2ae6141cc1d",
+  "size": 4912095
 }
