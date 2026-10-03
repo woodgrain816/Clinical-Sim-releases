@@ -1,15 +1,36 @@
 {
-  "version": "1.46",
+  "version": "1.47",
   "minNative": 1,
-  "title": "Search that speaks nurse, and the nursing actions that were missing",
+  "title": "IV piggybacks, admission questions, and a safer sign-off",
   "major": false,
   "notes": [
-    "Search understands how nurses talk: Foley, BVM / Ambu, tele, restraints, sitter, I&O, Accu-Chek / FSBS, type and screen, CMP, blood gas, lung sounds, manual BP / vitals, code blue, LP, NIHSS, pacer, transfuse - the right thing comes first (no more D-dimer for 'restraints' or Gas-X for 'blood gas')",
-    "New nursing actions (Procedures, top section, and in the search): seizure precautions, time the seizure, 1:1 sitter, telemetry, strict I&O, daily weight, bladder scan, straight cath, NIHSS, pain assessment, CIWA-Ar, incentive spirometer, SCDs, oral care, wound care - each answers from the patient",
-    "New labs: type and screen, CMP, urine culture, sputum culture, procalcitonin, phosphorus, ionized calcium, hemoglobin A1c, beta-hydroxybutyrate",
-    "ERCP, interventional embolization and an implantable defibrillator can now be ordered - the cholangitis, hemoptysis, diverticular bleed and Brugada cases can be finished properly"
+    "IV piggyback: choose IV push or IVPB over 15/30/60/90/120 min next to the route; antibiotics, magnesium, potassium and levetiracetam default to the usual piggyback time, and the level builds while it runs",
+    "Talking: 'what's your pain on a scale of 1 to 10', 'are you a full code', 'do you have a living will', 'when was your last bowel movement' all answered properly (DNR patients say so)",
+    "Signing off asks first ('Discharge home?' with the patient and your diagnosis); pressing a disposition with no diagnosis highlights the box",
+    "Seizures: holding a seizing patient down or restraining them is flagged, with the right teaching",
+    "Hypoglycemia: after D50 they wake up within minutes, as real patients do",
+    "No more impossible blood pressures (a diastolic of 2); oxygen ordered from Meds puts the device on",
+    "Guidance: anaphylaxis (epinephrine 0.5 mg IM) and opioid overdose recognized by how the patient looks; shocks point to the crash cart",
+    "US wording: Leaving AMA, return precautions, call light, IV pole, moisturize; the 'patient has left' banner says where they went (observation, ICU, OR, home)",
+    "Blood cultures and other long tests say 'pending — preliminary results in 24–48 hours'; search no longer lists category headings as actions"
   ],
   "changelog": [
+    {
+      "v": "1.47",
+      "date": "2026-10-02",
+      "title": "IV piggybacks, admission questions, and a safer sign-off",
+      "notes": [
+        "IV piggyback: choose IV push or IVPB over 15/30/60/90/120 min next to the route; antibiotics, magnesium, potassium and levetiracetam default to the usual piggyback time, and the level builds while it runs",
+        "Talking: 'what's your pain on a scale of 1 to 10', 'are you a full code', 'do you have a living will', 'when was your last bowel movement' all answered properly (DNR patients say so)",
+        "Signing off asks first ('Discharge home?' with the patient and your diagnosis); pressing a disposition with no diagnosis highlights the box",
+        "Seizures: holding a seizing patient down or restraining them is flagged, with the right teaching",
+        "Hypoglycemia: after D50 they wake up within minutes, as real patients do",
+        "No more impossible blood pressures (a diastolic of 2); oxygen ordered from Meds puts the device on",
+        "Guidance: anaphylaxis (epinephrine 0.5 mg IM) and opioid overdose recognized by how the patient looks; shocks point to the crash cart",
+        "US wording: Leaving AMA, return precautions, call light, IV pole, moisturize; the 'patient has left' banner says where they went (observation, ICU, OR, home)",
+        "Blood cultures and other long tests say 'pending — preliminary results in 24–48 hours'; search no longer lists category headings as actions"
+      ]
+    },
     {
       "v": "1.46",
       "date": "2026-10-02",
@@ -590,7 +611,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.46.html",
-  "sha256": "d1e08e6471311f0066fd293157807bc77eb9ff2140a2e0924134598f9f480242",
-  "size": 4716454
+  "page": "clinicalsim-1.47.html",
+  "sha256": "d7549426a5172df2461c8b36574416207e3751e9902663179467bc5d9464bff3",
+  "size": 4726814
 }
