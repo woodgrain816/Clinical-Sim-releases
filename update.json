@@ -1,16 +1,31 @@
 {
-  "version": "1.59",
+  "version": "1.60",
   "minNative": 6,
-  "title": "Clinical Sim by D.M — protected",
+  "title": "A real Beginner mode — it explains everything",
   "major": true,
   "notes": [
-    "Clinical Sim is now 'Clinical Sim by D.M' — on the start screen, the welcome, the legal notice (new section 11: Copyright) and the update log. © 2026 D.M. All rights reserved",
-    "The app's code is now protected: minified and scrambled, then encrypted with AES-256 and sealed so any edit is detected",
-    "On phones the code only unlocks inside the genuine app — a copy re-signed or changed by anyone else refuses to run",
-    "On the PC it only unlocks inside ClinicalSim.exe; saved progress and settings carry over untouched",
-    "Phones: this update needs the new app (1.59 APK) — older apps will say an update needs a new APK. Install it once over the old one; nothing is lost"
+    "The difficulty menu now has its own heading, 'Difficulty', so it can't be mistaken for who the patient is: Beginner — explains everything / Student — hints when stuck / New grad — little help / Expert — no help",
+    "Someone opening the app for the first time starts on Beginner",
+    "Beginner now teaches as you go, in plain words, assuming you know nothing: your job and the order to do things in, every vital sign that's off (what it measures, what normal is, why it matters, what to do), every test you order, what every abnormal result means, every drug (what kind, what it does, what to watch), every procedure and oxygen mask, and the cardiac arrest step by step",
+    "The newest explanations show at the top of the Guide box ('What that means'), and every one is kept in the chart",
+    "It never tells you the diagnosis — that's still yours to work out",
+    "Options → Explain everything turns the teaching on or off at any difficulty"
   ],
   "changelog": [
+    {
+      "v": "1.60",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "A real Beginner mode — it explains everything",
+      "notes": [
+        "The difficulty menu now has its own heading, 'Difficulty', so it can't be mistaken for who the patient is: Beginner — explains everything / Student — hints when stuck / New grad — little help / Expert — no help",
+        "Someone opening the app for the first time starts on Beginner",
+        "Beginner now teaches as you go, in plain words, assuming you know nothing: your job and the order to do things in, every vital sign that's off (what it measures, what normal is, why it matters, what to do), every test you order, what every abnormal result means, every drug (what kind, what it does, what to watch), every procedure and oxygen mask, and the cardiac arrest step by step",
+        "The newest explanations show at the top of the Guide box ('What that means'), and every one is kept in the chart",
+        "It never tells you the diagnosis — that's still yours to work out",
+        "Options → Explain everything turns the teaching on or off at any difficulty"
+      ]
+    },
     {
       "v": "1.59",
       "date": "2026-10-03",
@@ -764,7 +779,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.59.html",
-  "sha256": "2a3c7c426ffdeaa1c673a229d037b38926f17c7d7d5e4b84540c92a565ed5dea",
-  "size": 4411380
+  "page": "clinicalsim-1.60.html",
+  "sha256": "fcda92c295c4c9a23840c86c9bc8e89cd1f05ee77d29374eed647ad58d483c1d",
+  "size": 4438356
 }
