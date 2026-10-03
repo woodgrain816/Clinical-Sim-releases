@@ -1,15 +1,27 @@
 {
-  "version": "1.57",
+  "version": "1.58",
   "minNative": 1,
-  "title": "Jake actually talks back on phones",
-  "major": false,
+  "title": "Real AI on your phone",
+  "major": true,
   "notes": [
-    "On phones (no AI model), Jake used to answer almost everything with 'Fair.' or 'Ha. Yeah.' — he now understands far more: greetings, his name and yours, how he's doing, his age, hometown, girlfriend, dog, hockey, why he became a doctor, jokes, how you're doing, school and tests, feeling tired, stressed or sad, compliments and insults, thanks and goodbyes",
-    "'I'm Damon' now teaches him your name (not just 'my name is…'), and 'I'm tired' doesn't",
-    "He doesn't repeat the exact same line twice in a row, and when he really doesn't follow he says so and gives you something to talk about",
-    "If you ever mention hurting yourself, he stops and points you to someone you trust or 988"
+    "Jake (and the patient) can now run on a real AI model right on your phone, the way Google AI Edge Gallery does it: Gemma 4 E2B, Google's newest small model, running on the phone's GPU",
+    "One-time download from Options → AI on this phone (2.6 GB — use Wi-Fi). It can be paused and resumed, and is checked before it's used. After that it works offline, anywhere",
+    "Needs the new app (1.58) — install the new APK once. Phones without the download keep the pre-written Jake",
+    "Delete it any time from the same place to free the 2.6 GB"
   ],
   "changelog": [
+    {
+      "v": "1.58",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Real AI on your phone",
+      "notes": [
+        "Jake (and the patient) can now run on a real AI model right on your phone, the way Google AI Edge Gallery does it: Gemma 4 E2B, Google's newest small model, running on the phone's GPU",
+        "One-time download from Options → AI on this phone (2.6 GB — use Wi-Fi). It can be paused and resumed, and is checked before it's used. After that it works offline, anywhere",
+        "Needs the new app (1.58) — install the new APK once. Phones without the download keep the pre-written Jake",
+        "Delete it any time from the same place to free the 2.6 GB"
+      ]
+    },
     {
       "v": "1.57",
       "date": "2026-10-03",
@@ -738,7 +750,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.57.html",
-  "sha256": "4d612123b88e44cdb02e5477ddd21b3f2b920ee8e0d163678497f2ae6141cc1d",
-  "size": 4912095
+  "page": "clinicalsim-1.58.html",
+  "sha256": "7f508e54e15bb39ec8c6fd57a32e7951d30013583b30daf6a8d8b18527748623",
+  "size": 4920063
 }
