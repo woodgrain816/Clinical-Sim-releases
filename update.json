@@ -1,18 +1,35 @@
 {
-  "version": "1.49",
+  "version": "1.50",
   "minNative": 1,
-  "title": "Feels like an app, alarms that make sense, and one-tap removal",
+  "title": "Your own fellows, and learning from every mistake",
   "major": true,
   "notes": [
-    "No more browser pop-ups ('This page says…'): every question is asked in the app's own dialog; no text highlighting when you tap, no long-press copy menu, no pinch-zoom or bounce",
-    "Alarms need to be real before they sound: heart rate and breathing must stay past the limit for a few seconds, extreme rates for about 4 s; a short HR alarm that flickers back inside its 3-minute timeout shows but stays quiet",
-    "Everything they're on: tap anything to take it off at once (oxygen, lines, drips, nursing measures, tests) with Undo; only airway tubes still ask; drugs already pushed explain they can't be taken back and name the reversal",
-    "An 'On patient' button in the quick bar opens the whole list in one big panel (PC and phone)",
-    "When the patient leaves (home, admitted, the OR), their oxygen, lines and drips come off the chart",
-    "Alarm limits changed on the tablet's big screen now stick (they are sent to the controls)",
-    "Antibiotics: Zosyn, meropenem and cefepime labeled broad-spectrum (search 'broad spectrum', 'abx', 'sepsis'); new: cefazolin (Ancef), ampicillin-sulbactam (Unasyn), levofloxacin (Levaquin)"
+    "You now have two fellows in the room with every patient — Dr. Priya Patel and Dr. Marcus Reed. They're doctors too, and they're the same two people every shift",
+    "When the patient arrests, one starts compressions within seconds, the other gets the pads on, calls the code and asks who's bagging; at two minutes they ask for the rhythm check and swap. Press Space to take over and they step back; stop, and one goes straight back on",
+    "When things slide they speak up and offer the obvious fix — non-rebreather, an IV, a fluid bolus, a 12-lead, seizure meds — one tap to say yes",
+    "Tell them what to do in plain words ('Marcus, get a 12-lead', 'Priya, draw a lactate'). Shocks, code drugs, airways and sending people home stay your call — they pull it up for you",
+    "Ask them anything. With the AI model on the PC they think out loud from the real chart (they don't know the diagnosis either); on phones they answer from the chart",
+    "They remember you: patients, codes, saves, the ones you lost, and each new condition they see. Sometimes one comes back having read up on an old case",
+    "The debrief now has 'How not to do it again': every mistake links to the lesson and a quick test. The same mistake 3 times makes the training required, and it waits for you in the Training Center under 'Lined up for you' until you pass it",
+    "Getting the diagnosis wrong links to the disease-book page for what it really was, plus the lesson and test for that topic"
   ],
   "changelog": [
+    {
+      "v": "1.50",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Your own fellows, and learning from every mistake",
+      "notes": [
+        "You now have two fellows in the room with every patient — Dr. Priya Patel and Dr. Marcus Reed. They're doctors too, and they're the same two people every shift",
+        "When the patient arrests, one starts compressions within seconds, the other gets the pads on, calls the code and asks who's bagging; at two minutes they ask for the rhythm check and swap. Press Space to take over and they step back; stop, and one goes straight back on",
+        "When things slide they speak up and offer the obvious fix — non-rebreather, an IV, a fluid bolus, a 12-lead, seizure meds — one tap to say yes",
+        "Tell them what to do in plain words ('Marcus, get a 12-lead', 'Priya, draw a lactate'). Shocks, code drugs, airways and sending people home stay your call — they pull it up for you",
+        "Ask them anything. With the AI model on the PC they think out loud from the real chart (they don't know the diagnosis either); on phones they answer from the chart",
+        "They remember you: patients, codes, saves, the ones you lost, and each new condition they see. Sometimes one comes back having read up on an old case",
+        "The debrief now has 'How not to do it again': every mistake links to the lesson and a quick test. The same mistake 3 times makes the training required, and it waits for you in the Training Center under 'Lined up for you' until you pass it",
+        "Getting the diagnosis wrong links to the disease-book page for what it really was, plus the lesson and test for that topic"
+      ]
+    },
     {
       "v": "1.49",
       "date": "2026-10-02",
@@ -642,7 +659,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.49.html",
-  "sha256": "336ee027971e1523ae3356ece9b25d4d7754a0a52bb94fb40392d21c694ab23f",
-  "size": 4760717
+  "page": "clinicalsim-1.50.html",
+  "sha256": "aa14f48d0390e14225d7b91f2db75a1fec00929dc94f1caa741226b18bb2a504",
+  "size": 4809333
 }
