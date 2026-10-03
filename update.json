@@ -1,16 +1,25 @@
 {
-  "version": "1.53",
+  "version": "1.54",
   "minNative": 1,
-  "title": "Off shift — hang out with Jake",
-  "major": true,
+  "title": "See Jake's replies right where you talk to him",
+  "major": false,
   "notes": [
-    "New optional mode: Options → Off shift → On. It never touches the medicine — the sim stays exactly as realistic",
-    "Between patients, an Off shift card lets you go do something with Jake: coffee in the break room, tacos from the truck after a shift, breakfast at the diner, his hockey game, walking his dog Lido",
-    "After a code or a death, the roof opens up: he'll talk about the patient if you want, or just stand there with you",
-    "Pick things to say or type anything — with the AI model on the PC he answers in his own voice; he remembers what you talked about and where you went",
-    "New places unlock as you two get to know each other, and he opens up about his life a little faster off shift. Strictly coworkers-who-are-friends — he has a girlfriend, Maya"
+    "Jake's answers now show inside his card, as a little conversation, right under the box you type in — on phones they used to go only to the Chart tab, so it looked like he never replied",
+    "Fixed an empty yellow bar showing above Jake's card during a patient (the Off shift card not hiding)",
+    "Solo mode now hides Jake's card completely"
   ],
   "changelog": [
+    {
+      "v": "1.54",
+      "date": "2026-10-03",
+      "major": false,
+      "title": "See Jake's replies right where you talk to him",
+      "notes": [
+        "Jake's answers now show inside his card, as a little conversation, right under the box you type in — on phones they used to go only to the Chart tab, so it looked like he never replied",
+        "Fixed an empty yellow bar showing above Jake's card during a patient (the Off shift card not hiding)",
+        "Solo mode now hides Jake's card completely"
+      ]
+    },
     {
       "v": "1.53",
       "date": "2026-10-03",
@@ -696,7 +705,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.53.html",
-  "sha256": "4c5184def63d6ec289204a9a14fb5a2e77b481fe7f10d62cccc8c80258723767",
-  "size": 4894044
+  "page": "clinicalsim-1.54.html",
+  "sha256": "b002c63a81a4b1ec9275d2c7b437ded1992792195b0d9051bb735fe340c3a7ea",
+  "size": 4896493
 }
