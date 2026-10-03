@@ -1,19 +1,31 @@
 {
-  "version": "1.50",
+  "version": "1.51",
   "minNative": 1,
-  "title": "Your own fellows, and learning from every mistake",
+  "title": "Meet Jake — your fellow, who actually gets to know you",
   "major": true,
   "notes": [
-    "You now have two fellows in the room with every patient — Dr. Priya Patel and Dr. Marcus Reed. They're doctors too, and they're the same two people every shift",
-    "When the patient arrests, one starts compressions within seconds, the other gets the pads on, calls the code and asks who's bagging; at two minutes they ask for the rhythm check and swap. Press Space to take over and they step back; stop, and one goes straight back on",
-    "When things slide they speak up and offer the obvious fix — non-rebreather, an IV, a fluid bolus, a 12-lead, seizure meds — one tap to say yes",
-    "Tell them what to do in plain words ('Marcus, get a 12-lead', 'Priya, draw a lactate'). Shocks, code drugs, airways and sending people home stay your call — they pull it up for you",
-    "Ask them anything. With the AI model on the PC they think out loud from the real chart (they don't know the diagnosis either); on phones they answer from the chart",
-    "They remember you: patients, codes, saves, the ones you lost, and each new condition they see. Sometimes one comes back having read up on an old case",
-    "The debrief now has 'How not to do it again': every mistake links to the lesson and a quick test. The same mistake 3 times makes the training required, and it waits for you in the Training Center under 'Lined up for you' until you pass it",
-    "Getting the diagnosis wrong links to the disease-book page for what it really was, plus the lesson and test for that topic"
+    "One fellow now: Dr. Jake Moreno (EM fellow, quick, jokes when it's tense but never in a code). Priya is gone",
+    "He remembers you, not just the cases: tell him your name ('call me…') and things about yourself, and he brings them up later ('how'd that go?'); he remembers what you two talked about last time",
+    "He has his own life — where he grew up, why he chose the ER, his dog, the code he froze in — and tells you a little at a time as you work more shifts together. Nothing personal on day one",
+    "He notices how you work: diagnoses you keep getting right, skipping the fingerstick glucose, how fast you are, the mistake you keep repeating (and tells you to go do the training)",
+    "In a code he's on the chest within seconds and tells you what he needs: pads, a code called, someone to bag. 'You bag' means he takes the bag and you take compressions (Space); if nobody's compressing he's straight back on. His hands are full while he's doing CPR",
+    "Messages you send while he's still answering are no longer lost — he answers them in order"
   ],
   "changelog": [
+    {
+      "v": "1.51",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Meet Jake — your fellow, who actually gets to know you",
+      "notes": [
+        "One fellow now: Dr. Jake Moreno (EM fellow, quick, jokes when it's tense but never in a code). Priya is gone",
+        "He remembers you, not just the cases: tell him your name ('call me…') and things about yourself, and he brings them up later ('how'd that go?'); he remembers what you two talked about last time",
+        "He has his own life — where he grew up, why he chose the ER, his dog, the code he froze in — and tells you a little at a time as you work more shifts together. Nothing personal on day one",
+        "He notices how you work: diagnoses you keep getting right, skipping the fingerstick glucose, how fast you are, the mistake you keep repeating (and tells you to go do the training)",
+        "In a code he's on the chest within seconds and tells you what he needs: pads, a code called, someone to bag. 'You bag' means he takes the bag and you take compressions (Space); if nobody's compressing he's straight back on. His hands are full while he's doing CPR",
+        "Messages you send while he's still answering are no longer lost — he answers them in order"
+      ]
+    },
     {
       "v": "1.50",
       "date": "2026-10-03",
@@ -659,7 +671,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.50.html",
-  "sha256": "aa14f48d0390e14225d7b91f2db75a1fec00929dc94f1caa741226b18bb2a504",
-  "size": 4809333
+  "page": "clinicalsim-1.51.html",
+  "sha256": "831865f8ead80ee824d63eb8bc217304abd03d5c4ec83cc5115bab187d5fd052",
+  "size": 4817301
 }
