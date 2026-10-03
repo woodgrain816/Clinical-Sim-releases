@@ -1,21 +1,33 @@
 {
-  "version": "1.48",
+  "version": "1.49",
   "minNative": 1,
-  "title": "The bedside monitor, as the real one is - and everything they're on",
+  "title": "Feels like an app, alarms that make sense, and one-tap removal",
   "major": true,
   "notes": [
-    "Everything they're on: one card under the patient lists the oxygen/airway, every line and tube, what is running (fluids, drips, piggybacks), every drug given with dose, route, how long ago and whether it is starting, working or worn off, the nursing measures in place, and the tests you are waiting on",
-    "Monitor screen like the real unit: name as 'Last, First' (or Not Admitted), no emoji, flat info line, Resp and CO2 in yellow, the device's alarm colors, acknowledged alarms not dimmed, 'Al. Paused 1:59', no invented prompt lines, ECG labeled II, condensed numerics",
-    "SmartKeys in the device's order: Main Screen, Main Setup, Start/ Stop, Repeat Time, Alarm Limits, Pause Alarms, Silence (check-mark key); Alarm Tones removed (it is a configuration-mode setting); alarm volume from the speaker symbol, 4-10",
-    "Silence acknowledges every active alarm (not only the one on top); the heartbeat tone keeps going, as on the device",
-    "Alarms as the real unit: HR High/Low are short yellow (three dings over 6 s, re-announced every 3 min); the reminder of a silenced alarm sounds for 6 s every 3 min; no extra delay on red alarms; no siren, flatline tone or event beeps",
-    "Defibrillator: a steady low tone while charging and a steady higher tone while charged, until the shock or disarm; the shock is a dull click",
-    "NBP: factory Auto 10 min; while measuring, the live cuff pressure shows in the small text and the last reading stays; countdown as m:ss",
-    "QRS Volume 0-10 in the monitor's own setup (ECG and Main Setup); a single self-test tone at power-on",
-    "Big screen (tablet/TV): fixed overlapping text (pause field over the name, limits over SpO2 and Temp, labels over the waves); the tablet now follows the controls' acknowledged alarms, so it no longer dings after Silence",
-    "Fixed: 'says the pain has eased right off' repeating over and over"
+    "No more browser pop-ups ('This page says…'): every question is asked in the app's own dialog; no text highlighting when you tap, no long-press copy menu, no pinch-zoom or bounce",
+    "Alarms need to be real before they sound: heart rate and breathing must stay past the limit for a few seconds, extreme rates for about 4 s; a short HR alarm that flickers back inside its 3-minute timeout shows but stays quiet",
+    "Everything they're on: tap anything to take it off at once (oxygen, lines, drips, nursing measures, tests) with Undo; only airway tubes still ask; drugs already pushed explain they can't be taken back and name the reversal",
+    "An 'On patient' button in the quick bar opens the whole list in one big panel (PC and phone)",
+    "When the patient leaves (home, admitted, the OR), their oxygen, lines and drips come off the chart",
+    "Alarm limits changed on the tablet's big screen now stick (they are sent to the controls)",
+    "Antibiotics: Zosyn, meropenem and cefepime labeled broad-spectrum (search 'broad spectrum', 'abx', 'sepsis'); new: cefazolin (Ancef), ampicillin-sulbactam (Unasyn), levofloxacin (Levaquin)"
   ],
   "changelog": [
+    {
+      "v": "1.49",
+      "date": "2026-10-02",
+      "major": true,
+      "title": "Feels like an app, alarms that make sense, and one-tap removal",
+      "notes": [
+        "No more browser pop-ups ('This page says…'): every question is asked in the app's own dialog; no text highlighting when you tap, no long-press copy menu, no pinch-zoom or bounce",
+        "Alarms need to be real before they sound: heart rate and breathing must stay past the limit for a few seconds, extreme rates for about 4 s; a short HR alarm that flickers back inside its 3-minute timeout shows but stays quiet",
+        "Everything they're on: tap anything to take it off at once (oxygen, lines, drips, nursing measures, tests) with Undo; only airway tubes still ask; drugs already pushed explain they can't be taken back and name the reversal",
+        "An 'On patient' button in the quick bar opens the whole list in one big panel (PC and phone)",
+        "When the patient leaves (home, admitted, the OR), their oxygen, lines and drips come off the chart",
+        "Alarm limits changed on the tablet's big screen now stick (they are sent to the controls)",
+        "Antibiotics: Zosyn, meropenem and cefepime labeled broad-spectrum (search 'broad spectrum', 'abx', 'sepsis'); new: cefazolin (Ancef), ampicillin-sulbactam (Unasyn), levofloxacin (Levaquin)"
+      ]
+    },
     {
       "v": "1.48",
       "date": "2026-10-02",
@@ -630,7 +642,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.48.html",
-  "sha256": "e09be028aba673e161953c94e016acd8c16c7493c5003be31865e8f6207f4764",
-  "size": 4742220
+  "page": "clinicalsim-1.49.html",
+  "sha256": "336ee027971e1523ae3356ece9b25d4d7754a0a52bb94fb40392d21c694ab23f",
+  "size": 4760717
 }
