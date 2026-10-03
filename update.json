@@ -1,15 +1,29 @@
 {
-  "version": "1.58",
-  "minNative": 1,
-  "title": "Real AI on your phone",
+  "version": "1.59",
+  "minNative": 6,
+  "title": "Clinical Sim by D.M — protected",
   "major": true,
   "notes": [
-    "Jake (and the patient) can now run on a real AI model right on your phone, the way Google AI Edge Gallery does it: Gemma 4 E2B, Google's newest small model, running on the phone's GPU",
-    "One-time download from Options → AI on this phone (2.6 GB — use Wi-Fi). It can be paused and resumed, and is checked before it's used. After that it works offline, anywhere",
-    "Needs the new app (1.58) — install the new APK once. Phones without the download keep the pre-written Jake",
-    "Delete it any time from the same place to free the 2.6 GB"
+    "Clinical Sim is now 'Clinical Sim by D.M' — on the start screen, the welcome, the legal notice (new section 11: Copyright) and the update log. © 2026 D.M. All rights reserved",
+    "The app's code is now protected: minified and scrambled, then encrypted with AES-256 and sealed so any edit is detected",
+    "On phones the code only unlocks inside the genuine app — a copy re-signed or changed by anyone else refuses to run",
+    "On the PC it only unlocks inside ClinicalSim.exe; saved progress and settings carry over untouched",
+    "Phones: this update needs the new app (1.59 APK) — older apps will say an update needs a new APK. Install it once over the old one; nothing is lost"
   ],
   "changelog": [
+    {
+      "v": "1.59",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Clinical Sim by D.M — protected",
+      "notes": [
+        "Clinical Sim is now 'Clinical Sim by D.M' — on the start screen, the welcome, the legal notice (new section 11: Copyright) and the update log. © 2026 D.M. All rights reserved",
+        "The app's code is now protected: minified and scrambled, then encrypted with AES-256 and sealed so any edit is detected",
+        "On phones the code only unlocks inside the genuine app — a copy re-signed or changed by anyone else refuses to run",
+        "On the PC it only unlocks inside ClinicalSim.exe; saved progress and settings carry over untouched",
+        "Phones: this update needs the new app (1.59 APK) — older apps will say an update needs a new APK. Install it once over the old one; nothing is lost"
+      ]
+    },
     {
       "v": "1.58",
       "date": "2026-10-03",
@@ -750,7 +764,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.58.html",
-  "sha256": "7f508e54e15bb39ec8c6fd57a32e7951d30013583b30daf6a8d8b18527748623",
-  "size": 4920063
+  "page": "clinicalsim-1.59.html",
+  "sha256": "2a3c7c426ffdeaa1c673a229d037b38926f17c7d7d5e4b84540c92a565ed5dea",
+  "size": 4411380
 }
