@@ -1,16 +1,29 @@
 {
-  "version": "1.52",
+  "version": "1.53",
   "minNative": 1,
-  "title": "Update log, and a Solo mode",
-  "major": false,
+  "title": "Off shift — hang out with Jake",
+  "major": true,
   "notes": [
-    "New Update log: every update ever, newest first, each with what it changed or added",
-    "The total number of updates is shown big at the top, with how many changes in all, how many were major, and since when",
-    "Search the log ('alarms', 'Jake', 'CPR') to find when something changed",
-    "On the PC: Options → Version → Update log. On phones: Options → Update log",
-    "New in Options: 'Your fellow' — Work with Jake, or Solo (just you). Solo hides Jake completely: no help in codes, no suggestions, nobody to talk to — switch back any time and he still remembers you"
+    "New optional mode: Options → Off shift → On. It never touches the medicine — the sim stays exactly as realistic",
+    "Between patients, an Off shift card lets you go do something with Jake: coffee in the break room, tacos from the truck after a shift, breakfast at the diner, his hockey game, walking his dog Lido",
+    "After a code or a death, the roof opens up: he'll talk about the patient if you want, or just stand there with you",
+    "Pick things to say or type anything — with the AI model on the PC he answers in his own voice; he remembers what you talked about and where you went",
+    "New places unlock as you two get to know each other, and he opens up about his life a little faster off shift. Strictly coworkers-who-are-friends — he has a girlfriend, Maya"
   ],
   "changelog": [
+    {
+      "v": "1.53",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Off shift — hang out with Jake",
+      "notes": [
+        "New optional mode: Options → Off shift → On. It never touches the medicine — the sim stays exactly as realistic",
+        "Between patients, an Off shift card lets you go do something with Jake: coffee in the break room, tacos from the truck after a shift, breakfast at the diner, his hockey game, walking his dog Lido",
+        "After a code or a death, the roof opens up: he'll talk about the patient if you want, or just stand there with you",
+        "Pick things to say or type anything — with the AI model on the PC he answers in his own voice; he remembers what you talked about and where you went",
+        "New places unlock as you two get to know each other, and he opens up about his life a little faster off shift. Strictly coworkers-who-are-friends — he has a girlfriend, Maya"
+      ]
+    },
     {
       "v": "1.52",
       "date": "2026-10-03",
@@ -683,7 +696,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.52.html",
-  "sha256": "46f10f8b1356117fa7b2112c1301c92c855a1cbd8968a836a48cddaf87c1728d",
-  "size": 4871955
+  "page": "clinicalsim-1.53.html",
+  "sha256": "4c5184def63d6ec289204a9a14fb5a2e77b481fe7f10d62cccc8c80258723767",
+  "size": 4894044
 }
