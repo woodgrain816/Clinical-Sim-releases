@@ -1,20 +1,39 @@
 {
-  "version": "1.47",
+  "version": "1.48",
   "minNative": 1,
-  "title": "IV piggybacks, admission questions, and a safer sign-off",
-  "major": false,
+  "title": "The bedside monitor, as the real one is - and everything they're on",
+  "major": true,
   "notes": [
-    "IV piggyback: choose IV push or IVPB over 15/30/60/90/120 min next to the route; antibiotics, magnesium, potassium and levetiracetam default to the usual piggyback time, and the level builds while it runs",
-    "Talking: 'what's your pain on a scale of 1 to 10', 'are you a full code', 'do you have a living will', 'when was your last bowel movement' all answered properly (DNR patients say so)",
-    "Signing off asks first ('Discharge home?' with the patient and your diagnosis); pressing a disposition with no diagnosis highlights the box",
-    "Seizures: holding a seizing patient down or restraining them is flagged, with the right teaching",
-    "Hypoglycemia: after D50 they wake up within minutes, as real patients do",
-    "No more impossible blood pressures (a diastolic of 2); oxygen ordered from Meds puts the device on",
-    "Guidance: anaphylaxis (epinephrine 0.5 mg IM) and opioid overdose recognized by how the patient looks; shocks point to the crash cart",
-    "US wording: Leaving AMA, return precautions, call light, IV pole, moisturize; the 'patient has left' banner says where they went (observation, ICU, OR, home)",
-    "Blood cultures and other long tests say 'pending — preliminary results in 24–48 hours'; search no longer lists category headings as actions"
+    "Everything they're on: one card under the patient lists the oxygen/airway, every line and tube, what is running (fluids, drips, piggybacks), every drug given with dose, route, how long ago and whether it is starting, working or worn off, the nursing measures in place, and the tests you are waiting on",
+    "Monitor screen like the real unit: name as 'Last, First' (or Not Admitted), no emoji, flat info line, Resp and CO2 in yellow, the device's alarm colors, acknowledged alarms not dimmed, 'Al. Paused 1:59', no invented prompt lines, ECG labeled II, condensed numerics",
+    "SmartKeys in the device's order: Main Screen, Main Setup, Start/ Stop, Repeat Time, Alarm Limits, Pause Alarms, Silence (check-mark key); Alarm Tones removed (it is a configuration-mode setting); alarm volume from the speaker symbol, 4-10",
+    "Silence acknowledges every active alarm (not only the one on top); the heartbeat tone keeps going, as on the device",
+    "Alarms as the real unit: HR High/Low are short yellow (three dings over 6 s, re-announced every 3 min); the reminder of a silenced alarm sounds for 6 s every 3 min; no extra delay on red alarms; no siren, flatline tone or event beeps",
+    "Defibrillator: a steady low tone while charging and a steady higher tone while charged, until the shock or disarm; the shock is a dull click",
+    "NBP: factory Auto 10 min; while measuring, the live cuff pressure shows in the small text and the last reading stays; countdown as m:ss",
+    "QRS Volume 0-10 in the monitor's own setup (ECG and Main Setup); a single self-test tone at power-on",
+    "Big screen (tablet/TV): fixed overlapping text (pause field over the name, limits over SpO2 and Temp, labels over the waves); the tablet now follows the controls' acknowledged alarms, so it no longer dings after Silence",
+    "Fixed: 'says the pain has eased right off' repeating over and over"
   ],
   "changelog": [
+    {
+      "v": "1.48",
+      "date": "2026-10-02",
+      "major": true,
+      "title": "The bedside monitor, as the real one is - and everything they're on",
+      "notes": [
+        "Everything they're on: one card under the patient lists the oxygen/airway, every line and tube, what is running (fluids, drips, piggybacks), every drug given with dose, route, how long ago and whether it is starting, working or worn off, the nursing measures in place, and the tests you are waiting on",
+        "Monitor screen like the real unit: name as 'Last, First' (or Not Admitted), no emoji, flat info line, Resp and CO2 in yellow, the device's alarm colors, acknowledged alarms not dimmed, 'Al. Paused 1:59', no invented prompt lines, ECG labeled II, condensed numerics",
+        "SmartKeys in the device's order: Main Screen, Main Setup, Start/ Stop, Repeat Time, Alarm Limits, Pause Alarms, Silence (check-mark key); Alarm Tones removed (it is a configuration-mode setting); alarm volume from the speaker symbol, 4-10",
+        "Silence acknowledges every active alarm (not only the one on top); the heartbeat tone keeps going, as on the device",
+        "Alarms as the real unit: HR High/Low are short yellow (three dings over 6 s, re-announced every 3 min); the reminder of a silenced alarm sounds for 6 s every 3 min; no extra delay on red alarms; no siren, flatline tone or event beeps",
+        "Defibrillator: a steady low tone while charging and a steady higher tone while charged, until the shock or disarm; the shock is a dull click",
+        "NBP: factory Auto 10 min; while measuring, the live cuff pressure shows in the small text and the last reading stays; countdown as m:ss",
+        "QRS Volume 0-10 in the monitor's own setup (ECG and Main Setup); a single self-test tone at power-on",
+        "Big screen (tablet/TV): fixed overlapping text (pause field over the name, limits over SpO2 and Temp, labels over the waves); the tablet now follows the controls' acknowledged alarms, so it no longer dings after Silence",
+        "Fixed: 'says the pain has eased right off' repeating over and over"
+      ]
+    },
     {
       "v": "1.47",
       "date": "2026-10-02",
@@ -611,7 +630,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.47.html",
-  "sha256": "d7549426a5172df2461c8b36574416207e3751e9902663179467bc5d9464bff3",
-  "size": 4726814
+  "page": "clinicalsim-1.48.html",
+  "sha256": "e09be028aba673e161953c94e016acd8c16c7493c5003be31865e8f6207f4764",
+  "size": 4742220
 }
