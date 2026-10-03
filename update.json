@@ -1,17 +1,29 @@
 {
-  "version": "1.51",
+  "version": "1.52",
   "minNative": 1,
-  "title": "Meet Jake — your fellow, who actually gets to know you",
-  "major": true,
+  "title": "Update log, and a Solo mode",
+  "major": false,
   "notes": [
-    "One fellow now: Dr. Jake Moreno (EM fellow, quick, jokes when it's tense but never in a code). Priya is gone",
-    "He remembers you, not just the cases: tell him your name ('call me…') and things about yourself, and he brings them up later ('how'd that go?'); he remembers what you two talked about last time",
-    "He has his own life — where he grew up, why he chose the ER, his dog, the code he froze in — and tells you a little at a time as you work more shifts together. Nothing personal on day one",
-    "He notices how you work: diagnoses you keep getting right, skipping the fingerstick glucose, how fast you are, the mistake you keep repeating (and tells you to go do the training)",
-    "In a code he's on the chest within seconds and tells you what he needs: pads, a code called, someone to bag. 'You bag' means he takes the bag and you take compressions (Space); if nobody's compressing he's straight back on. His hands are full while he's doing CPR",
-    "Messages you send while he's still answering are no longer lost — he answers them in order"
+    "New Update log: every update ever, newest first, each with what it changed or added",
+    "The total number of updates is shown big at the top, with how many changes in all, how many were major, and since when",
+    "Search the log ('alarms', 'Jake', 'CPR') to find when something changed",
+    "On the PC: Options → Version → Update log. On phones: Options → Update log",
+    "New in Options: 'Your fellow' — Work with Jake, or Solo (just you). Solo hides Jake completely: no help in codes, no suggestions, nobody to talk to — switch back any time and he still remembers you"
   ],
   "changelog": [
+    {
+      "v": "1.52",
+      "date": "2026-10-03",
+      "major": false,
+      "title": "Update log, and a Solo mode",
+      "notes": [
+        "New Update log: every update ever, newest first, each with what it changed or added",
+        "The total number of updates is shown big at the top, with how many changes in all, how many were major, and since when",
+        "Search the log ('alarms', 'Jake', 'CPR') to find when something changed",
+        "On the PC: Options → Version → Update log. On phones: Options → Update log",
+        "New in Options: 'Your fellow' — Work with Jake, or Solo (just you). Solo hides Jake completely: no help in codes, no suggestions, nobody to talk to — switch back any time and he still remembers you"
+      ]
+    },
     {
       "v": "1.51",
       "date": "2026-10-03",
@@ -671,7 +683,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.51.html",
-  "sha256": "831865f8ead80ee824d63eb8bc217304abd03d5c4ec83cc5115bab187d5fd052",
-  "size": 4817301
+  "page": "clinicalsim-1.52.html",
+  "sha256": "46f10f8b1356117fa7b2112c1301c92c855a1cbd8968a836a48cddaf87c1728d",
+  "size": 4871955
 }
