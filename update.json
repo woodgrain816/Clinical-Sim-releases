@@ -1,14 +1,25 @@
 {
-  "version": "1.54",
+  "version": "1.55",
   "minNative": 1,
-  "title": "See Jake's replies right where you talk to him",
+  "title": "Jake's box is always there",
   "major": false,
   "notes": [
-    "Jake's answers now show inside his card, as a little conversation, right under the box you type in — on phones they used to go only to the Chart tab, so it looked like he never replied",
-    "Fixed an empty yellow bar showing above Jake's card during a patient (the Off shift card not hiding)",
-    "Solo mode now hides Jake's card completely"
+    "Jake's card shows all the time now, not only during a patient (1.54 accidentally hid it between patients)",
+    "Talk to him between patients too — about the last patient, about himself, about you — while you wait for the next one",
+    "It only disappears in Solo mode and during graded training cases"
   ],
   "changelog": [
+    {
+      "v": "1.55",
+      "date": "2026-10-03",
+      "major": false,
+      "title": "Jake's box is always there",
+      "notes": [
+        "Jake's card shows all the time now, not only during a patient (1.54 accidentally hid it between patients)",
+        "Talk to him between patients too — about the last patient, about himself, about you — while you wait for the next one",
+        "It only disappears in Solo mode and during graded training cases"
+      ]
+    },
     {
       "v": "1.54",
       "date": "2026-10-03",
@@ -705,7 +716,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.54.html",
-  "sha256": "b002c63a81a4b1ec9275d2c7b437ded1992792195b0d9051bb735fe340c3a7ea",
-  "size": 4896493
+  "page": "clinicalsim-1.55.html",
+  "sha256": "cb7888d7230e3f783a8de72c2dd0789ca0059e881b1888753ceb120bf6303928",
+  "size": 4903884
 }
