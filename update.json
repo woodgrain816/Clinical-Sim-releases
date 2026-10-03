@@ -1,20 +1,26 @@
 {
-  "version": "1.45",
+  "version": "1.46",
   "minNative": 1,
-  "title": "Codes, seizures and overdoses that make sense - and a monitor that sounds like the real one",
-  "major": true,
+  "title": "Search that speaks nurse, and the nursing actions that were missing",
+  "major": false,
   "notes": [
-    "Cardiac arrest: unconscious within seconds (GCS 3, no answers); capnography reads about 0 with nobody bagging, 15-20 with a bag and good CPR, and falls when compressions stop",
-    "Seizures stop when you treat them: lorazepam stops a tonic-clonic seizure, levetiracetam / phenytoin / valproate stop status that has already had two benzodiazepines; the exam turns post-ictal, and a seizure can come back if nothing long-acting is on board",
-    "Lorazepam no longer flattens a post-ictal patient (drowsy, GCS around 9 after 4 mg)",
-    "Opioid overdose: naloxone works - breathing and alertness come back within minutes, and re-sedation can follow when it wears off before the opioid",
-    "Pinpoint pupils only for opioids, not every sedative",
-    "The dose follows the route: epinephrine 1 mg IV / 0.5 mg IM, naloxone 0.4 mg IV / 4 mg intranasal",
-    "Monitor sound like the real bedside unit: the heartbeat tone is a short soft tick at volume 1 of 10 (alarms at 5) instead of a loud beep on every beat; its pitch falls with the SpO2; set it 0-10 in Options. Equipment (cyan) alarms use the equipment tone",
-    "DKA urinalysis shows glucose and ketones; Stop resuscitation works; Search 'Do it' never fires shocks, code drugs, airways or discharges in one tap - those open the place instead",
-    "Guidance: one switch (the old Guide button now agrees with it), urgent prompts pop up once per patient, and the airway hint points to the right place"
+    "Search understands how nurses talk: Foley, BVM / Ambu, tele, restraints, sitter, I&O, Accu-Chek / FSBS, type and screen, CMP, blood gas, lung sounds, manual BP / vitals, code blue, LP, NIHSS, pacer, transfuse - the right thing comes first (no more D-dimer for 'restraints' or Gas-X for 'blood gas')",
+    "New nursing actions (Procedures, top section, and in the search): seizure precautions, time the seizure, 1:1 sitter, telemetry, strict I&O, daily weight, bladder scan, straight cath, NIHSS, pain assessment, CIWA-Ar, incentive spirometer, SCDs, oral care, wound care - each answers from the patient",
+    "New labs: type and screen, CMP, urine culture, sputum culture, procalcitonin, phosphorus, ionized calcium, hemoglobin A1c, beta-hydroxybutyrate",
+    "ERCP, interventional embolization and an implantable defibrillator can now be ordered - the cholangitis, hemoptysis, diverticular bleed and Brugada cases can be finished properly"
   ],
   "changelog": [
+    {
+      "v": "1.46",
+      "date": "2026-10-02",
+      "title": "Search that speaks nurse, and the nursing actions that were missing",
+      "notes": [
+        "Search understands how nurses talk: Foley, BVM / Ambu, tele, restraints, sitter, I&O, Accu-Chek / FSBS, type and screen, CMP, blood gas, lung sounds, manual BP / vitals, code blue, LP, NIHSS, pacer, transfuse - the right thing comes first (no more D-dimer for 'restraints' or Gas-X for 'blood gas')",
+        "New nursing actions (Procedures, top section, and in the search): seizure precautions, time the seizure, 1:1 sitter, telemetry, strict I&O, daily weight, bladder scan, straight cath, NIHSS, pain assessment, CIWA-Ar, incentive spirometer, SCDs, oral care, wound care - each answers from the patient",
+        "New labs: type and screen, CMP, urine culture, sputum culture, procalcitonin, phosphorus, ionized calcium, hemoglobin A1c, beta-hydroxybutyrate",
+        "ERCP, interventional embolization and an implantable defibrillator can now be ordered - the cholangitis, hemoptysis, diverticular bleed and Brugada cases can be finished properly"
+      ]
+    },
     {
       "v": "1.45",
       "date": "2026-10-02",
@@ -584,7 +590,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.45.html",
-  "sha256": "6422b8bbb485caec339884db763c553e8e0434d12891cf4c65d0d011bcb7086b",
-  "size": 4704153
+  "page": "clinicalsim-1.46.html",
+  "sha256": "d1e08e6471311f0066fd293157807bc77eb9ff2140a2e0924134598f9f480242",
+  "size": 4716454
 }
