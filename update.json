@@ -1,14 +1,21 @@
 {
-  "version": "1.55",
+  "version": "1.56",
   "minNative": 1,
-  "title": "Jake's box is always there",
+  "title": "Jake always knows your name",
   "major": false,
   "notes": [
-    "Jake's card shows all the time now, not only during a patient (1.54 accidentally hid it between patients)",
-    "Talk to him between patients too — about the last patient, about himself, about you — while you wait for the next one",
-    "It only disappears in Solo mode and during graded training cases"
+    "Asking Jake 'what's my name?' or 'do you remember me?' is answered from his memory every time — the AI sometimes mixed up whose name was whose and told you his own"
   ],
   "changelog": [
+    {
+      "v": "1.56",
+      "date": "2026-10-03",
+      "major": false,
+      "title": "Jake always knows your name",
+      "notes": [
+        "Asking Jake 'what's my name?' or 'do you remember me?' is answered from his memory every time — the AI sometimes mixed up whose name was whose and told you his own"
+      ]
+    },
     {
       "v": "1.55",
       "date": "2026-10-03",
@@ -716,7 +723,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.55.html",
-  "sha256": "cb7888d7230e3f783a8de72c2dd0789ca0059e881b1888753ceb120bf6303928",
-  "size": 4903884
+  "page": "clinicalsim-1.56.html",
+  "sha256": "1c19a0610dbc8bbf61cd4676b80522b40850c9751670320a209cbad6ce2b4818",
+  "size": 4904758
 }
