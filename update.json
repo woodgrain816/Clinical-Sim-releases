@@ -1,17 +1,33 @@
 {
-  "version": "1.60",
+  "version": "1.61",
   "minNative": 6,
-  "title": "A real Beginner mode — it explains everything",
+  "title": "Pick your job: Diagnose & hand off, or Diagnose & treat",
   "major": true,
   "notes": [
-    "The difficulty menu now has its own heading, 'Difficulty', so it can't be mistaken for who the patient is: Beginner — explains everything / Student — hints when stuck / New grad — little help / Expert — no help",
-    "Someone opening the app for the first time starts on Beginner",
-    "Beginner now teaches as you go, in plain words, assuming you know nothing: your job and the order to do things in, every vital sign that's off (what it measures, what normal is, why it matters, what to do), every test you order, what every abnormal result means, every drug (what kind, what it does, what to watch), every procedure and oxygen mask, and the cardiac arrest step by step",
-    "The newest explanations show at the top of the Guide box ('What that means'), and every one is kept in the chart",
-    "It never tells you the diagnosis — that's still yours to work out",
-    "Options → Explain everything turns the teaching on or off at any difficulty"
+    "New 'Your job' menu at the top. Diagnose & hand off (the default) works like a real ER: keep them alive while they're yours, work out what it is, then hand them off. Diagnose & treat is the old way: they stay yours",
+    "In Diagnose & hand off, the patient leaves as soon as you admit them, send them to the ICU or OR, discharge them, or a specialist accepts them. You don't have to finish treating them",
+    "The next patient comes in on their own a few seconds later. Sometimes the board is quiet for a minute or two. 'Bring them in now' or 'Wait — I'll start it' on the banner",
+    "How the last patient did comes later as a phone call while you're with someone else. The call tells you what it really was, and whether you got it right",
+    "Shift log in the Discharge tab: everyone you've seen this shift, where they went, what you wrote, and how they did. Tap one for their full debrief, including 'How not to do it again'",
+    "Shift count: patients seen, handed off, diagnosed right, and died in your care",
+    "Starting a new patient while the last one is still out there no longer loses them, in either job. They go in the shift log and you still get the call"
   ],
   "changelog": [
+    {
+      "v": "1.61",
+      "date": "2026-10-03",
+      "major": true,
+      "title": "Pick your job: Diagnose & hand off, or Diagnose & treat",
+      "notes": [
+        "New 'Your job' menu at the top. Diagnose & hand off (the default) works like a real ER: keep them alive while they're yours, work out what it is, then hand them off. Diagnose & treat is the old way: they stay yours",
+        "In Diagnose & hand off, the patient leaves as soon as you admit them, send them to the ICU or OR, discharge them, or a specialist accepts them. You don't have to finish treating them",
+        "The next patient comes in on their own a few seconds later. Sometimes the board is quiet for a minute or two. 'Bring them in now' or 'Wait — I'll start it' on the banner",
+        "How the last patient did comes later as a phone call while you're with someone else. The call tells you what it really was, and whether you got it right",
+        "Shift log in the Discharge tab: everyone you've seen this shift, where they went, what you wrote, and how they did. Tap one for their full debrief, including 'How not to do it again'",
+        "Shift count: patients seen, handed off, diagnosed right, and died in your care",
+        "Starting a new patient while the last one is still out there no longer loses them, in either job. They go in the shift log and you still get the call"
+      ]
+    },
     {
       "v": "1.60",
       "date": "2026-10-03",
@@ -779,7 +795,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.60.html",
-  "sha256": "fcda92c295c4c9a23840c86c9bc8e89cd1f05ee77d29374eed647ad58d483c1d",
-  "size": 4438356
+  "page": "clinicalsim-1.61.html",
+  "sha256": "ad50c19ac7d627b3fa3207bd9c2bdb6bd78aee228bc89e798b84f9bbec0f2131",
+  "size": 4454916
 }
