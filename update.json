@@ -1,17 +1,43 @@
 {
-  "version": "1.62",
+  "version": "1.63",
   "minNative": 6,
-  "title": "Phone AI download fixed: a progress bar, and it stays on your phone",
+  "title": "Phone polish: cleaner screens and fixed bugs",
   "major": false,
   "notes": [
-    "Tapping 'Give him real AI' no longer makes the offer just vanish. A progress bar shows right in Jake's box from the moment you tap Download, and in Options",
-    "It says exactly what's happening: starting, waiting for Wi-Fi, how many GB are done and the percent, then checking the file isn't damaged, then on",
-    "Waiting for Wi-Fi? There's a 'Use mobile data instead' button",
-    "The download is now done by Android's own download manager (needs the new 1.62 app). It keeps going if you leave the app or the screen turns off, shows in your notifications, and picks up by itself after a dropped connection",
-    "Once downloaded and checked, the model stays on your phone for good. App updates never delete it. Only uninstalling Clinical Sim or Delete in Options removes it",
-    "Pause is now Cancel, and it asks first"
+    "Fixed: on the compact phone monitor every number sat one column to the right (the heart rate showed under SpO₂). Each value is now under its own label",
+    "Fixed: Surgery and Discharge (from More) no longer have the big monitor covering the top of the screen. They fold it to the slim vitals bar like every other tab",
+    "Fixed: the same guidance no longer shows twice (Next step plus a second Guidance box)",
+    "Fixed: the ⓘ info buttons on Orders are joined to their test, so one can never wrap onto the next line in front of a different test",
+    "Fixed: results no longer repeat the test name (\"Urinalysis: Urinalysis…\")",
+    "Suggested questions are written properly: \"What's wrong?\" instead of \"whats wrong\"",
+    "US hospital words on the Talk buttons: Nausea med, Emesis bag, Bathroom, Bed bath",
+    "Sound, Beep and Alarms have proper icons and fit on one line with the volume",
+    "The alarm lights are a clean strip along the top of the monitor",
+    "Short, uncut hints in every search and typing box; \"tap\" instead of \"click\" on the phone",
+    "Menu: full-width choices, spaced icons, one style for buttons that are on, and settings laid out as tidy rows",
+    "The empty chart says what will appear in it"
   ],
   "changelog": [
+    {
+      "v": "1.63",
+      "date": "2026-10-06",
+      "major": false,
+      "title": "Phone polish: cleaner screens and fixed bugs",
+      "notes": [
+        "Fixed: on the compact phone monitor every number sat one column to the right (the heart rate showed under SpO₂). Each value is now under its own label",
+        "Fixed: Surgery and Discharge (from More) no longer have the big monitor covering the top of the screen. They fold it to the slim vitals bar like every other tab",
+        "Fixed: the same guidance no longer shows twice (Next step plus a second Guidance box)",
+        "Fixed: the ⓘ info buttons on Orders are joined to their test, so one can never wrap onto the next line in front of a different test",
+        "Fixed: results no longer repeat the test name (\"Urinalysis: Urinalysis…\")",
+        "Suggested questions are written properly: \"What's wrong?\" instead of \"whats wrong\"",
+        "US hospital words on the Talk buttons: Nausea med, Emesis bag, Bathroom, Bed bath",
+        "Sound, Beep and Alarms have proper icons and fit on one line with the volume",
+        "The alarm lights are a clean strip along the top of the monitor",
+        "Short, uncut hints in every search and typing box; \"tap\" instead of \"click\" on the phone",
+        "Menu: full-width choices, spaced icons, one style for buttons that are on, and settings laid out as tidy rows",
+        "The empty chart says what will appear in it"
+      ]
+    },
     {
       "v": "1.62",
       "date": "2026-10-04",
@@ -808,7 +834,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.62.html",
-  "sha256": "88da804d333ad79b7b4d4b6a3201d3e6a5efce79cd505a2f61f2d2388e5a37f7",
-  "size": 4458324
+  "page": "clinicalsim-1.63.html",
+  "sha256": "5cbd4c31a55eac627ac04b04d9515aedef21882725ee924fdb9463fbbce43f4b",
+  "size": 4468612
 }
