@@ -4,9 +4,10 @@ B450 MONITOR SIMULATOR (Windows)
 Start:   double-click  "Start B450 Simulator.bat"
          (or "Start B450 Simulator (Full Screen).bat" - press Alt+F4 to close)
          Click "Power On" on the screen; sound starts with it.
-         Before powering on, pick the alarm sounds: "Real B450" (CARESCAPE
-         tones) or "TV / House MD style" (older GE tones + continuous
-         flatline). Change it later in Alarms Setup -> Audio.
+         Before powering on, pick the monitor: "CARESCAPE B450" (real
+         monitor screen and alarm tones) or "House M.D. monitor" (the set
+         monitor's screen and sounds). Change it later in Alarms Setup ->
+         Audio or Monitor Setup -> Screen Setup.
 
 If Windows asks, choose "More info" -> "Run anyway". The launcher only opens
 B450-Simulator.html in a Microsoft Edge app window. You can also double-click

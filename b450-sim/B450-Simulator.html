@@ -148,6 +148,42 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:#26303c;border:1px solid #4a5a70;color:#fff;
   padding:8px 18px;font-size:16px;border-radius:4px;display:none;z-index:26}
 
+/* ---------- House MD set monitor (GE Dash-style) screen ---------- */
+#screen.house{background:#010309;font-family:Arial,Helvetica,sans-serif}
+.house #top{height:30px;background:linear-gradient(#5d6a86,#3a4560);border-bottom:1px solid #141a26}
+.house #ptInfo{width:300px;padding:3px 10px;display:flex;align-items:center;gap:14px}
+.house #ptInfo .bed{font-size:14px;font-weight:700}
+.house #ptInfo .bed span{font-size:12px;color:#d7deeb}
+.house #ptInfo .nm{font-size:12px;color:#e6ebf3}
+.house #alarmArea{padding:3px 4px;gap:3px}
+.house .abox{font-size:15px;border-radius:1px}
+.house #sysInfo{font-size:12px;width:220px}
+.house #clock .t{font-size:14px;font-weight:400}
+.house #clock .d{display:none}
+.house .pw{border:none;background:transparent}
+.house .pw .lbl,.house .bpw .lbl{font-size:14px;font-weight:400;top:6px}
+.house .pw .lim,.house .bpw .lim{font-size:11px;line-height:1.1;text-align:left}
+.house .big{font-family:Arial,Helvetica,sans-serif;font-weight:400;letter-spacing:0}
+.house #bottomRow{border-top:1px solid #151c2a}
+.house .bpw{border-right:none}
+.house .wlbl{font-family:Arial,Helvetica,sans-serif;font-weight:400;font-size:13px}
+.house .flash-high,.house .flash-medium,.house .solid-low{animation:none!important;background:transparent!important}
+.house .flash-high .big,.house .flash-high .hv{color:#ff2b2b!important}
+.house .flash-medium .big,.house .flash-medium .hv{color:#ffd400!important}
+.house .solid-low *{color:inherit!important}
+.house .hsub{position:absolute;font-size:13px;white-space:nowrap}
+.house .hsub b{font-weight:400;font-size:24px;margin-left:8px}
+.house .nlist{position:absolute;font-size:13px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:pre}
+.house #menubar{height:66px;top:734px;background:#1b1f27;border-top:1px solid #3c4352;padding:5px 6px;gap:3px}
+.house .mk{background:linear-gradient(#eef0f4,#b8bec9);color:#1a2030;border:1px solid #5f6878;border-radius:2px;font-size:11px;
+  font-family:Arial,Helvetica,sans-serif;gap:2px;line-height:1.05}
+.house .mk:hover{background:linear-gradient(#ffffff,#c9cfd9)}
+.house .mk .ic{font-size:16px}
+.house .mk.hk-y,.house #mkPause{background:linear-gradient(#ecf6a6,#bdd35b);color:#1a2030}
+.house .mk.hk-p{background:linear-gradient(#aeb0f4,#6c70cf);color:#fff}
+.house .mk.hk-n{flex:.55}
+.house #mkPause .ic svg{width:18px;height:18px}
+
 /* ---------- instructor ---------- */
 #instrBtn{position:fixed;right:10px;top:10px;z-index:50;background:#203247;color:#fff;border:1px solid #4c6f96;
   padding:7px 12px;border-radius:6px;font-size:13px;cursor:pointer;opacity:.85;font-family:inherit}
@@ -199,8 +235,8 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
      <button class="btn" style="font-size:20px;padding:12px 26px" id="resumeBtn">Resume Monitoring</button></div>
    <div id="boot"><div class="t">CARESCAPE B450 SIMULATOR</div><div class="note" style="font-size:14px;margin-top:10px">Self test&hellip;</div><div class="bar"><i id="bootBar"></i></div></div>
    <div id="off" class="on"><div class="t">Monitor is off</div><button id="powerOn">&#9211;&nbsp; Power On</button>
-     <div style="margin-top:18px;font-size:15px;color:#9fb3c8">Alarm sounds:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
-       <option value="real">Real B450 (CARESCAPE tones)</option><option value="tv">TV / House MD style (GE legacy + flatline)</option></select></div>
+     <div style="margin-top:18px;font-size:15px;color:#9fb3c8">Monitor:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
+       <option value="real">CARESCAPE B450 (real monitor)</option><option value="tv">House M.D. monitor (screen + sounds)</option></select></div>
      <div class="note" style="margin-top:26px;font-size:13px;text-align:center;max-width:620px">Training simulator only &mdash; not a medical device. Not affiliated with or endorsed by GE HealthCare.<br>
      Space = Pause Audio &nbsp;&middot;&nbsp; N = Start NIBP &nbsp;&middot;&nbsp; I = Instructor panel &nbsp;&middot;&nbsp; F11 = Full screen</div></div>
    <div id="dim"></div>
@@ -263,7 +299,7 @@ function defaultSettings(cat = 'Adult') {
     bed: 'BED 1', unit: 'ICU', name: '', mrn: '', cat: cat,
     sweep: 25, lead1: 'II', lead2: 'V', gain: 1, showEcg2: true, artScale: 'Auto', co2Scale: 50, tempUnit: 'C',
     colors: {ecg:'#00ff3c', art:'#ff2a2a', cvp:'#4aa3ff', spo2:'#00e5ff', co2:'#ffee00', resp:'#ffee00', nibp:'#ffffff', temp:'#ffffff'},
-    volAlarm: 6, volQrs: 3, toneSet: 'carescape', tvFlatline: false, pauseTime: 120, bezel: true, brightness: 100,
+    volAlarm: 6, volQrs: 3, toneSet: 'carescape', tvFlatline: false, display: 'carescape', pauseTime: 120, bezel: true, brightness: 100,
     lim: lim, apnea: {time: L.apnea, on: true}, xtachy: L.xtachy, xbrady: L.xbrady, arr: arr, nibpAuto: 0,
   };
 }
@@ -279,6 +315,8 @@ const RAMP = {};
 function setTarget(k, v, dur) {
   RAMP[k] = {from: P[k], to: v, t0: simT, dur: Math.max(0.001, dur)};
   if (dur <= 0) P[k] = v;
+  // an instant change of breathing rate (e.g. arrest) drops breaths that were already scheduled
+  if (k === 'rr' && dur <= 0) { breaths = breaths.filter(b => b.t <= simT); breathT = simT + 0.3; }
 }
 let rampDur = 10; // seconds
 const R = {rhythm:'nsr', ectopy:'none', pulseless:false, artifact:false, vfCoarse:true, vtPulse:true};
@@ -815,8 +853,13 @@ let AC = null, master = null, alarmGain = null, qrsGain = null, wave = null;
 function ensureAudio() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
   try {
-    AC = new (window.AudioContext || window.webkitAudioContext)();
-    master = AC.createGain(); master.connect(AC.destination);
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    try { AC = new Ctx({sampleRate: 48000, latencyHint: 'interactive'}); } catch (e) { AC = new Ctx(); }
+    // master -> brick-wall limiter: overlapping alarms can never clip or distort
+    master = AC.createGain(); master.gain.value = 0.9;
+    const lim = AC.createDynamicsCompressor();
+    lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.08;
+    master.connect(lim); lim.connect(AC.destination);
     alarmGain = AC.createGain(); alarmGain.connect(master);
     qrsGain = AC.createGain(); qrsGain.connect(master);
     // IEC 60601-1-8 requires >= 4 harmonics in the 300-4000 Hz range
@@ -842,16 +885,18 @@ function applyVolumes() {
   qrsGain.gain.value = S.volQrs ? 0.012 * S.volQrs : 0;
 }
 const WAVES = {};
+// raised-cosine edges: no clicks or splatter at the start and end of each beep
+const COS_UP = new Float32Array(64).map((_, i) => 0.5 - 0.5 * Math.cos(Math.PI * i / 63));
 function tone(freq, at, dur, gainNode, w, level = 0.5, attack) {
   const o = AC.createOscillator(), g = AC.createGain();
   if (w === true) o.setPeriodicWave(wave); else if (w && WAVES[w]) o.setPeriodicWave(WAVES[w]); else o.type = 'sine';
   o.frequency.value = freq;
-  const edge = Math.min(0.015, dur / 5), rise = attack || edge;
+  const edge = Math.min(0.015, dur / 5), rise = Math.min(attack || edge, dur - edge);
+  const up = COS_UP.map(v => v * level), down = up.slice().reverse();
   g.gain.setValueAtTime(0, at);
-  g.gain.linearRampToValueAtTime(level, at + rise);
-  g.gain.setValueAtTime(level, at + dur - edge);
-  g.gain.linearRampToValueAtTime(0, at + dur);
-  o.connect(g); g.connect(gainNode); o.start(at); o.stop(at + dur + 0.02);
+  g.gain.setValueCurveAtTime(up, at, rise);
+  g.gain.setValueCurveAtTime(down, at + dur - edge, edge);
+  o.connect(g); g.connect(gainNode); o.start(at); o.stop(at + dur + 0.01);
 }
 // Alarm tone sets. Each pattern: notes = [startOffset s, frequency Hz, duration s, wave?, level?], repeat = cycle (s).
 // "carescape" HIGH was measured from a recording of a real CARESCAPE B450 (red "Brady" alarm): 3 beeps of ~105 ms,
@@ -934,13 +979,31 @@ function addTrend(nibpOnly) {
 }
 
 /* ---------------- layout & drawing ---------------- */
-const WAVE_W = 860, WAVE_H = 560, PXMM = 4.9;
+let WAVE_W = 860, WAVE_H = 560, WAVE_TOP = 48;
+const PXMM = 4.9;
 const cv = $('#waveCv'), ctx = cv.getContext('2d');
 let rows = [], chans = [], dpr = 1, scale = 1, frozen = false;
+const isHouse = () => S.display === 'house';
+function applyGeometry() {
+  // CARESCAPE B450 screen vs. the House M.D. set monitor (GE Dash-style)
+  const h = isHouse();
+  $('#screen').classList.toggle('house', h);
+  WAVE_TOP = h ? 30 : 48; WAVE_W = h ? 900 : 860; WAVE_H = h ? 500 : 560;
+  const st = (sel, css) => Object.assign($(sel).style, css);
+  st('#top', {height: WAVE_TOP + 'px'});
+  st('#waveCv', {top: WAVE_TOP + 'px'});
+  st('#params', {left: WAVE_W + 'px', top: WAVE_TOP + 'px', width: (1280 - WAVE_W) + 'px', height: WAVE_H + 'px'});
+  st('#bottomRow', {top: (WAVE_TOP + WAVE_H) + 'px', height: (h ? 204 : 130) + 'px'});
+  st('#frozen', {top: (WAVE_TOP + 6) + 'px'});
+  $('#bezelBottom .brand').innerHTML = h ? 'House M.D. set monitor &nbsp;<span style="font-weight:400;color:#7d848c">Dash-style simulator</span>'
+    : 'CARESCAPE&nbsp; B450 &nbsp;<span style="font-weight:400;color:#7d848c">simulator</span>';
+  buildMenuBar();
+}
 function layout() {
+  applyGeometry();
   rows = [];
   const ecgOn = SEN.ecg !== 'none';
-  if (ecgOn) rows.push({id:'ecg1', w:1.25}), S.showEcg2 && rows.push({id:'ecg2', w:1.0});
+  if (ecgOn) rows.push({id:'ecg1', w: isHouse() ? 1.45 : 1.25}), S.showEcg2 && !isHouse() && rows.push({id:'ecg2', w:1.0});
   if (SEN.art === 'ok') rows.push({id:'art', w:1.1});
   if (SEN.cvp === 'ok') rows.push({id:'cvp', w:0.8});
   if (SEN.spo2 !== 'none') rows.push({id:'spo2', w:0.95});
@@ -952,8 +1015,9 @@ function layout() {
   chans = rows.map(r => ({row: r, x: 0, t: simT, last: null, speed: (r.id === 'co2' || r.id === 'resp' ? S.sweep / 4 : S.sweep) * PXMM}));
   buildParams(); resizeCanvas(); buildWaveLabels();
 }
+const HOUSE_COLORS = {ecg:'#33d26a', art:'#ff3b3b', cvp:'#4d9dff', spo2:'#3fb8cf', co2:'#e3e35a', resp:'#e3e35a', nibp:'#e04fd2', temp:'#d9dde6'};
 function rowColor(id) {
-  const c = S.colors;
+  const c = isHouse() ? HOUSE_COLORS : S.colors;
   return {ecg1:c.ecg, ecg2:c.ecg, art:c.art, cvp:c.cvp, spo2:c.spo2, co2:c.co2, resp:c.resp}[id];
 }
 function artScale() {
@@ -989,12 +1053,12 @@ function resizeCanvas() {
 }
 function drawStatic() {
   // pressure scale lines
-  for (const r of rows) if (r.id === 'art' || r.id === 'cvp') drawScale(r, 0, WAVE_W);
+  for (const r of rows) if (r.id === 'art' || r.id === 'cvp' || (isHouse() && r.id === 'spo2')) drawScale(r, 0, WAVE_W);
 }
 function drawScale(r, x0, x1) {
   const top = r.y + 18, h = r.h - 26;
   const max = r.id === 'art' ? artScaleNow : 20;
-  ctx.save(); ctx.strokeStyle = rowColor(r.id); ctx.globalAlpha = 0.45; ctx.setLineDash([2, 6]); ctx.lineWidth = 1;
+  ctx.save(); ctx.strokeStyle = isHouse() && r.id === 'spo2' ? '#4b5468' : rowColor(r.id); ctx.globalAlpha = 0.45; ctx.setLineDash([2, 6]); ctx.lineWidth = 1;
   for (const f of [0, 0.5, 1]) { const y = Math.round(top + h - f * h) + 0.5; ctx.beginPath(); ctx.moveTo(Math.max(x0, 34), y); ctx.lineTo(x1, y); ctx.stroke(); }
   ctx.restore();
 }
@@ -1002,22 +1066,22 @@ function buildWaveLabels() {
   const box = $('#waveLabels'); box.innerHTML = '';
   for (const r of rows) {
     const c = rowColor(r.id);
-    const lbl = document.createElement('div'); lbl.className = 'wlbl'; lbl.style.left = '8px'; lbl.style.top = (48 + r.y + 2) + 'px'; lbl.style.color = c;
+    const lbl = document.createElement('div'); lbl.className = 'wlbl'; lbl.style.left = '8px'; lbl.style.top = (WAVE_TOP + r.y + 2) + 'px'; lbl.style.color = c;
     let txt = '';
-    if (r.id === 'ecg1') txt = S.lead1 + ' &nbsp;<span style="font-weight:400;opacity:.8">x' + S.gain + '</span>';
+    if (r.id === 'ecg1') txt = isHouse() ? S.lead1 : S.lead1 + ' &nbsp;<span style="font-weight:400;opacity:.8">x' + S.gain + '</span>';
     else if (r.id === 'ecg2') txt = S.lead2;
     else if (r.id === 'art') txt = 'ART';
     else if (r.id === 'cvp') txt = 'CVP';
-    else if (r.id === 'spo2') txt = 'SpO<sub>2</sub>';
+    else if (r.id === 'spo2') txt = isHouse() ? 'Pleth' : 'SpO<sub>2</sub>';
     else if (r.id === 'co2') txt = 'CO<sub>2</sub>';
     else if (r.id === 'resp') txt = 'RESP <span style="font-weight:400;opacity:.8">Imped.</span>';
     lbl.innerHTML = txt; box.appendChild(lbl);
     if (r.id === 'art' || r.id === 'cvp' || r.id === 'co2') {
       const sc = document.createElement('div'); sc.className = 'wlbl'; sc.style.left = '4px'; sc.style.color = c; sc.style.fontSize = '11px'; sc.style.fontWeight = '400';
-      sc.style.top = (48 + r.y + 18) + 'px'; sc.dataset.scale = r.id; box.appendChild(sc);
-      const sc0 = sc.cloneNode(); sc0.style.top = (48 + r.y + r.h - 22) + 'px'; sc0.textContent = '0'; delete sc0.dataset.scale; box.appendChild(sc0);
+      sc.style.top = (WAVE_TOP + r.y + 18) + 'px'; sc.dataset.scale = r.id; box.appendChild(sc);
+      const sc0 = sc.cloneNode(); sc0.style.top = (WAVE_TOP + r.y + r.h - 22) + 'px'; sc0.textContent = '0'; delete sc0.dataset.scale; box.appendChild(sc0);
     }
-    const m = document.createElement('div'); m.className = 'wmsg'; m.style.left = '330px'; m.style.top = (48 + r.y + r.h / 2 - 10) + 'px';
+    const m = document.createElement('div'); m.className = 'wmsg'; m.style.left = '330px'; m.style.top = (WAVE_TOP + r.y + r.h / 2 - 10) + 'px';
     m.style.color = c; m.dataset.wmsg = r.id; box.appendChild(m);
   }
   updateScaleLabels();
@@ -1029,7 +1093,7 @@ function drawWaves() {
   if (frozen) { for (const c of chans) c.t = simT; return; }
   const ns = artScale(); if (ns !== artScaleNow) { artScaleNow = ns; updateScaleLabels(); }
   const GAP = 14;
-  ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  ctx.lineWidth = isHouse() ? 1.6 : 2; ctx.lineJoin = 'round';
   for (const c of chans) {
     const r = c.row, step = 0.5 / c.speed; // half-pixel resolution
     if (simT - c.t > 2) { c.t = simT - 2; }
@@ -1052,7 +1116,7 @@ function flush(c, pts, GAP) {
   const x0 = c.last ? c.last[0] : pts[0][0], x1 = pts[pts.length - 1][0];
   ctx.clearRect(x0 + 1, r.y, x1 - x0 + GAP, r.h);
   if (x1 + GAP > WAVE_W) ctx.clearRect(0, r.y, x1 + GAP - WAVE_W, r.h);
-  if (r.id === 'art' || r.id === 'cvp') { drawScale(r, x0 + 1, Math.min(WAVE_W, x1 + GAP)); }
+  if (r.id === 'art' || r.id === 'cvp' || (isHouse() && r.id === 'spo2')) { drawScale(r, x0 + 1, Math.min(WAVE_W, x1 + GAP)); }
   ctx.strokeStyle = rowColor(r.id);
   ctx.beginPath();
   let pen = false;
@@ -1070,6 +1134,7 @@ let PW = {};
 function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
 function place(e, css) { Object.assign(e.style, css); return e; }
 function buildParams() {
+  if (isHouse()) return buildParamsHouse();
   const box = $('#params'); box.innerHTML = ''; PW = {};
   const rmap = Object.fromEntries(rows.map(r => [r.id, r]));
   const mk = (id, r1, r2, color) => {
@@ -1151,6 +1216,45 @@ function buildParams() {
     <div class="sub" style="left:10px;top:30px;font-size:14px;line-height:1.5" data-v="info"></div>`;
   ex.onclick = () => openPatientMenu();
 }
+function buildParamsHouse() {
+  // right-hand column and NBP strip laid out like the House M.D. set monitor
+  const box = $('#params'); box.innerHTML = ''; PW = {};
+  const C = HOUSE_COLORS, W = 1280 - WAVE_W;
+  const rmap = Object.fromEntries(rows.map(r => [r.id, r]));
+  const mk = (id, r, color, html) => {
+    const w = place(el('div', 'pw'), {left: '0px', top: r.y + 'px', width: W + 'px', height: r.h + 'px', color: color});
+    w.style.setProperty('--pc', color); w.innerHTML = html; w.onclick = () => openAlarmsSetup();
+    box.appendChild(w); PW[id] = {el: w, h: r.h}; return w;
+  };
+  const big = (key, h, right = 40) => `<div class="big" data-v="${key}" style="right:${right}px;top:${Math.max(4, h * 0.08)}px;font-size:${Math.min(96, h * 0.55)}px"></div>`;
+  if (rmap.ecg1) { const h = rmap.ecg1.h;
+    mk('hr', rmap.ecg1, C.ecg, `<div class="lbl">HR<span class="belloff" data-bell="hr"></span></div><div class="lim" style="left:10px;top:26px" data-lim="hr"></div>
+      ${big('hr', h)}<div class="hsub" style="left:10px;bottom:10px">ST-${S.lead1}<b data-v="hst"></b></div>
+      <div class="hsub" style="left:150px;bottom:10px">PVC<b data-v="hpvc"></b></div><div class="msg" data-msg="hr" style="display:none"></div>`); }
+  if (rmap.art) mk('art', rmap.art, C.art, `<div class="lbl">ART</div><div class="lim" style="left:10px;top:26px" data-lim="art"></div>
+      <div class="big" data-v="artSD" style="right:20px;top:8px;font-size:${Math.min(54, rmap.art.h * 0.42)}px"></div>
+      <div class="big" data-v="artM" style="right:20px;top:${rmap.art.h * 0.56}px;font-size:${Math.min(34, rmap.art.h * 0.26)}px"></div>`);
+  if (rmap.cvp) mk('cvp', rmap.cvp, C.cvp, `<div class="lbl">CVP</div><div class="lim" style="left:10px;top:26px" data-lim="cvp"></div>${big('cvp', rmap.cvp.h)}`);
+  if (rmap.spo2) { const h = rmap.spo2.h;
+    mk('spo2', rmap.spo2, C.spo2, `<div class="lbl">SpO<sub>2</sub></div><div class="lim" style="left:10px;top:26px" data-lim="spo2"></div>
+      ${big('spo2', h)}<div class="hsub" style="left:150px;bottom:8px">&#128276; Pulse<b data-v="pr"></b></div>`); }
+  if (rmap.co2) mk('co2', rmap.co2, C.co2, `<div class="lbl">CO<sub>2</sub></div><div class="lim" style="left:10px;top:26px" data-lim="co2"></div>
+      ${big('etco2', rmap.co2.h)}<div class="hsub" style="left:10px;bottom:8px">Fi<b data-v="fico2"></b></div><div class="hsub" style="left:120px;bottom:8px">Resp<b data-v="rr"></b></div>`);
+  if (rmap.resp) mk('resp', rmap.resp, C.resp, `<div class="lbl">Resp</div><div class="lim" style="left:10px;top:26px" data-lim="rr"></div>${big('rr', rmap.resp.h)}`);
+  const br = $('#bottomRow'); br.innerHTML = '';
+  const nb = el('div', 'bpw'); nb.style.flex = '2.4'; nb.style.color = C.nibp; nb.style.setProperty('--pc', C.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 204};
+  nb.innerHTML = `<div class="lbl">NBP &nbsp; Cuff</div><div class="lim" style="left:10px;top:26px" data-lim="nibp"></div>
+    <div class="hsub" style="left:300px;top:8px" data-v="nibpMode"></div>
+    <div class="big" style="left:90px;top:56px;font-size:100px"><span data-v="nibpSD"></span> <span data-v="nibpM"></span></div>
+    <div class="msg" data-msg="nibp" style="left:10px;bottom:8px"></div>`;
+  nb.onclick = () => openNibpMenu();
+  const nl = el('div', 'bpw'); nl.style.color = C.nibp; br.appendChild(nl);
+  nl.innerHTML = `<div class="lbl">NBP <span style="font-size:11px">mmHg</span></div><div class="nlist" style="left:14px;top:30px" data-v="nibpList"></div>`;
+  nl.onclick = () => openNibpMenu();
+  if (SEN.temp === 'ok') { const tp = el('div', 'bpw'); tp.style.flex = '.7'; tp.style.color = C.temp; tp.style.setProperty('--pc', C.temp); br.appendChild(tp); PW.temp = {el: tp, h: 204};
+    tp.innerHTML = `<div class="lbl">T1 <span style="font-size:11px" data-v="tunit"></span></div><div class="lim" style="left:10px;top:26px" data-lim="t1"></div>
+      <div class="big" data-v="t1" style="right:20px;top:60px;font-size:48px"></div>`; tp.onclick = () => openAlarmsSetup(); }
+}
 const fmt = v => v == null ? '---' : String(v);
 function setV(sel, html) { document.querySelectorAll('[data-v="' + sel + '"]').forEach(e => { if (e.innerHTML !== html) e.innerHTML = html; }); }
 function tempStr(c) { if (c == null) return '---'; return S.tempUnit === 'F' ? (c * 9 / 5 + 32).toFixed(1) : c.toFixed(1); }
@@ -1177,6 +1281,12 @@ function updateParams() {
   if (NB.last) info += NB.last.time.toTimeString().slice(0, 5) + '<br>';
   if (S.nibpAuto && NB.nextAuto != null && NB.state === 'idle') { const r = Math.max(0, NB.nextAuto - simT); info += 'Next ' + Math.floor(r / 60) + ':' + pad2(Math.floor(r % 60)); }
   setV('nibpSD', sd); setV('nibpM', mm); setV('nibpInfo', info);
+  if (isHouse()) {
+    setV('hst', M.hr == null ? '---' : (P.st || 0).toFixed(1)); setV('hpvc', M.hr == null ? '---' : String(M.pvc));
+    setV('nibpMode', S.nibpAuto ? 'Auto ' + S.nibpAuto + ' min' : 'Manual');
+    const hist = trends.filter(r => r.nibp).slice(0, 5);
+    setV('nibpList', hist.length ? hist.map(r => ':' + pad2(r.time.getMinutes()) + '   ' + r.nibp).join('\n') : '');
+  }
   setV('info', (S.name || '<span style="opacity:.6">No name</span>') + '<br>' + S.cat + (S.mrn ? ' · ' + S.mrn : '') + '<br>' +
     '<span style="opacity:.7">Alarm vol ' + S.volAlarm + ' · QRS ' + S.volQrs + '</span>');
   // limits
@@ -1274,8 +1384,24 @@ function toast(msg) { infoMsg = {msg: msg, until: simT + 4}; }
 
 /* ---------------- main menu bar ---------------- */
 const BELL_SVG = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/><path stroke="#ff4040" stroke-width="2.4" d="M3 3l18 18"/></svg>';
+const HOUSE_KEYS = [
+  // the soft-key bar on the House M.D. set monitor (GE Dash-style), left to right
+  ['mkPause', '&#128264;', 'Silence', pauseAudio, 'hk-y'],
+  ['hkAlmOff', '&#128276;', 'Alarms<br>Off', () => { pauseAudio(); if (simT < pauseUntil) { pauseUntil = simT + 300; toast('Alarms off for 5 minutes'); } }, 'hk-y'],
+  ['hkPrev', '&#9664;&#9664;', '', () => openDataMenu(), 'hk-n'],
+  ['mkNibp', '&#9711;&#9711;', 'Start/<br>Stop', nibpStart, ''],
+  ['hkStopAll', '&#9711;', 'Stop<br>All', () => { NB.state = 'idle'; NB.cuff = 0; NB.statUntil = 0; toast('NBP stopped'); }, ''],
+  ['mkZero', '&rarr;0&larr;', 'Zero<br>Press', zeroAll, ''],
+  ['hkRec', '&#10140;', 'Realtime<br>Record', () => toast('Realtime recording (no recorder connected)'), ''],
+  ['hkDly', '&#8631;', 'Delayed<br>Record', () => toast('Delayed recording (no recorder connected)'), ''],
+  ['hkEvt', '&#9776;', 'Manual<br>Event', () => { logAlarm('info', 'Manual event'); toast('Manual event stored'); }, ''],
+  ['hkStby', '&#9211;', 'Monitor<br>Standby', () => setStandby(true), ''],
+  ['hkNext', '&#9654;&#9654;', '', () => openNibpMenu(), 'hk-n'],
+  ['hkSetup', '&#128295;', 'Main<br>Setup', () => openMonitorSetup(), 'hk-p'],
+  ['hkMore', '&#9634;', 'More<br>Screens', () => openDataMenu(), 'hk-p'],
+];
 function buildMenuBar() {
-  const keys = [
+  const keys = isHouse() ? HOUSE_KEYS : [
     // order and names as on a real B450 main menu
     ['mkHome', '&#8962;', 'Normal<br>Screen', closeMenu],
     ['mkAlarms', '&#9888;', 'Alarms<br>Setup', () => openAlarmsSetup()],
@@ -1291,8 +1417,8 @@ function buildMenuBar() {
     ['mkPause', BELL_SVG, '', pauseAudio],
   ];
   const bar = $('#menubar'); bar.innerHTML = '';
-  for (const [id, ic, label, fn] of keys) {
-    const k = el('div', 'mk', `<span class="ic">${ic}</span><span>${label}</span>${id === 'mkPause' ? '<span class="cnt"></span>' : ''}`);
+  for (const [id, ic, label, fn, cls] of keys) {
+    const k = el('div', 'mk' + (cls ? ' ' + cls : ''), `<span class="ic">${ic}</span><span>${label}</span>${id === 'mkPause' ? '<span class="cnt"></span>' : ''}`);
     k.id = id; k.onclick = e => { ensureAudio(); fn(); }; bar.appendChild(k);
   }
 }
@@ -1302,7 +1428,7 @@ function zeroAll() {
   setTimeout(() => toast('ART / CVP zeroed'), 2200);
 }
 function toggleFreeze() {
-  frozen = !frozen; $('#frozen').style.display = frozen ? 'block' : 'none'; $('#mkFreeze').classList.toggle('on', frozen);
+  frozen = !frozen; $('#frozen').style.display = frozen ? 'block' : 'none'; const fz = $('#mkFreeze'); if (fz) fz.classList.toggle('on', frozen);
   if (frozen) freezeTimer = setTimeout(() => frozen && toggleFreeze(), 60000);
   else { clearTimeout(freezeTimer); resizeCanvas(); }
 }
@@ -1392,8 +1518,8 @@ function openAlarmsSetup(idx = 0) {
     }},
     {name: 'Audio', build: b => {
       row(b, 'Alarm volume', stepper(() => S.volAlarm, v => { S.volAlarm = v; applyVolumes(); }, 1, 10, 1), button('Test', () => testAlarm('high')));
-      row(b, 'Sound style', button('Real B450', () => { setSoundStyle('real'); renderMenu(); }, S.toneSet === 'carescape' && !S.tvFlatline ? 'on' : ''),
-        button('TV / House MD', () => { setSoundStyle('tv'); renderMenu(); }, S.toneSet === 'classic' && S.tvFlatline ? 'on' : ''));
+      row(b, 'Monitor style', button('CARESCAPE B450', () => { setSoundStyle('real'); renderMenu(); }, S.display !== 'house' ? 'on' : ''),
+        button('House M.D.', () => { setSoundStyle('tv'); renderMenu(); }, S.display === 'house' ? 'on' : ''));
       row(b, 'Asystole flatline tone', toggle(() => S.tvFlatline, v => S.tvFlatline = v, 'Continuous (TV)', 'Off (real monitor)'));
       row(b, 'Audio pause time', choice([[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min']], () => S.pauseTime, v => S.pauseTime = +v));
       row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','GE legacy / TV (House MD style)']], () => S.toneSet, v => S.toneSet = v),
@@ -1425,8 +1551,10 @@ function autoLimits() {
   save(); renderMenu(); toast('Auto limits set');
 }
 function setSoundStyle(st) {
-  if (st === 'tv') { S.toneSet = 'classic'; S.tvFlatline = true; } else { S.toneSet = 'carescape'; S.tvFlatline = false; }
-  save(); syncSoundPick();
+  // "tv" = the House M.D. set monitor: its screen and its sounds together
+  if (st === 'tv') { S.toneSet = 'classic'; S.tvFlatline = true; S.display = 'house'; }
+  else { S.toneSet = 'carescape'; S.tvFlatline = false; S.display = 'carescape'; }
+  save(); syncSoundPick(); if (powered) layout(); else applyGeometry();
 }
 function syncSoundPick() { const e = $('#soundPick'); if (e) e.value = S.toneSet === 'classic' && S.tvFlatline ? 'tv' : 'real'; }
 function testAlarm(level) {
@@ -1440,6 +1568,7 @@ function openMonitorSetup() {
       row(b, 'Sweep speed', choice([[12.5,'12.5 mm/s'],[25,'25 mm/s'],[50,'50 mm/s']], () => S.sweep, v => { S.sweep = +v; layout(); }));
       row(b, 'Second ECG waveform', toggle(() => S.showEcg2, v => { S.showEcg2 = v; layout(); }));
       row(b, 'Brightness', stepper(() => S.brightness, v => { S.brightness = v; applyBrightness(); }, 20, 100, 10, v => v + '%'));
+      row(b, 'Screen style', choice([['carescape', 'CARESCAPE B450'], ['house', 'House M.D. set monitor']], () => S.display, v => { S.display = v; layout(); }));
       row(b, 'Show monitor housing', toggle(() => S.bezel, v => { S.bezel = v; fit(); }));
       row(b, 'Temperature unit', choice([['C','°C'],['F','°F']], () => S.tempUnit, v => S.tempUnit = v));
       row(b, 'Monitor standby', button('Standby', () => setStandby(true)));
@@ -1738,7 +1867,7 @@ addEventListener('keydown', e => {
 addEventListener('pointerdown', () => ensureAudio(), {capture: true});
 
 /* ---------------- start ---------------- */
-buildMenuBar(); buildInstructor(); applyBrightness(); fit(); updateTop();
+applyGeometry(); buildInstructor(); applyBrightness(); fit(); updateTop();
 requestAnimationFrame(frame);
 if (new URLSearchParams(location.search).has('autostart')) powerOn();
 </script>
