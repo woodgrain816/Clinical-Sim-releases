@@ -888,6 +888,9 @@ function ensureAudio() {
     // House M.D. "beep beep" (measured): two buzzer tones, 662 Hz and 595 Hz, harmonic levels relative to 662 Hz
     WAVES.h662 = mk([[1, 1], [3, .21], [5, .51], [7, .06]]);
     WAVES.h595 = mk([[1, .46], [3, .17], [5, .47], [7, .17], [9, .1]]);
+    // House M.D. pulse-ox tone (3488.5 Hz, nearly pure) and fast beep (2511.6 Hz, slight buzz): measured overtone levels
+    WAVES.ox = mk([[1, 1], [2, .025], [3, .014]]);
+    WAVES.fast = mk([[1, 1], [2, .042], [3, .035], [4, .011]]);
     const fr = new Float32Array(4), fi = new Float32Array(4); fi[1] = 1; fi[3] = 0.28;
     WAVES.flat = AC.createPeriodicWave(fr, fi);
     applyVolumes();
@@ -901,10 +904,29 @@ function applyVolumes() {
 const WAVES = {};
 // raised-cosine edges: no clicks or splatter at the start and end of each beep
 const COS_UP = new Float32Array(64).map((_, i) => 0.5 - 0.5 * Math.cos(Math.PI * i / 63));
-function tone(freq, at, dur, gainNode, w, level = 0.5, attack) {
+// amplitude envelope over a whole beep, from [time fraction, level] points (smooth interpolation)
+function envCurve(pts, n = 256) {
+  const c = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1); let k = 0; while (k < pts.length - 2 && t > pts[k + 1][0]) k++;
+    const [t0, v0] = pts[k], [t1, v1] = pts[k + 1], u = t1 > t0 ? clamp((t - t0) / (t1 - t0), 0, 1) : 1;
+    c[i] = v0 + (v1 - v0) * (0.5 - 0.5 * Math.cos(Math.PI * u));
+  }
+  return c;
+}
+// measured beep shapes (House M.D. clips): pulse-ox peaks early then eases off; the fast beep swells to its peak
+const ENV = {
+  ox:   envCurve([[0, 0], [.05, .8], [.12, 1], [.2, .93], [.32, .8], [.5, .72], [.7, .74], [.85, .66], [.93, .58], [.97, .3], [1, 0]]),
+  fast: envCurve([[0, 0], [.1, .62], [.35, .74], [.6, .95], [.8, 1], [.88, .72], [.95, .25], [1, 0]]),
+};
+function tone(freq, at, dur, gainNode, w, level = 0.5, attack, env) {
   const o = AC.createOscillator(), g = AC.createGain();
   if (w === true) o.setPeriodicWave(wave); else if (w && WAVES[w]) o.setPeriodicWave(WAVES[w]); else o.type = 'sine';
   o.frequency.value = freq;
+  if (env) {   // full measured envelope
+    g.gain.setValueAtTime(0, at); g.gain.setValueCurveAtTime(ENV[env].map(v => v * level), at, dur);
+    o.connect(g); g.connect(gainNode); o.start(at); o.stop(at + dur + 0.01); return;
+  }
   const edge = Math.min(0.015, dur / 5), rise = Math.min(attack || edge, dur - edge);
   const up = COS_UP.map(v => v * level), down = up.slice().reverse();
   g.gain.setValueAtTime(0, at);
@@ -943,17 +965,17 @@ const TONESETS = {
   },
   classic: {
     // red: the fast beeping with the "beep beep" pair on top, as in the House M.D. V-tach scene
-    high:   {notes: [[0, 2512, .082]], repeat: 0.18, layer: 'pair'},
+    high:   {notes: [[0, 2511.6, .08, 'fast', .55, 0, 'fast']], repeat: 0.18, layer: 'pair'},
     pair:   {notes: [...hBeep(0), ...hBeep(.132)], repeat: 0.9},
     medium: {notes: [...hBeep(0), ...hBeep(.132)], repeat: 0.9},
-    low:    {notes: [[0, 2512, .082]], repeat: 15},
+    low:    {notes: [[0, 2511.6, .08, 'fast', .55, 0, 'fast']], repeat: 15},
     // pulse-oximeter alarms (seizure and arrest scenes): pure 3489 Hz, 220 ms, every 0.334 s, as loud as the fast beeping
-    ox:     {notes: [[0, 3489, .22, 'sine', .5, .006]], repeat: 0.334},
+    ox:     {notes: [[0, 3488.5, .236, 'ox', .5, 0, 'ox']], repeat: 0.334},
     // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 505 + 522 Hz)
     ber:    {notes: berNotes(), repeat: 1.12},
   },
 };
-function playPattern(pat, t0) { for (const [off, f, d, w, lv, att] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv, att); }
+function playPattern(pat, t0) { for (const [off, f, d, w, lv, att, env] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv, att, env); }
 let audioPri = 0, audioName = null, nextBurst = 0, nextLayer = 0, nextOx = 0, oxOn = false, flatOsc = null;
 const OX_IDS = new Set(['spo2Lo', 'spo2Hi', 'spo2nop', 'spo2off', 'spo2art']);
 function setFlatline(on) {
