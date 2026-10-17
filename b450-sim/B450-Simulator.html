@@ -820,6 +820,13 @@ function ensureAudio() {
     // IEC 60601-1-8 requires >= 4 harmonics in the 300-4000 Hz range
     const real = new Float32Array([0, 1, 0.5, 0.35, 0.25, 0.15]), imag = new Float32Array(real.length);
     wave = AC.createPeriodicWave(real, imag);
+    // TV-mode timbres, measured from House M.D. clips: a square-wave piezo buzzer (odd harmonics,
+    // strong ring near its ~3.5 kHz resonance = 7th harmonic of 505 Hz) and a 1 kHz flatline with a weak 3rd harmonic.
+    const pr = new Float32Array(10), pi = new Float32Array(10);
+    [[1, 1], [3, 0.3], [5, 0.15], [7, 0.75], [9, 0.08]].forEach(([n, a]) => pi[n] = a);
+    WAVES.piezo = AC.createPeriodicWave(pr, pi);
+    const fr = new Float32Array(4), fi = new Float32Array(4); fi[1] = 1; fi[3] = 0.28;
+    WAVES.flat = AC.createPeriodicWave(fr, fi);
     applyVolumes();
   } catch (e) { AC = null; }
 }
@@ -828,13 +835,15 @@ function applyVolumes() {
   alarmGain.gain.value = 0.02 + 0.075 * S.volAlarm;   // 1..10 (alarm audio cannot be turned off)
   qrsGain.gain.value = S.volQrs ? 0.012 * S.volQrs : 0;
 }
-function tone(freq, at, dur, gainNode, w) {
+const WAVES = {};
+function tone(freq, at, dur, gainNode, w, level = 0.5) {
   const o = AC.createOscillator(), g = AC.createGain();
-  if (w) o.setPeriodicWave(wave); else o.type = 'sine';
+  if (w === true) o.setPeriodicWave(wave); else if (w && WAVES[w]) o.setPeriodicWave(WAVES[w]); else o.type = 'sine';
   o.frequency.value = freq;
+  const edge = Math.min(0.015, dur / 5);
   g.gain.setValueAtTime(0, at);
-  g.gain.linearRampToValueAtTime(0.5, at + 0.015);
-  g.gain.setValueAtTime(0.5, at + dur - 0.02);
+  g.gain.linearRampToValueAtTime(level, at + edge);
+  g.gain.setValueAtTime(level, at + dur - edge);
   g.gain.linearRampToValueAtTime(0, at + dur);
   o.connect(g); g.connect(gainNode); o.start(at); o.stop(at + dur + 0.02);
 }
@@ -843,8 +852,11 @@ function tone(freq, at, dur, gainNode, w) {
 //   high and medium share the 5-note sequence (high plays it twice per burst, IEC 3+2 pulse grouping),
 //   low uses two 200 ms tones and repeats after a 24.8 s silence.
 // "iec": the IEC 60601-1-8 Annex F "general" melody (C-A-F / A-F).
-// "classic": GE legacy (Marquette Solar / Dash compatible) crisis / warning / advisory tones - the sound heard
-//   on most US TV hospital dramas of the 2000s. Reconstructed by ear; no official timing table was available.
+// "classic": TV / House M.D. style. The crisis sounds were measured from two House M.D. clips (the set monitor is a
+//   GE Dash/Solar): flatline crisis = 505 Hz piezo "di-dit" (45 ms on, 15 ms off, 45 ms on) x3, 0.2 s apart, every 1.12 s,
+//   over a continuous 1 kHz flatline; before the arrest = 2512 Hz, ~80 ms beep every 0.18 s (used for every red/yellow
+//   alarm except asystole). The low-priority sound is not in the clips.
+function didit(t, f) { return [[t, f, .038], [t + .062, f, .042]]; }
 function burst5(t0, d, gap) { const f = [523, 698, 784, 880, 988], s = d + gap;
   return [[t0, f[0], d], [t0 + s, f[1], d], [t0 + 2 * s, f[2], d], [t0 + 2 * s + d + 2 * gap + d, f[3], d], [t0 + 3 * s + d + 2 * gap + d, f[4], d]]; }
 const TONESETS = {
@@ -859,18 +871,19 @@ const TONESETS = {
     low:    {notes: [[0,659,.2],[.32,523,.2]], repeat: 16},
   },
   classic: {
-    high:   {notes: [[0,960,.12],[.2,960,.12],[.4,960,.12]], repeat: 0.95},
-    medium: {notes: [[0,880,.2],[.3,660,.2]], repeat: 2.5},
-    low:    {notes: [[0,660,.25]], repeat: 10},
+    high:   {notes: [...didit(0, 505), ...didit(.2, 505), ...didit(.4, 505)], repeat: 1.12, wave: 'piezo'},
+    fast:   {notes: [[0, 2512, .082]], repeat: 0.18},
+    medium: {notes: [...didit(0, 505), ...didit(.2, 505)], repeat: 2.6, wave: 'piezo'},
+    low:    {notes: didit(0, 505), repeat: 10, wave: 'piezo'},
   },
 };
-function playPattern(pat, t0) { for (const [off, f, d] of pat.notes) tone(f, t0 + off, d, alarmGain, true); }
-let audioPri = 0, nextBurst = 0, flatOsc = null;
+function playPattern(pat, t0) { for (const [off, f, d] of pat.notes) tone(f, t0 + off, d, alarmGain, pat.wave || true); }
+let audioPri = 0, audioName = null, nextBurst = 0, flatOsc = null;
 function setFlatline(on) {
   // TV-drama style continuous flatline tone (real monitors use the normal high-priority pattern instead)
   if (on && !flatOsc) {
     const o = AC.createOscillator(), g = AC.createGain();
-    o.type = 'sine'; o.frequency.value = 1000; g.gain.setValueAtTime(0, AC.currentTime); g.gain.linearRampToValueAtTime(0.45, AC.currentTime + 0.03);
+    o.setPeriodicWave(WAVES.flat); o.frequency.value = 1000; g.gain.setValueAtTime(0, AC.currentTime); g.gain.linearRampToValueAtTime(0.32, AC.currentTime + 0.03);
     o.connect(g); g.connect(alarmGain); o.start(); flatOsc = {o: o, g: g};
   } else if (!on && flatOsc) {
     const f = flatOsc; flatOsc = null; f.g.gain.setTargetAtTime(0, AC.currentTime, 0.02); f.o.stop(AC.currentTime + 0.2);
@@ -880,14 +893,17 @@ function audioTick() {
   if (!AC) return;
   const list = (powered && !standby) ? audibleAlarms() : [];
   const flat = S.tvFlatline && list.some(a => a.id === 'asys' && !a.latched);
-  setFlatline(flat);
-  if (flat) { audioPri = -1; return; }
+  setFlatline(flat);   // in the clip the flatline plays together with the crisis alarm
   const p = topPriority(list);
-  const name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
-  if (p !== audioPri) { audioPri = p; nextBurst = AC.currentTime + 0.05; }
+  let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
+  const set = TONESETS[S.toneSet] || TONESETS.carescape;
+  // TV mode follows the House M.D. scene: fast beeping while the patient crashes, triple di-dit + flatline once in asystole
+  if (set.fast && (name === 'medium' || (name === 'high' && !list.some(a => a.id === 'asys' && !a.latched)))) name = 'fast';
+  if (name !== audioName) { audioName = name; nextBurst = AC.currentTime + 0.05; }
+  audioPri = p;
   if (!name) return;
   if (AC.currentTime + 0.15 >= nextBurst) {
-    const pat = (TONESETS[S.toneSet] || TONESETS.carescape)[name];
+    const pat = set[name];
     playPattern(pat, nextBurst);
     nextBurst += pat.repeat;
   }
@@ -1371,6 +1387,8 @@ function openAlarmsSetup(idx = 0) {
       row(b, 'Audio pause time', choice([[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min']], () => S.pauseTime, v => S.pauseTime = +v));
       row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','GE legacy / TV (House MD style)']], () => S.toneSet, v => S.toneSet = v),
         button('High', () => testAlarm('high')), button('Medium', () => testAlarm('medium')), button('Low', () => testAlarm('low')));
+      if (S.toneSet === 'classic') row(b, 'TV crisis sounds', button('Asystole (di-dit + flatline)', () => { testAlarm('high'); ensureAudio(); setFlatline(true); setTimeout(() => setFlatline(false), 3400); }),
+        button('Crashing (fast beeping)', () => { const p = TONESETS.classic.fast; for (let i = 0; i < 16; i++) playPattern(p, AC.currentTime + 0.05 + i * p.repeat); }));
       b.appendChild(el('div', 'note', 'Alarm audio cannot be turned off; the minimum volume is 1. Pause Audio silences active alarms for the pause time; pressing it with no active alarm pre-pauses new alarms.'));
     }},
     {name: 'Active Alarms', build: b => {
@@ -1400,7 +1418,8 @@ function setSoundStyle(st) {
 function syncSoundPick() { const e = $('#soundPick'); if (e) e.value = S.toneSet === 'classic' && S.tvFlatline ? 'tv' : 'real'; }
 function testAlarm(level) {
   ensureAudio(); if (!AC) return;
-  playPattern((TONESETS[S.toneSet] || TONESETS.carescape)[level || 'high'], AC.currentTime + 0.05);
+  const set = TONESETS[S.toneSet] || TONESETS.carescape, pat = set[level || 'high'];
+  for (let i = 0; i < (pat.repeat < 1.5 ? 3 : 1); i++) playPattern(pat, AC.currentTime + 0.05 + i * pat.repeat);
 }
 function openMonitorSetup() {
   openMenu('Monitor Setup', [
