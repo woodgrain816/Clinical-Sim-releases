@@ -828,6 +828,9 @@ function ensureAudio() {
     // harmonic levels measured from the real B450 recording (relative to the 1530 Hz peak)
     WAVES.ge512 = mk([[1, .24], [3, 1], [5, .43], [7, .43], [9, .21]]);
     WAVES.ge500 = mk([[1, .2], [3, .53], [5, .47], [7, .35], [9, .16]]);
+    // House M.D. "beep beep" (measured): two buzzer tones, 662 Hz and 595 Hz, harmonic levels relative to 662 Hz
+    WAVES.h662 = mk([[1, 1], [3, .21], [5, .51], [7, .06]]);
+    WAVES.h595 = mk([[1, .46], [3, .17], [5, .47], [7, .17], [9, .1]]);
     const fr = new Float32Array(4), fi = new Float32Array(4); fi[1] = 1; fi[3] = 0.28;
     WAVES.flat = AC.createPeriodicWave(fr, fi);
     applyVolumes();
@@ -857,9 +860,12 @@ function tone(freq, at, dur, gainNode, w, level = 0.5, attack) {
 //   The same alarm is the three-beep sound in the House M.D. arrest scene. Medium (2 beeps every 2 s) and low (1 beep)
 //   use the same tone; their timing is not measured from a recording.
 // "iec": the IEC 60601-1-8 Annex F "general" melody (C-A-F / A-F).
-// "classic": TV / House M.D. style, measured from the show's V-tach / arrest scene: red and yellow alarms = 2512 Hz
-//   ~80 ms beep every 0.18 s; asystole = continuous 1 kHz flatline on its own.
+// "classic": TV / House M.D. style, measured from the show's V-tach / arrest scene: red alarms = 2512 Hz ~80 ms beep
+//   every 0.18 s with a "beep beep" on top (two 68 ms beeps 0.132 s apart, every 0.9 s; each beep is 662 + 595 Hz
+//   buzzer tones, ~4 dB louder than the fast beeping); yellow alarms = the beep beep alone;
+//   asystole = continuous 1 kHz flatline on its own.
 function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'ge500', .26]]; }
+function hBeep(t) { return [[t, 662, .08, 'h662', .55], [t, 595, .08, 'h595', .55]]; }
 function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
 const TONESETS = {
   carescape: {
@@ -873,9 +879,10 @@ const TONESETS = {
     low:    {notes: [[0,659,.2],[.32,523,.2]], repeat: 16},
   },
   classic: {
-    // red and yellow: the fast beeping from the House M.D. V-tach scene
-    high:   {notes: [[0, 2512, .082]], repeat: 0.18},
-    medium: {notes: [[0, 2512, .082]], repeat: 0.18},
+    // red: the fast beeping with the "beep beep" pair on top, as in the House M.D. V-tach scene
+    high:   {notes: [[0, 2512, .082]], repeat: 0.18, layer: 'pair'},
+    pair:   {notes: [...hBeep(0), ...hBeep(.132)], repeat: 0.9},
+    medium: {notes: [...hBeep(0), ...hBeep(.132)], repeat: 0.9},
     low:    {notes: [[0, 2512, .082]], repeat: 15},
   },
 };
@@ -1392,8 +1399,9 @@ function openAlarmsSetup(idx = 0) {
       row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','GE legacy / TV (House MD style)']], () => S.toneSet, v => S.toneSet = v),
         button('High', () => testAlarm('high')), button('Medium', () => testAlarm('medium')), button('Low', () => testAlarm('low')));
       if (S.toneSet === 'classic') row(b, 'TV crisis sounds', button('Asystole (flatline)', () => { ensureAudio(); setFlatline(true); setTimeout(() => setFlatline(false), 3400); }),
-        button('V-tach (fast beeping)', () => { const c = TONESETS.classic, t0 = AC.currentTime + 0.05;
-          for (let i = 0; i < 28; i++) playPattern(c.high, t0 + i * c.high.repeat); }));
+        button('V-tach (fast + beep beep)', () => { const c = TONESETS.classic, t0 = AC.currentTime + 0.05;
+          for (let i = 0; i < 28; i++) playPattern(c.high, t0 + i * c.high.repeat); for (let i = 0; i < 5; i++) playPattern(c.pair, t0 + 0.4 + i * c.pair.repeat); }),
+        button('Beep beep', () => testAlarm('medium')));
       b.appendChild(el('div', 'note', 'Alarm audio cannot be turned off; the minimum volume is 1. Pause Audio silences active alarms for the pause time; pressing it with no active alarm pre-pauses new alarms.'));
     }},
     {name: 'Active Alarms', build: b => {
