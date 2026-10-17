@@ -197,6 +197,8 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
      <button class="btn" style="font-size:20px;padding:12px 26px" id="resumeBtn">Resume Monitoring</button></div>
    <div id="boot"><div class="t">CARESCAPE B450 SIMULATOR</div><div class="note" style="font-size:14px;margin-top:10px">Self test&hellip;</div><div class="bar"><i id="bootBar"></i></div></div>
    <div id="off" class="on"><div class="t">Monitor is off</div><button id="powerOn">&#9211;&nbsp; Power On</button>
+     <div style="margin-top:18px;font-size:15px;color:#9fb3c8">Alarm sounds:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
+       <option value="real">Real B450 (CARESCAPE tones)</option><option value="tv">TV / House MD style (GE legacy + flatline)</option></select></div>
      <div class="note" style="margin-top:26px;font-size:13px;text-align:center;max-width:620px">Training simulator only &mdash; not a medical device. Not affiliated with or endorsed by GE HealthCare.<br>
      Space = Pause Audio &nbsp;&middot;&nbsp; N = Start NIBP &nbsp;&middot;&nbsp; I = Instructor panel &nbsp;&middot;&nbsp; F11 = Full screen</div></div>
    <div id="dim"></div>
@@ -259,7 +261,7 @@ function defaultSettings(cat = 'Adult') {
     bed: 'BED 1', unit: 'ICU', name: '', mrn: '', cat: cat,
     sweep: 25, lead1: 'II', lead2: 'V', gain: 1, showEcg2: true, artScale: 'Auto', co2Scale: 50, tempUnit: 'C',
     colors: {ecg:'#00ff3c', art:'#ff2a2a', cvp:'#4aa3ff', spo2:'#00e5ff', co2:'#ffee00', resp:'#ffee00', nibp:'#ffffff', temp:'#ffffff'},
-    volAlarm: 6, volQrs: 3, toneSet: 'carescape', pauseTime: 120, bezel: true, brightness: 100,
+    volAlarm: 6, volQrs: 3, toneSet: 'carescape', tvFlatline: false, pauseTime: 120, bezel: true, brightness: 100,
     lim: lim, apnea: {time: L.apnea, on: true}, xtachy: L.xtachy, xbrady: L.xbrady, arr: arr, nibpAuto: 0,
   };
 }
@@ -841,7 +843,8 @@ function tone(freq, at, dur, gainNode, w) {
 //   high and medium share the 5-note sequence (high plays it twice per burst, IEC 3+2 pulse grouping),
 //   low uses two 200 ms tones and repeats after a 24.8 s silence.
 // "iec": the IEC 60601-1-8 Annex F "general" melody (C-A-F / A-F).
-// "classic": approximation of legacy GE Solar/Dash crisis / warning / advisory tones.
+// "classic": GE legacy (Marquette Solar / Dash compatible) crisis / warning / advisory tones - the sound heard
+//   on most US TV hospital dramas of the 2000s. Reconstructed by ear; no official timing table was available.
 function burst5(t0, d, gap) { const f = [523, 698, 784, 880, 988], s = d + gap;
   return [[t0, f[0], d], [t0 + s, f[1], d], [t0 + 2 * s, f[2], d], [t0 + 2 * s + d + 2 * gap + d, f[3], d], [t0 + 3 * s + d + 2 * gap + d, f[4], d]]; }
 const TONESETS = {
@@ -856,19 +859,32 @@ const TONESETS = {
     low:    {notes: [[0,659,.2],[.32,523,.2]], repeat: 16},
   },
   classic: {
-    high:   {notes: [[0,960,.11],[.16,960,.11],[.32,960,.11],[.62,960,.11],[.78,960,.11],[.94,960,.11]], repeat: 1.6},
-    medium: {notes: [[0,740,.22],[.3,880,.22]], repeat: 3.2},
-    low:    {notes: [[0,660,.3]], repeat: 12},
+    high:   {notes: [[0,960,.12],[.2,960,.12],[.4,960,.12]], repeat: 0.95},
+    medium: {notes: [[0,880,.2],[.3,660,.2]], repeat: 2.5},
+    low:    {notes: [[0,660,.25]], repeat: 10},
   },
 };
 function playPattern(pat, t0) { for (const [off, f, d] of pat.notes) tone(f, t0 + off, d, alarmGain, true); }
-let audioPri = 0, nextBurst = 0;
+let audioPri = 0, nextBurst = 0, flatOsc = null;
+function setFlatline(on) {
+  // TV-drama style continuous flatline tone (real monitors use the normal high-priority pattern instead)
+  if (on && !flatOsc) {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = 1000; g.gain.setValueAtTime(0, AC.currentTime); g.gain.linearRampToValueAtTime(0.45, AC.currentTime + 0.03);
+    o.connect(g); g.connect(alarmGain); o.start(); flatOsc = {o: o, g: g};
+  } else if (!on && flatOsc) {
+    const f = flatOsc; flatOsc = null; f.g.gain.setTargetAtTime(0, AC.currentTime, 0.02); f.o.stop(AC.currentTime + 0.2);
+  }
+}
 function audioTick() {
   if (!AC) return;
   const list = (powered && !standby) ? audibleAlarms() : [];
+  const flat = S.tvFlatline && list.some(a => a.id === 'asys' && !a.latched);
+  setFlatline(flat);
+  if (flat) { audioPri = -1; return; }
   const p = topPriority(list);
   const name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
-  if (p !== audioPri) { audioPri = p; nextBurst = AC.currentTime + 0.05; if (p > 0 && p < 3) {} }
+  if (p !== audioPri) { audioPri = p; nextBurst = AC.currentTime + 0.05; }
   if (!name) return;
   if (AC.currentTime + 0.15 >= nextBurst) {
     const pat = (TONESETS[S.toneSet] || TONESETS.carescape)[name];
@@ -881,6 +897,7 @@ function qrsBeep(b) {
   if (!AC || !S.volQrs || standby || !powered) return;
   // pitch follows SpO2 (lower saturation = lower pitch)
   const s = M.spo2 != null ? M.spo2 : 100;
+  if (S.toneSet === 'classic') return tone(960, AC.currentTime + 0.005, 0.08, qrsGain, false); // legacy fixed-pitch beep
   const f = 880 * Math.pow(2, (clamp(s, 60, 100) - 100) / 24);
   tone(f, AC.currentTime + 0.005, 0.06, qrsGain, false);
 }
@@ -1348,8 +1365,11 @@ function openAlarmsSetup(idx = 0) {
     }},
     {name: 'Audio', build: b => {
       row(b, 'Alarm volume', stepper(() => S.volAlarm, v => { S.volAlarm = v; applyVolumes(); }, 1, 10, 1), button('Test', () => testAlarm('high')));
+      row(b, 'Sound style', button('Real B450', () => { setSoundStyle('real'); renderMenu(); }, S.toneSet === 'carescape' && !S.tvFlatline ? 'on' : ''),
+        button('TV / House MD', () => { setSoundStyle('tv'); renderMenu(); }, S.toneSet === 'classic' && S.tvFlatline ? 'on' : ''));
+      row(b, 'Asystole flatline tone', toggle(() => S.tvFlatline, v => S.tvFlatline = v, 'Continuous (TV)', 'Off (real monitor)'));
       row(b, 'Audio pause time', choice([[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min']], () => S.pauseTime, v => S.pauseTime = +v));
-      row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','Legacy (Solar/Dash-style)']], () => S.toneSet, v => S.toneSet = v),
+      row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','GE legacy / TV (House MD style)']], () => S.toneSet, v => S.toneSet = v),
         button('High', () => testAlarm('high')), button('Medium', () => testAlarm('medium')), button('Low', () => testAlarm('low')));
       b.appendChild(el('div', 'note', 'Alarm audio cannot be turned off; the minimum volume is 1. Pause Audio silences active alarms for the pause time; pressing it with no active alarm pre-pauses new alarms.'));
     }},
@@ -1373,6 +1393,11 @@ function autoLimits() {
   set('rr', M.rr || null, v => v * 0.6, v => v * 1.6);
   save(); renderMenu(); toast('Auto limits set');
 }
+function setSoundStyle(st) {
+  if (st === 'tv') { S.toneSet = 'classic'; S.tvFlatline = true; } else { S.toneSet = 'carescape'; S.tvFlatline = false; }
+  save(); syncSoundPick();
+}
+function syncSoundPick() { const e = $('#soundPick'); if (e) e.value = S.toneSet === 'classic' && S.tvFlatline ? 'tv' : 'real'; }
 function testAlarm(level) {
   ensureAudio(); if (!AC) return;
   playPattern((TONESETS[S.toneSet] || TONESETS.carescape)[level || 'high'], AC.currentTime + 0.05);
@@ -1659,6 +1684,7 @@ function powerOff() {
   $('#alarmLight').className = ''; closeMenu();
 }
 $('#powerOn').onclick = powerOn;
+$('#soundPick').onchange = e => setSoundStyle(e.target.value); syncSoundPick();
 $('#pwrBtn').onclick = () => powered ? openConfirm('Turn the monitor off?', 'Monitoring will stop.', powerOff) : powerOn();
 $('#resumeBtn').onclick = () => setStandby(false);
 $('#instrBtn').onclick = () => $('#instr').classList.toggle('open');
