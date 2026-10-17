@@ -50,7 +50,7 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
   font-weight:700;letter-spacing:.3px;white-space:nowrap;overflow:hidden;padding:0 8px;cursor:pointer}
 .abox.high{background:var(--hi);color:#fff}
 .abox.medium{background:var(--med);color:#000}
-.abox.low{background:var(--low);color:#000}
+.abox.low{background:#1e8fe0;color:#fff}
 .abox.info{background:#26303c;color:#e0e6ee;font-weight:500}
 .abox.latched{opacity:.75;outline:2px dashed rgba(255,255,255,.8);outline-offset:-4px}
 .abox .more{font-size:13px;font-weight:600;margin-left:10px;opacity:.85}
@@ -82,8 +82,8 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
 .flash-medium{animation:fm 1.6s steps(1) infinite}
 .solid-low{background:rgba(0,216,255,.85)!important}
 .solid-low *{color:#000!important}
-@keyframes fh{0%{background:#ff1a1a;color:#fff}50%{background:#000}}
-@keyframes fm{0%{background:#ffd400;color:#000}50%{background:#000}}
+@keyframes fh{0%{background:#ff1a1a;color:#fff}50%{background:#000;color:var(--pc)}}
+@keyframes fm{0%{background:#ffd400;color:#000}50%{background:#000;color:var(--pc)}}
 .flash-high .big,.flash-medium .big{mix-blend-mode:normal}
 .dashes{opacity:.9}
 .wlbl{position:absolute;font-size:14px;font-weight:600;pointer-events:none}
@@ -98,9 +98,11 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
 .mk:active{background:#2f6db5}
 .mk .ic{font-size:20px;line-height:1}
 .mk.on{background:#2f6db5;color:#fff}
-.mk.paused{background:#5a4a00;color:#ffe766}
+.mk.paused{background:#5a4a00!important;color:#ffe766!important}
 .mk .cnt{font-size:12px;color:#ffe766}
-#mkPause{flex:1.25}
+#mkPause{flex:0.9;background:#c9a800;color:#000}
+#mkPause .ic svg path:last-child{stroke:#b00000}
+#mkHome{flex:0.8;background:#1f7a3a}
 #mkPause .ic svg{width:26px;height:26px}
 
 /* ---------- menus ---------- */
@@ -820,11 +822,12 @@ function ensureAudio() {
     // IEC 60601-1-8 requires >= 4 harmonics in the 300-4000 Hz range
     const real = new Float32Array([0, 1, 0.5, 0.35, 0.25, 0.15]), imag = new Float32Array(real.length);
     wave = AC.createPeriodicWave(real, imag);
-    // TV-mode timbres, measured from House M.D. clips: a square-wave piezo buzzer (odd harmonics,
-    // strong ring near its ~3.5 kHz resonance = 7th harmonic of 505 Hz) and a 1 kHz flatline with a weak 3rd harmonic.
-    const pr = new Float32Array(10), pi = new Float32Array(10);
-    [[1, 1], [3, 0.3], [5, 0.15], [7, 0.75], [9, 0.08]].forEach(([n, a]) => pi[n] = a);
-    WAVES.piezo = AC.createPeriodicWave(pr, pi);
+    // TV flatline (measured from House M.D.): 1 kHz with a weak 3rd harmonic.
+    const mk = (h) => { const r = new Float32Array(10), i = new Float32Array(10); h.forEach(([n, a]) => i[n] = a);
+      return AC.createPeriodicWave(r, i, {disableNormalization: true}); };
+    // harmonic levels measured from the real B450 recording (relative to the 1530 Hz peak)
+    WAVES.ge512 = mk([[1, .24], [3, 1], [5, .43], [7, .43], [9, .21]]);
+    WAVES.ge500 = mk([[1, .2], [3, .53], [5, .47], [7, .35], [9, .16]]);
     const fr = new Float32Array(4), fi = new Float32Array(4); fi[1] = 1; fi[3] = 0.28;
     WAVES.flat = AC.createPeriodicWave(fr, fi);
     applyVolumes();
@@ -847,23 +850,22 @@ function tone(freq, at, dur, gainNode, w, level = 0.5) {
   g.gain.linearRampToValueAtTime(0, at + dur);
   o.connect(g); g.connect(gainNode); o.start(at); o.stop(at + dur + 0.02);
 }
-// Alarm tone sets. Each pattern: notes = [startOffset s, frequency Hz, duration s], repeat = burst cycle (s).
-// "carescape": built from the GE CARESCAPE manual's IEC tone table - 100 ms tones at 523/698/784/880/988 Hz,
-//   high and medium share the 5-note sequence (high plays it twice per burst, IEC 3+2 pulse grouping),
-//   low uses two 200 ms tones and repeats after a 24.8 s silence.
+// Alarm tone sets. Each pattern: notes = [startOffset s, frequency Hz, duration s, wave?, level?], repeat = cycle (s).
+// "carescape" HIGH was measured from a recording of a real CARESCAPE B450 (red "Brady" alarm): 3 beeps of ~105 ms,
+//   onsets 0.2 s apart, repeating every 1.0 s. Each beep is two buzzer tones at once, 512 Hz + 500 Hz, both rich in odd
+//   harmonics (1530/2550/3570 and 1500/2500/3500 Hz); the 12 Hz beat between them gives the GE alarm its "rough" sound.
+//   The same alarm is the three-beep sound in the House M.D. arrest scene. Medium and low use the same tone; their
+//   timing has not been measured yet.
 // "iec": the IEC 60601-1-8 Annex F "general" melody (C-A-F / A-F).
-// "classic": TV / House M.D. style. The crisis sounds were measured from two House M.D. clips (the set monitor is a
-//   GE Dash/Solar): flatline crisis = 505 Hz piezo "di-dit" (45 ms on, 15 ms off, 45 ms on) x3, 0.2 s apart, every 1.12 s,
-//   over a continuous 1 kHz flatline; before the arrest = 2512 Hz, ~80 ms beep every 0.18 s (used for every red/yellow
-//   alarm except asystole). The low-priority sound is not in the clips.
-function didit(t, f) { return [[t, f, .038], [t + .062, f, .042]]; }
-function burst5(t0, d, gap) { const f = [523, 698, 784, 880, 988], s = d + gap;
-  return [[t0, f[0], d], [t0 + s, f[1], d], [t0 + 2 * s, f[2], d], [t0 + 2 * s + d + 2 * gap + d, f[3], d], [t0 + 3 * s + d + 2 * gap + d, f[4], d]]; }
+// "classic": TV / House M.D. style, measured from the show: 2512 Hz, ~80 ms beep every 0.18 s while the patient
+//   crashes, and a continuous 1 kHz flatline (alone) in asystole.
+function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'ge500', .26]]; }
+function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
 const TONESETS = {
   carescape: {
-    high:   {notes: [...burst5(0, .1, .08), ...burst5(1.4, .1, .08)], repeat: 4.8},
-    medium: {notes: burst5(0, .1, .08), repeat: 7.0},
-    low:    {notes: [[0, 784, .2], [.4, 523, .2]], repeat: 25.4},
+    high:   {notes: geGroup(3), repeat: 1.0},
+    medium: {notes: geGroup(3), repeat: 3.0},
+    low:    {notes: geGroup(1), repeat: 15},
   },
   iec: {
     high:   {notes: [[0,523,.15],[.25,880,.15],[.5,698,.15],[1.0,880,.15],[1.25,698,.15],[1.85,523,.15],[2.1,880,.15],[2.35,698,.15],[2.85,880,.15],[3.1,698,.15]], repeat: 6.0},
@@ -871,13 +873,13 @@ const TONESETS = {
     low:    {notes: [[0,659,.2],[.32,523,.2]], repeat: 16},
   },
   classic: {
-    high:   {notes: [...didit(0, 505), ...didit(.2, 505), ...didit(.4, 505)], repeat: 1.12, wave: 'piezo'},
+    high:   {notes: geGroup(3), repeat: 1.0},
     fast:   {notes: [[0, 2512, .082]], repeat: 0.18},
-    medium: {notes: [...didit(0, 505), ...didit(.2, 505)], repeat: 2.6, wave: 'piezo'},
-    low:    {notes: didit(0, 505), repeat: 10, wave: 'piezo'},
+    medium: {notes: geGroup(3), repeat: 3.0},
+    low:    {notes: geGroup(1), repeat: 15},
   },
 };
-function playPattern(pat, t0) { for (const [off, f, d] of pat.notes) tone(f, t0 + off, d, alarmGain, pat.wave || true); }
+function playPattern(pat, t0) { for (const [off, f, d, w, lv] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv); }
 let audioPri = 0, audioName = null, nextBurst = 0, flatOsc = null;
 function setFlatline(on) {
   // TV-drama style continuous flatline tone (real monitors use the normal high-priority pattern instead)
@@ -897,8 +899,9 @@ function audioTick() {
   const p = topPriority(list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   const set = TONESETS[S.toneSet] || TONESETS.carescape;
-  // TV mode follows the House M.D. scene: fast beeping while the patient crashes, triple di-dit + flatline once in asystole
-  if (set.fast && (name === 'medium' || (name === 'high' && !list.some(a => a.id === 'asys' && !a.latched)))) name = 'fast';
+  // TV mode follows the House M.D. scene: fast beeping while the patient crashes, only the flatline in asystole
+  if (flat) name = null;
+  else if (set.fast && (name === 'medium' || name === 'high')) name = 'fast';
   if (name !== audioName) { audioName = name; nextBurst = AC.currentTime + 0.05; }
   audioPri = p;
   if (!name) return;
@@ -1068,6 +1071,7 @@ function buildParams() {
   const mk = (id, r1, r2, color) => {
     const top = r1.y, h = (r2 ? r2.y + r2.h : r1.y + r1.h) - top;
     const w = place(el('div', 'pw'), {left: '0px', top: top + 'px', width: '420px', height: h + 'px', color: color});
+    w.style.setProperty('--pc', color);
     w.onclick = () => openAlarmsSetup();
     box.appendChild(w); PW[id] = {el: w, h: h}; return w;
   };
@@ -1124,7 +1128,7 @@ function buildParams() {
   }
   // bottom row: NIBP, Temp, (SpO2/CO2 without waveform are not shown)
   const br = $('#bottomRow'); br.innerHTML = '';
-  const nb = el('div', 'bpw'); nb.style.flex = '2.2'; nb.style.color = c.nibp; br.appendChild(nb); PW.nibp = {el: nb, h: 130};
+  const nb = el('div', 'bpw'); nb.style.flex = '2.2'; nb.style.color = c.nibp; nb.style.setProperty('--pc', c.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 130};
   nb.innerHTML = `<div class="lbl">NIBP <span style="font-size:12px;font-weight:400">mmHg</span><span class="belloff" data-bell="nibp"></span></div>
     <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="nibp"></div>
     <div class="big" data-v="nibpSD" style="left:150px;top:22px;font-size:66px"></div>
@@ -1132,7 +1136,7 @@ function buildParams() {
     <div class="sub" style="right:12px;top:6px;text-align:right" data-v="nibpInfo"></div>
     <div class="msg" data-msg="nibp"></div>`;
   nb.onclick = () => openNibpMenu();
-  const tp = el('div', 'bpw'); tp.style.color = c.temp; br.appendChild(tp); PW.temp = {el: tp, h: 130};
+  const tp = el('div', 'bpw'); tp.style.color = c.temp; tp.style.setProperty('--pc', c.temp); br.appendChild(tp); PW.temp = {el: tp, h: 130};
   tp.innerHTML = `<div class="lbl">T1 <span style="font-size:12px;font-weight:400" data-v="tunit"></span><span class="belloff" data-bell="temp"></span></div>
     <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="t1"></div>
     <div class="big" data-v="t1" style="right:20px;top:30px;font-size:58px"></div>
@@ -1268,16 +1272,19 @@ function toast(msg) { infoMsg = {msg: msg, until: simT + 4}; }
 const BELL_SVG = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/><path stroke="#ff4040" stroke-width="2.4" d="M3 3l18 18"/></svg>';
 function buildMenuBar() {
   const keys = [
-    ['mkPause', BELL_SVG, 'Pause Audio', pauseAudio],
-    ['mkAlarms', '&#9888;', 'Alarms Setup', () => openAlarmsSetup()],
-    ['mkMon', '&#9881;', 'Monitor Setup', () => openMonitorSetup()],
-    ['mkPt', '&#128100;', 'Patient', () => openPatientMenu()],
-    ['mkData', '&#128200;', 'Data &amp; Pages', () => openDataMenu()],
-    ['mkNibp', '&#9654;', 'NIBP<br>Start/Stop', nibpStart],
-    ['mkAuto', '&#8635;', 'NIBP<br>Setup', () => openNibpMenu()],
-    ['mkZero', '0', 'Zero All', zeroAll],
-    ['mkFreeze', '&#10074;&#10074;', 'Freeze', toggleFreeze],
-    ['mkStby', '&#9789;', 'Standby', () => setStandby(true)],
+    // order and names as on a real B450 main menu
+    ['mkHome', '&#8962;', 'Normal<br>Screen', closeMenu],
+    ['mkAlarms', '&#9888;', 'Alarms<br>Setup', () => openAlarmsSetup()],
+    ['mkMon', '&#9881;', 'Monitor<br>Setup', () => openMonitorSetup()],
+    ['mkProc', '&#9877;', 'Procedures', () => openPatientMenu()],
+    ['mkData', '&#128193;', 'Data &amp;<br>Pages', () => openDataMenu()],
+    ['mkTrends', '&#128200;', 'Trends', () => openDataMenu(1)],
+    ['mkPrint', '&#128424;', 'Print<br>Waveforms', () => toast('Printing waveforms (no recorder connected)')],
+    ['mkFreeze', '&#10074;&#10074;', 'Freeze/<br>Snapshot', toggleFreeze],
+    ['mkNibp', '&#9654;', 'NIBP<br>Start', nibpStart],
+    ['mkAuto', '&#8635;', 'NIBP Auto<br>Stop', () => openNibpMenu()],
+    ['mkZero', '0', 'Zero All<br>Pressures', zeroAll],
+    ['mkPause', BELL_SVG, '', pauseAudio],
   ];
   const bar = $('#menubar'); bar.innerHTML = '';
   for (const [id, ic, label, fn] of keys) {
@@ -1387,7 +1394,7 @@ function openAlarmsSetup(idx = 0) {
       row(b, 'Audio pause time', choice([[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min']], () => S.pauseTime, v => S.pauseTime = +v));
       row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','GE legacy / TV (House MD style)']], () => S.toneSet, v => S.toneSet = v),
         button('High', () => testAlarm('high')), button('Medium', () => testAlarm('medium')), button('Low', () => testAlarm('low')));
-      if (S.toneSet === 'classic') row(b, 'TV crisis sounds', button('Asystole (di-dit + flatline)', () => { testAlarm('high'); ensureAudio(); setFlatline(true); setTimeout(() => setFlatline(false), 3400); }),
+      if (S.toneSet === 'classic') row(b, 'TV crisis sounds', button('Asystole (flatline)', () => { ensureAudio(); setFlatline(true); setTimeout(() => setFlatline(false), 3400); }),
         button('Crashing (fast beeping)', () => { const p = TONESETS.classic.fast; for (let i = 0; i < 16; i++) playPattern(p, AC.currentTime + 0.05 + i * p.repeat); }));
       b.appendChild(el('div', 'note', 'Alarm audio cannot be turned off; the minimum volume is 1. Pause Audio silences active alarms for the pause time; pressing it with no active alarm pre-pauses new alarms.'));
     }},
@@ -1429,6 +1436,7 @@ function openMonitorSetup() {
       row(b, 'Brightness', stepper(() => S.brightness, v => { S.brightness = v; applyBrightness(); }, 20, 100, 10, v => v + '%'));
       row(b, 'Show monitor housing', toggle(() => S.bezel, v => { S.bezel = v; fit(); }));
       row(b, 'Temperature unit', choice([['C','°C'],['F','°F']], () => S.tempUnit, v => S.tempUnit = v));
+      row(b, 'Monitor standby', button('Standby', () => setStandby(true)));
       row(b, 'Full screen', button('Toggle full screen (F11)', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }));
     }},
     {name: 'ECG', build: b => {
@@ -1496,7 +1504,7 @@ function openNibpMenu() {
     b.appendChild(el('div', 'note', 'Recent NIBP results')); b.appendChild(t);
   }}]);
 }
-function openDataMenu() {
+function openDataMenu(tab = 0) {
   openMenu('Data & Pages', [
     {name: 'Vital Signs Trends', build: b => {
       const t = el('table', 'lt'); t.innerHTML = '<tr><th>Time</th><th>HR</th><th>SpO2</th><th>NIBP</th><th>ART</th><th>CVP</th><th>RR</th><th>EtCO2</th><th>T1</th></tr>';
@@ -1514,7 +1522,7 @@ function openDataMenu() {
         tr.innerHTML = `<td>${a.time.toTimeString().slice(0, 8)}</td><td style="color:${a.pri === 'high' ? '#ff5050' : a.pri === 'medium' ? '#ffd400' : '#00d8ff'}">${a.pri.toUpperCase()}</td><td>${esc(a.msg)}</td>`; t.appendChild(tr); });
       if (!alarmHist.length) b.appendChild(el('div', 'note', 'No alarms recorded.')); else b.appendChild(t);
     }},
-  ]);
+  ], tab);
 }
 function drawGraphTrends(c) {
   const g = c.getContext('2d'), W = c.width, H = c.height;
