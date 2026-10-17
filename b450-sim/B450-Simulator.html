@@ -1,0 +1,1687 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B450 Monitor Simulator</title>
+<style>
+:root{
+  --bg:#000; --bezel:#2b2e33; --bezel2:#1d1f23; --txt:#e8e8e8; --dim:#8a8f98;
+  --menu:#1b2430; --menu2:#243244; --menuHi:#2f6db5; --line:#3a4656;
+  --hi:#ff1a1a; --med:#ffd400; --low:#00d8ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidden;
+  font-family:"Segoe UI",Tahoma,Arial,sans-serif;user-select:none;-webkit-user-select:none}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#device{position:absolute;left:0;top:0;transform-origin:0 0}
+#device.bezel{width:1340px;height:892px;background:linear-gradient(#34383e,#24272b);border-radius:22px;
+  box-shadow:0 0 0 2px #15171a,0 12px 40px rgba(0,0,0,.6)}
+#device.nobezel{width:1280px;height:800px}
+#alarmLight{position:absolute;left:470px;top:9px;width:400px;height:22px;border-radius:11px;background:#111;
+  box-shadow:inset 0 2px 4px #000;transition:background .05s}
+#device.nobezel #alarmLight,#device.nobezel #bezelBottom{display:none}
+#alarmLight.red{background:#ff2020;box-shadow:0 0 22px 6px rgba(255,30,30,.7)}
+#alarmLight.yellow{background:#ffd000;box-shadow:0 0 22px 6px rgba(255,210,0,.6)}
+#alarmLight.cyan{background:#18d8ff;box-shadow:0 0 18px 4px rgba(0,216,255,.5)}
+#screen{position:absolute;left:30px;top:42px;width:1280px;height:800px;background:var(--bg);overflow:hidden;
+  border-radius:3px;box-shadow:0 0 0 3px #0c0d0f}
+#device.nobezel #screen{left:0;top:0;border-radius:0;box-shadow:none}
+#bezelBottom{position:absolute;left:30px;right:30px;top:848px;height:40px;display:flex;align-items:center;
+  justify-content:space-between;color:#9aa0a8;font-size:13px;letter-spacing:.5px}
+#bezelBottom .brand{font-weight:600;color:#c5c9cf}
+#bezelBottom .leds{display:flex;gap:18px;align-items:center}
+.led{display:inline-flex;align-items:center;gap:6px}
+.led i{width:9px;height:9px;border-radius:50%;background:#333;display:inline-block}
+.led i.on{background:#3cff5a;box-shadow:0 0 6px #3cff5a}
+.led i.bat{background:#ffb000;box-shadow:0 0 6px #ffb000}
+#pwrBtn{width:30px;height:30px;border-radius:50%;border:2px solid #555;background:#1a1c1f;color:#3cff5a;
+  font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* ---------- top bar ---------- */
+#top{position:absolute;left:0;top:0;width:1280px;height:48px;background:#0d1520;border-bottom:1px solid #2a3442;
+  display:flex;align-items:stretch}
+#ptInfo{width:270px;padding:4px 10px;cursor:pointer;line-height:1.15}
+#ptInfo .bed{font-size:19px;font-weight:600;color:#fff}
+#ptInfo .bed span{color:#9fb3c8;font-weight:400;font-size:15px;margin-left:6px}
+#ptInfo .nm{font-size:13px;color:#b8c4d2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#alarmArea{flex:1;display:flex;gap:4px;padding:4px 4px;align-items:stretch}
+.abox{flex:1;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:21px;
+  font-weight:700;letter-spacing:.3px;white-space:nowrap;overflow:hidden;padding:0 8px;cursor:pointer}
+.abox.high{background:var(--hi);color:#fff}
+.abox.medium{background:var(--med);color:#000}
+.abox.low{background:var(--low);color:#000}
+.abox.info{background:#26303c;color:#e0e6ee;font-weight:500}
+.abox.latched{opacity:.75;outline:2px dashed rgba(255,255,255,.8);outline-offset:-4px}
+.abox .more{font-size:13px;font-weight:600;margin-left:10px;opacity:.85}
+#sysInfo{width:250px;display:flex;align-items:center;justify-content:flex-end;gap:10px;padding-right:10px;font-size:15px}
+#pauseInd{display:none;align-items:center;gap:4px;color:#ffd400;font-weight:700}
+#pauseInd.on{display:flex}
+#clock{text-align:right;line-height:1.1}
+#clock .t{font-size:20px;font-weight:600}
+#clock .d{font-size:11px;color:#9aa6b4}
+#batt{display:flex;align-items:center;gap:3px;font-size:11px;color:#bbb}
+#batt .cell{width:26px;height:12px;border:1.5px solid #bbb;border-radius:2px;position:relative;padding:1px}
+#batt .cell:after{content:"";position:absolute;right:-4px;top:3px;width:2px;height:4px;background:#bbb}
+#batt .fill{height:100%;background:#3cff5a}
+
+/* ---------- waveforms & parameter windows ---------- */
+#waveCv{position:absolute;left:0;top:48px}
+#params{position:absolute;left:860px;top:48px;width:420px;height:560px}
+#bottomRow{position:absolute;left:0;top:608px;width:1280px;height:130px;display:flex;border-top:1px solid #222}
+.pw{position:absolute;border:1px solid #1e252e;background:#000;overflow:hidden;cursor:pointer}
+.bpw{position:relative;flex:1;border-right:1px solid #1e252e;overflow:hidden;cursor:pointer}
+.pw .lbl,.bpw .lbl{position:absolute;left:8px;top:3px;font-size:17px;font-weight:600}
+.pw .lim,.bpw .lim{position:absolute;font-size:12px;line-height:1.05;text-align:right;opacity:.9}
+.pw .big,.bpw .big{position:absolute;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.pw .sub,.bpw .sub{position:absolute;font-size:14px;line-height:1.2}
+.pw .msg,.bpw .msg{position:absolute;left:8px;bottom:3px;right:6px;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden}
+.pw .unit,.bpw .unit{position:absolute;font-size:12px;opacity:.75}
+.belloff{display:inline-block;margin-left:6px;font-size:12px;opacity:.9}
+.flash-high{animation:fh .5s steps(1) infinite}
+.flash-medium{animation:fm 1.6s steps(1) infinite}
+.solid-low{background:rgba(0,216,255,.85)!important}
+.solid-low *{color:#000!important}
+@keyframes fh{0%{background:#ff1a1a;color:#fff}50%{background:#000}}
+@keyframes fm{0%{background:#ffd400;color:#000}50%{background:#000}}
+.flash-high .big,.flash-medium .big{mix-blend-mode:normal}
+.dashes{opacity:.9}
+.wlbl{position:absolute;font-size:14px;font-weight:600;pointer-events:none}
+.wmsg{position:absolute;font-size:16px;font-weight:700;pointer-events:none;letter-spacing:.3px}
+
+/* ---------- main menu ---------- */
+#menubar{position:absolute;left:0;top:738px;width:1280px;height:62px;background:#111a24;border-top:1px solid #2f3b4b;
+  display:flex}
+.mk{flex:1;border-right:1px solid #2a3442;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:13.5px;color:#dfe7f1;cursor:pointer;text-align:center;line-height:1.1;gap:3px;position:relative}
+.mk:hover{background:#1a2836}
+.mk:active{background:#2f6db5}
+.mk .ic{font-size:20px;line-height:1}
+.mk.on{background:#2f6db5;color:#fff}
+.mk.paused{background:#5a4a00;color:#ffe766}
+.mk .cnt{font-size:12px;color:#ffe766}
+#mkPause{flex:1.25}
+#mkPause .ic svg{width:26px;height:26px}
+
+/* ---------- menus ---------- */
+#menuWin{position:absolute;left:8px;top:96px;width:900px;height:632px;background:var(--menu);border:1px solid #4a5a70;
+  border-radius:4px;display:none;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,.8);z-index:20}
+#menuWin.open{display:flex}
+#menuWin .mh{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#22344a;
+  font-size:18px;font-weight:600}
+#menuWin .mh button{background:#33475f;border:1px solid #5b7290;color:#fff;font-size:15px;padding:4px 14px;border-radius:3px;cursor:pointer}
+#menuWin .tabs{display:flex;gap:2px;padding:6px 8px 0;background:#18222e;flex-wrap:wrap}
+#menuWin .tab{padding:7px 14px;background:#22303f;border:1px solid #334356;border-bottom:none;border-radius:4px 4px 0 0;cursor:pointer;font-size:14px}
+#menuWin .tab.on{background:var(--menu2);color:#fff;font-weight:600}
+#menuWin .mb{flex:1;overflow:auto;padding:12px 14px;background:var(--menu2);font-size:14px}
+.row{display:flex;align-items:center;gap:10px;min-height:36px;border-bottom:1px solid #2f3e51}
+.row .k{width:240px;color:#cfd9e6}
+.ctl{display:flex;align-items:center;gap:6px}
+.btn{background:#33475f;border:1px solid #5b7290;color:#fff;font-size:14px;padding:5px 12px;border-radius:3px;cursor:pointer;font-family:inherit}
+.btn:hover{background:#3d5674}
+.btn.on{background:#2f6db5;border-color:#7fb0ff}
+.btn.warn{background:#7a1f1f;border-color:#c55}
+.step{display:flex;align-items:center}
+.step .v{min-width:64px;text-align:center;font-size:16px;font-weight:600;background:#101820;border:1px solid #3c4d62;padding:4px 6px}
+.step .btn{padding:4px 10px;font-size:16px}
+select.sel,input.inp{background:#101820;color:#fff;border:1px solid #3c4d62;font-size:14px;padding:5px 6px;font-family:inherit;border-radius:2px}
+table.lt{border-collapse:collapse;width:100%}
+table.lt th,table.lt td{border-bottom:1px solid #2f3e51;padding:5px 6px;text-align:left;font-size:13.5px}
+table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(--menu2)}
+.note{color:#9fb3c8;font-size:12.5px;margin:8px 0}
+.swatch{width:22px;height:22px;border:2px solid #556;cursor:pointer;display:inline-block;border-radius:2px}
+.swatch.on{border-color:#fff}
+
+/* ---------- overlays ---------- */
+#standby,#boot,#off{position:absolute;inset:0;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:30}
+#standby.on,#boot.on,#off.on{display:flex}
+#standby .t{font-size:44px;font-weight:600;color:#9fb3c8}
+#boot .t{font-size:30px;color:#cfd9e6;letter-spacing:2px}
+#boot .bar{width:360px;height:8px;background:#222;margin-top:24px;border-radius:4px;overflow:hidden}
+#boot .bar i{display:block;height:100%;width:0;background:#2f6db5;transition:width 2.2s linear}
+#off .t{font-size:22px;color:#8a95a3;margin-bottom:22px}
+#off button{font-size:22px;padding:14px 34px;background:#1d3a5c;color:#fff;border:2px solid #4c86c9;border-radius:6px;cursor:pointer;font-family:inherit}
+#dim{position:absolute;inset:0;background:#000;pointer-events:none;opacity:0;z-index:25}
+#frozen{position:absolute;left:10px;top:54px;background:#2f6db5;color:#fff;font-weight:700;padding:3px 10px;font-size:15px;display:none;z-index:5}
+#toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:#26303c;border:1px solid #4a5a70;color:#fff;
+  padding:8px 18px;font-size:16px;border-radius:4px;display:none;z-index:26}
+
+/* ---------- instructor ---------- */
+#instrBtn{position:fixed;right:10px;top:10px;z-index:50;background:#203247;color:#fff;border:1px solid #4c6f96;
+  padding:7px 12px;border-radius:6px;font-size:13px;cursor:pointer;opacity:.85;font-family:inherit}
+#instrBtn:hover{opacity:1}
+#instr{position:fixed;right:0;top:0;bottom:0;width:380px;background:#121820;border-left:1px solid #34465c;z-index:60;
+  transform:translateX(100%);transition:transform .2s;overflow-y:auto;padding:12px 14px 30px;font-size:13px}
+#instr.open{transform:none}
+#instr h2{font-size:16px;margin:2px 0 8px;display:flex;justify-content:space-between;align-items:center}
+#instr h3{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#7f9ab8;margin:16px 0 6px;border-bottom:1px solid #2a3a4d;padding-bottom:3px}
+#instr .ir{display:flex;align-items:center;gap:8px;margin:5px 0}
+#instr .ir label{width:92px;color:#c2cfdd}
+#instr .ir input[type=range]{flex:1}
+#instr .ir output{width:58px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+#instr select,#instr input[type=number]{background:#0b1016;color:#fff;border:1px solid #34465c;padding:4px;font-size:13px;flex:1;font-family:inherit}
+#instr .presets{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+#instr .presets button,#instr .sb{background:#1f3046;color:#e6eef8;border:1px solid #3b5675;padding:6px;font-size:12.5px;border-radius:3px;cursor:pointer;font-family:inherit;text-align:left}
+#instr .presets button:hover,#instr .sb:hover{background:#2a4262}
+#instr .sb.on{background:#7a5b00;border-color:#d7a400}
+#instr .seg{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+#instr .seg .sb{padding:4px 7px;text-align:center}
+#instr .seg .sb.sel{background:#2f6db5;border-color:#7fb0ff}
+#instr .hint{color:#7f9ab8;font-size:11.5px;line-height:1.4}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div id="device" class="bezel">
+  <div id="alarmLight"></div>
+  <div id="screen">
+   <div id="top">
+    <div id="ptInfo"><div class="bed" id="bedTxt">BED 1</div><div class="nm" id="ptTxt">Adult</div></div>
+    <div id="alarmArea"></div>
+    <div id="sysInfo">
+      <div id="pauseInd"><span>&#128277;</span><span id="pauseCnt">2:00</span></div>
+      <div id="batt"><span id="acIco">&#9889;</span><div class="cell"><div class="fill" id="battFill" style="width:100%"></div></div></div>
+      <div id="clock"><div class="t" id="clkT">--:--</div><div class="d" id="clkD"></div></div>
+    </div>
+   </div>
+   <canvas id="waveCv"></canvas>
+   <div id="waveLabels"></div>
+   <div id="params"></div>
+   <div id="bottomRow"></div>
+   <div id="frozen">FROZEN</div>
+   <div id="menubar"></div>
+   <div id="menuWin"><div class="mh"><span id="menuTitle">Menu</span><button id="menuClose">Close &#10005;</button></div>
+     <div class="tabs" id="menuTabs"></div><div class="mb" id="menuBody"></div></div>
+   <div id="toast"></div>
+   <div id="standby"><div class="t">Standby</div><div class="note" style="font-size:16px;margin:12px 0 24px">Monitoring and alarms are suspended.</div>
+     <button class="btn" style="font-size:20px;padding:12px 26px" id="resumeBtn">Resume Monitoring</button></div>
+   <div id="boot"><div class="t">CARESCAPE B450 SIMULATOR</div><div class="note" style="font-size:14px;margin-top:10px">Self test&hellip;</div><div class="bar"><i id="bootBar"></i></div></div>
+   <div id="off" class="on"><div class="t">Monitor is off</div><button id="powerOn">&#9211;&nbsp; Power On</button>
+     <div class="note" style="margin-top:26px;font-size:13px;text-align:center;max-width:620px">Training simulator only &mdash; not a medical device. Not affiliated with or endorsed by GE HealthCare.<br>
+     Space = Pause Audio &nbsp;&middot;&nbsp; N = Start NIBP &nbsp;&middot;&nbsp; I = Instructor panel &nbsp;&middot;&nbsp; F11 = Full screen</div></div>
+   <div id="dim"></div>
+  </div>
+  <div id="bezelBottom">
+    <span class="brand">CARESCAPE&nbsp; B450 &nbsp;<span style="font-weight:400;color:#7d848c">simulator</span></span>
+    <span class="leds"><span class="led"><i id="ledAc" class="on"></i>AC</span><span class="led"><i id="ledBat"></i>Battery</span>
+    <button id="pwrBtn" title="Power / Standby">&#9211;</button></span>
+  </div>
+ </div>
+</div>
+<button id="instrBtn">&#9776; Instructor (I)</button>
+<div id="instr"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   CARESCAPE B450-style patient monitor simulator
+   Single-file, offline. Training / entertainment only.
+   ===================================================================== */
+const VERSION = '1.0';
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const gauss = (x, mu, sd) => Math.exp(-0.5 * ((x - mu) / sd) ** 2);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pad2 = n => String(n).padStart(2, '0');
+
+/* ---------------- settings ---------------- */
+const CAT_LIMITS = {
+  Adult:    {hr:[50,120], spo2:[90,100], artS:[90,160], artD:[50,90], artM:[60,110], nibpS:[90,160], nibpD:[50,90], nibpM:[60,110],
+             cvp:[0,15], rr:[6,30], etco2:[25,50], fico2:[0,8], t1:[35,39], apnea:20, xtachy:160, xbrady:35},
+  Pediatric:{hr:[70,160], spo2:[90,100], artS:[75,130], artD:[40,80], artM:[50,95], nibpS:[75,130], nibpD:[40,80], nibpM:[50,95],
+             cvp:[0,12], rr:[12,40], etco2:[25,50], fico2:[0,8], t1:[35,39], apnea:20, xtachy:200, xbrady:50},
+  Neonate:  {hr:[100,200], spo2:[85,95], artS:[45,90], artD:[25,60], artM:[30,70], nibpS:[45,90], nibpD:[25,60], nibpM:[30,70],
+             cvp:[0,10], rr:[25,70], etco2:[25,50], fico2:[0,8], t1:[35.5,38], apnea:15, xtachy:230, xbrady:80},
+};
+const LIM_KEYS = ['hr','spo2','artS','artD','artM','nibpS','nibpD','nibpM','cvp','rr','etco2','fico2','t1'];
+const LIM_LABEL = {hr:'HR (Tachy / Brady)', spo2:'SpO2 (%)', artS:'ART Sys', artD:'ART Dia', artM:'ART Mean', nibpS:'NIBP Sys',
+  nibpD:'NIBP Dia', nibpM:'NIBP Mean', cvp:'CVP Mean', rr:'RR (resp rate)', etco2:'EtCO2 (mmHg)', fico2:'FiCO2 (mmHg)', t1:'T1 (°C)'};
+const ARR_DEFS = [ // id, name, default priority, group, latching default
+  ['asys','Asystole','high','lethal',true], ['vfib','V Fib/V Tach','high','lethal',true], ['vtach','V Tach','high','lethal',true],
+  ['xtachy','Extreme Tachy','high','hr',true], ['xbrady','Extreme Brady','high','hr',true],
+  ['vt2','VT>2','medium','vent',false], ['accv','Accelerated Ventricular','medium','vent',false], ['vbrady','V Brady','medium','vent',false],
+  ['pause','Pause','medium','vent',false], ['ront','R on T','medium','vent',false], ['couplet','Couplet','low','vent',false],
+  ['bigem','Bigeminy','low','vent',false], ['trigem','Trigeminy','low','vent',false], ['pvc','PVC','low','vent',false],
+  ['tachy','Tachy','medium','hr',false], ['brady','Brady','medium','hr',false],
+  ['afib','A Fib','low','atrial',false], ['irreg','Irregular','low','atrial',false],
+];
+const ARR_NAME = Object.fromEntries(ARR_DEFS.map(a => [a[0], a[1]]));
+const PALETTE = {Green:'#00ff3c', Red:'#ff2a2a', Yellow:'#ffee00', Cyan:'#00e5ff', Blue:'#4aa3ff', White:'#ffffff', Magenta:'#ff4dff', Orange:'#ff9a1a'};
+
+function defaultSettings(cat = 'Adult') {
+  const L = CAT_LIMITS[cat], lim = {};
+  for (const k of LIM_KEYS) lim[k] = {lo: L[k][0], hi: L[k][1], on: true, pri: 'medium'};
+  lim.spo2.pri = 'medium'; lim.fico2.lo = 0;
+  const arr = {};
+  for (const [id, , pri, , latch] of ARR_DEFS) arr[id] = {pri: pri, latch: latch};
+  arr.pvc.pri = 'off'; // PVC alarm off by default on most care units
+  return {
+    bed: 'BED 1', unit: 'ICU', name: '', mrn: '', cat: cat,
+    sweep: 25, lead1: 'II', lead2: 'V', gain: 1, showEcg2: true, artScale: 'Auto', co2Scale: 50, tempUnit: 'C',
+    colors: {ecg:'#00ff3c', art:'#ff2a2a', cvp:'#4aa3ff', spo2:'#00e5ff', co2:'#ffee00', resp:'#ffee00', nibp:'#ffffff', temp:'#ffffff'},
+    volAlarm: 6, volQrs: 3, toneSet: 'carescape', pauseTime: 120, bezel: true, brightness: 100,
+    lim: lim, apnea: {time: L.apnea, on: true}, xtachy: L.xtachy, xbrady: L.xbrady, arr: arr, nibpAuto: 0,
+  };
+}
+let S = defaultSettings();
+try { const saved = JSON.parse(localStorage.getItem('b450sim.settings') || 'null');
+  if (saved && saved.lim && saved.arr) S = Object.assign(defaultSettings(saved.cat || 'Adult'), saved); } catch (e) {}
+function save() { try { localStorage.setItem('b450sim.settings', JSON.stringify(S)); } catch (e) {} }
+
+/* ---------------- patient model ---------------- */
+// P = current physiologic values (ramped), T = instructor targets
+const P = {hr:75, spo2:98, sys:120, dia:78, cvp:8, rr:14, etco2:37, temp:37.0, st:0};
+const RAMP = {};
+function setTarget(k, v, dur) {
+  RAMP[k] = {from: P[k], to: v, t0: simT, dur: Math.max(0.001, dur)};
+  if (dur <= 0) P[k] = v;
+}
+let rampDur = 10; // seconds
+const R = {rhythm:'nsr', ectopy:'none', pulseless:false, artifact:false, vfCoarse:true, vtPulse:true};
+const SEN = {ecg:'ok', spo2:'ok', art:'ok', cvp:'ok', co2:'ok', nibp:'ok', temp:'ok', ac:true};
+let artZeroed = true, cvpZeroed = true, artDamped = false, zeroingUntil = 0;
+let battery = 100;
+
+let simT = 0;               // simulation clock (s)
+let beats = [];             // {t, k:'N'|'V'|'E'|'Vp'|'P', hasP, pr, rr, perf, next, det}
+let schedT = 1.0, lastQRS = 0, beatN = 0, atrialT = 0.6, wenckPR = 0.16, wenckIdx = 0, mob2Idx = 0;
+let breaths = [], breathT = 0.5;
+const RHYTHMS = {
+  nsr:'Sinus rhythm', sbrady:'Sinus bradycardia', stach:'Sinus tachycardia', afib:'Atrial fibrillation', aflut:'Atrial flutter',
+  svt:'SVT', junct:'Junctional', avb1:'1° AV block', wenck:'2° AV block Mobitz I', mob2:'2° AV block Mobitz II',
+  avb3:'3° (complete) AV block', paced:'V-paced', idio:'Idioventricular', vt:'Ventricular tachycardia', vf:'Ventricular fibrillation',
+  asys:'Asystole', pea:'PEA (sinus, no pulse)'
+};
+const RHY_HR = {nsr:75, sbrady:45, stach:120, afib:125, aflut:150, svt:185, junct:50, avb1:68, wenck:60, mob2:48, avb3:36,
+  paced:70, idio:38, vt:175, vf:0, asys:0, pea:70};
+const ECTOPY = {none:'None', pvc:'Occasional PVCs', freq:'Frequent PVCs', bigem:'Bigeminy', trigem:'Trigeminy',
+  couplet:'Couplets', nsvt:'Runs of VT (3-5)', ront:'R on T PVCs'};
+
+function addBeat(b) {
+  const prev = beats.length ? beats[beats.length - 1] : null;
+  if (prev && b.k !== 'P' ) { for (let i = beats.length - 1; i >= 0; i--) if (beats[i].k !== 'P') { beats[i].next = b.t; break; } }
+  b.det = false; beats.push(b);
+}
+function noPulse() { return R.pulseless || R.rhythm === 'pea' || (R.rhythm === 'vt' && !R.vtPulse); }
+
+function scheduleBeats(until) {
+  let guard = 0;
+  while (schedT < until && guard++ < 50) {
+    const rh = R.rhythm, hr = Math.max(P.hr, 1), rr = 60 / hr;
+    const perfN = noPulse() ? 0 : 1;
+    if (rh === 'vf' || rh === 'asys') { schedT += 0.5; continue; }
+    if (rh === 'vt' || rh === 'idio') {
+      addBeat({t: schedT, k: 'V', hasP: false, rr: rr, perf: rh === 'vt' ? (R.vtPulse && !R.pulseless ? 0.55 : 0) : (R.pulseless ? 0 : 0.8)});
+      lastQRS = schedT; schedT += rr * rnd(0.98, 1.02); continue;
+    }
+    if (rh === 'paced') {
+      addBeat({t: schedT, k: 'Vp', hasP: false, rr: rr, perf: perfN}); lastQRS = schedT; schedT += rr; continue;
+    }
+    if (rh === 'afib') {
+      const r = rr * rnd(0.62, 1.38);
+      addBeat({t: schedT, k: 'N', hasP: false, rr: r, perf: perfN * clamp(r / rr, 0.45, 1.1)});
+      lastQRS = schedT; schedT += r; continue;
+    }
+    if (rh === 'aflut') {
+      const ratio = clamp(Math.round(300 / hr), 2, 6);
+      addBeat({t: schedT, k: 'N', hasP: false, rr: ratio * 0.2, perf: perfN});
+      lastQRS = schedT; schedT += ratio * 0.2; continue;
+    }
+    if (rh === 'avb3') {
+      // atrial P waves at ~80/min, independent ventricular escape (wide)
+      while (atrialT < schedT + rr) { addBeat({t: atrialT, k: 'P', hasP: true, pr: 0, rr: 0.75, perf: 0}); atrialT += 0.75 * rnd(0.97, 1.03); }
+      addBeat({t: schedT, k: 'E', hasP: false, rr: rr, perf: perfN}); lastQRS = schedT; schedT += rr; continue;
+    }
+    if (rh === 'wenck') {
+      const pp = rr * 0.75; // 4:3 conduction
+      const seq = [0.16, 0.26, 0.32];
+      if (wenckIdx < 3) {
+        const pr = seq[wenckIdx];
+        addBeat({t: schedT + pr, k: 'N', hasP: true, pr: pr, rr: rr, perf: perfN}); lastQRS = schedT + pr;
+      } else addBeat({t: schedT, k: 'P', hasP: true, pr: 0, rr: rr, perf: 0});
+      wenckIdx = (wenckIdx + 1) % 4; schedT += pp; continue;
+    }
+    if (rh === 'mob2') {
+      const pp = rr * 0.6667; // 3:2 conduction
+      if (mob2Idx < 2) { addBeat({t: schedT + 0.2, k: 'N', hasP: true, pr: 0.2, rr: rr, perf: perfN}); lastQRS = schedT + 0.2; }
+      else addBeat({t: schedT, k: 'P', hasP: true, pr: 0, rr: rr, perf: 0});
+      mob2Idx = (mob2Idx + 1) % 3; schedT += pp; continue;
+    }
+    // sinus-family (nsr, sbrady, stach, avb1, svt, junct, pea) + ectopy
+    const hasP = !(rh === 'svt' || rh === 'junct');
+    const pr = rh === 'avb1' ? 0.30 : 0.16;
+    const nV = ectopyDecide(beatN++);
+    if (nV > 0 && rh !== 'pea') {
+      const coupling = R.ectopy === 'ront' ? 0.30 : clamp(rr * 0.6, 0.34, 0.7);
+      let t = lastQRS + coupling;
+      if (t < schedT - rr * 0.95) t = schedT - rr * 0.4;
+      for (let i = 0; i < nV; i++) {
+        const perf = (coupling < 0.36 || i > 0) ? 0.15 : 0.45;
+        addBeat({t: t, k: 'V', hasP: false, rr: i ? 0.4 : coupling, perf: noPulse() ? 0 : perf, ront: R.ectopy === 'ront' && i === 0});
+        lastQRS = t; t += 0.4;
+      }
+      schedT = Math.max(schedT + rr, lastQRS + rr * 1.1); // compensatory pause
+      continue;
+    }
+    const r = rr * rnd(0.975, 1.025);
+    addBeat({t: schedT, k: 'N', hasP: hasP, pr: pr, rr: r, perf: perfN});
+    lastQRS = schedT; schedT += r;
+  }
+  // prune
+  const cut = simT - 15; let i = 0; while (i < beats.length && beats[i].t < cut) i++; if (i) beats.splice(0, i);
+}
+function ectopyDecide(n) {
+  switch (R.ectopy) {
+    case 'pvc': return Math.random() < 0.07 ? 1 : 0;
+    case 'freq': return Math.random() < 0.2 ? 1 : 0;
+    case 'bigem': return n % 2 === 1 ? 1 : 0;
+    case 'trigem': return n % 3 === 2 ? 1 : 0;
+    case 'couplet': return n % 7 === 6 ? 2 : 0;
+    case 'nsvt': return n % 12 === 11 ? 3 + Math.floor(Math.random() * 3) : 0;
+    case 'ront': return Math.random() < 0.1 ? 1 : 0;
+  }
+  return 0;
+}
+function scheduleBreaths(until) {
+  let guard = 0;
+  while (breathT < until && guard++ < 20) {
+    if (P.rr < 1) { if (breathT > simT + 1) break; breathT += 0.5; continue; }
+    const per = 60 / P.rr * rnd(0.95, 1.05);
+    breaths.push({t: breathT, per: per, ti: Math.min(per * 0.36, 1.6), et: P.etco2});
+    breathT += per;
+  }
+  const cut = simT - 30; let i = 0; while (i < breaths.length && breaths[i].t < cut) i++; if (i) breaths.splice(0, i);
+}
+
+/* ---------------- waveform models ---------------- */
+const LEADS = {
+  I:  {p:.5, r:.6, s:.12, t:.25, w:.7},  II: {p:1, r:1, s:.25, t:.35, w:1},  III:{p:.5, r:.45, s:.3, t:.12, w:.45},
+  aVR:{p:-.7, r:-.75, s:-.1, t:-.28, w:-.8}, aVL:{p:.15, r:.25, s:.35, t:.1, w:-.3}, aVF:{p:.75, r:.75, s:.25, t:.25, w:.75},
+  V:  {p:.45, r:1.25, s:.2, t:.4, w:-.9}
+};
+function beatECG(b, tau, L) {
+  let v = 0;
+  if (b.hasP) v += 0.14 * L.p * gauss(tau, -b.pr + 0.05, 0.022);
+  if (b.k === 'P') return v;
+  if (b.k === 'N') {
+    const qt = clamp(0.38 * Math.sqrt(b.rr), 0.26, 0.44);
+    v += -0.08 * L.s * gauss(tau, 0.012, 0.009) + 1.15 * L.r * gauss(tau, 0.036, 0.011) - 0.3 * L.s * gauss(tau, 0.062, 0.011);
+    if (P.st) { const a = clamp((tau - 0.07) / 0.03, 0, 1) * clamp((qt - 0.04 - tau) / 0.08, 0, 1); v += P.st * 0.1 * Math.sign(L.r || 1) * a; }
+    v += 0.32 * L.t * gauss(tau, qt - 0.09, 0.045);
+    return v;
+  }
+  // wide complexes: V (PVC / VT / idioventricular), E (escape), Vp (paced)
+  let off = 0;
+  if (b.k === 'Vp') { if (tau >= 0 && tau < 0.006) v += 2.2; off = 0.02; }
+  const sc = b.k === 'E' ? 0.75 : 1;
+  const tw = Math.min(0.3, Math.max(0.17, b.rr * 0.55));
+  const x = tau - off;
+  v += sc * (1.35 * L.w * gauss(x, 0.05, 0.03) - 0.55 * L.w * gauss(x, 0.13, 0.03) - 0.42 * L.w * gauss(x, tw, 0.065));
+  return v;
+}
+function ecgAt(t, lead) {
+  if (SEN.ecg === 'leadsoff' || SEN.ecg === 'none') return 0;
+  if (SEN.ecg === 'vlead' && lead === 'V') return 0;
+  const L = LEADS[lead] || LEADS.II;
+  let v = 0;
+  for (let i = beats.length - 1; i >= 0; i--) {
+    const b = beats[i], tau = t - b.t;
+    if (tau < -0.45) continue;
+    if (tau > 1.0) break;
+    v += beatECG(b, tau, L);
+  }
+  const rh = R.rhythm;
+  if (rh === 'afib') v += L.p * (0.05 * Math.sin(2 * Math.PI * 6.1 * t) + 0.035 * Math.sin(2 * Math.PI * 8.3 * t + 2) + 0.02 * Math.sin(2 * Math.PI * 4.7 * t + 1));
+  else if (rh === 'aflut') { const ph = (t * 5) % 1; v += L.p * -0.2 * (ph < 0.8 ? ph / 0.8 : 1 - (ph - 0.8) / 0.2) + 0.1 * L.p; }
+  else if (rh === 'vf') {
+    const a = (R.vfCoarse ? 0.55 : 0.16) * (0.7 + 0.3 * Math.sin(0.45 * t));
+    v += a * (0.6 * Math.sin(2 * Math.PI * 4.6 * t + 1.4 * Math.sin(0.7 * t)) + 0.3 * Math.sin(2 * Math.PI * 6.2 * t + 0.5) + 0.2 * Math.sin(2 * Math.PI * 2.9 * t)) * Math.sign(L.w || 1);
+  }
+  v += 0.02 * Math.sin(2 * Math.PI * 0.25 * t); // baseline wander
+  if (R.artifact) v += 0.18 * Math.sin(2 * Math.PI * 1.7 * t) * Math.sin(2 * Math.PI * 0.3 * t) + (Math.random() - 0.5) * 0.25;
+  if (shockUntil > t) v += 3.5 * Math.exp(-(t - (shockUntil - 1.2)) * 3) * Math.sign(Math.sin(t * 40));
+  return v;
+}
+let shockUntil = -1;
+function lastPerfused(t, delay) {
+  for (let i = beats.length - 1; i >= 0; i--) { const b = beats[i]; if (b.perf > 0 && b.t + delay <= t) return b; }
+  return null;
+}
+function artShape(tau, dur) {
+  if (tau < 0) return 0;
+  if (tau < 0.1) return Math.sin(Math.PI / 2 * tau / 0.1);
+  if (tau < 0.3) return 1 - 0.45 * (tau - 0.1) / 0.2;
+  const notch = 0.55 + 0.07 * gauss(tau, 0.35, 0.025);
+  const k = 1 / Math.max(0.12, (dur - 0.35) * 0.45);
+  const end = Math.exp(-k * Math.max(0.01, dur - 0.32));
+  return Math.max(0, notch * (Math.exp(-k * (tau - 0.3)) - end) / (1 - end));
+}
+function pulseSum(t, delay, shapeFn) {
+  let v = 0, n = 0;
+  for (let i = beats.length - 1; i >= 0 && n < 3; i--) {
+    const b = beats[i]; if (b.k === 'P') continue;
+    const tau = t - b.t - delay; if (tau < 0) continue;
+    n++;
+    if (b.perf <= 0) continue;
+    const dur = (b.next || (b.t + b.rr)) - b.t;
+    v += b.perf * shapeFn(tau, dur);
+  }
+  return v;
+}
+function floorDecay(t, delay) {
+  const lp = lastPerfused(t, delay);
+  const gap = lp ? t - lp.t - delay - Math.max(0.6, (lp.next || lp.t + lp.rr) - lp.t) : 30;
+  return gap > 0 ? Math.exp(-gap / 2.2) : 1;
+}
+function artAt(t) {
+  if (t < zeroingUntil) return 0;
+  const f = floorDecay(t, 0.16);
+  const floorP = 14, D = floorP + (P.dia - floorP) * f;
+  let v = D + (P.sys - P.dia) * pulseSum(t, 0.16, artShape);
+  v += -2.5 * respPhase(t); // respiratory variation
+  if (artDamped) { const m = P.dia + (P.sys - P.dia) / 3; v = m + (v - m) * 0.45; }
+  if (R.artifact) v += 6 * Math.sin(2 * Math.PI * 1.3 * t);
+  return v;
+}
+function plethShape(tau, dur) {
+  if (tau < 0) return 0;
+  if (tau < 0.14) return Math.sin(Math.PI / 2 * tau / 0.14) ** 1.5;
+  const end = Math.max(0.2, dur - 0.14);
+  const x = (tau - 0.14) / end;
+  return Math.max(0, (1 - x) * Math.exp(-1.6 * x) + 0.08 * gauss(tau, 0.36, 0.04));
+}
+function plethAt(t) {
+  if (SEN.spo2 !== 'ok') return 0;
+  let v = pulseSum(t, 0.26, plethShape);
+  if (R.artifact) v += 0.4 * Math.sin(2 * Math.PI * 1.1 * t) + (Math.random() - 0.5) * 0.15;
+  return v;
+}
+function cvpAt(t) {
+  if (t < zeroingUntil) return 0;
+  let v = P.cvp - 1.2 * respPhase(t);
+  for (let i = beats.length - 1; i >= 0; i--) {
+    const b = beats[i], tau = t - b.t;
+    if (tau < -0.2) continue; if (tau > 1) break;
+    if (b.hasP) v += 1.8 * gauss(tau, -b.pr + 0.14, 0.04);
+    if (b.k !== 'P') v += 0.8 * gauss(tau, 0.1, 0.03) + 1.4 * gauss(tau, 0.45, 0.06);
+  }
+  return v;
+}
+function lastBreath(t) { for (let i = breaths.length - 1; i >= 0; i--) if (breaths[i].t <= t) return breaths[i]; return null; }
+function respPhase(t) {
+  const b = lastBreath(t); if (!b) return 0;
+  const tau = t - b.t;
+  if (tau < b.ti) return (1 - Math.cos(Math.PI * tau / b.ti)) / 2;
+  const te = (b.per - b.ti) * 0.75;
+  return tau - b.ti < te ? (1 + Math.cos(Math.PI * (tau - b.ti) / te)) / 2 : 0;
+}
+function respAt(t) {
+  if (SEN.ecg !== 'ok' && SEN.ecg !== 'vlead') return 0;
+  let v = respPhase(t);
+  v += 0.03 * Math.sin(2 * Math.PI * P.hr / 60 * t); // cardiac oscillation
+  if (R.artifact) v += 0.25 * Math.sin(2 * Math.PI * 0.9 * t);
+  return v;
+}
+function co2At(t) {
+  if (SEN.co2 !== 'ok') return 0;
+  const b = lastBreath(t); if (!b) return 0;
+  const tau = t - b.t, prev = breaths[breaths.indexOf(b) - 1];
+  const prevEt = prev ? prev.et : b.et;
+  if (tau < b.ti) {
+    // inspiration: rapid fall to baseline
+    return tau < 0.12 && prev && (b.t - prev.t) < prev.per * 1.3 ? prevEt * (1 - tau / 0.12) : 0;
+  }
+  const te = tau - b.ti, tdur = b.per - b.ti;
+  if (te > tdur * 1.25) return Math.max(0, b.et * Math.exp(-(te - tdur * 1.25) / 1.5)); // apnea: decay
+  const rise = 1 - Math.exp(-te / 0.085);
+  return b.et * rise * (0.92 + 0.08 * Math.min(1, te / tdur));
+}
+
+/* ---------------- measurements ---------------- */
+const M = {hr:null, pvc:0, spo2:null, pr:null, artS:null, artD:null, artM:null, cvp:null, rr:null, etco2:null, fico2:null, t1:null};
+const artBuf = [], cvpBuf = [], co2Buf = [];
+let spo2Filt = 98, lastSample = 0;
+function sampleMeasures() {
+  // called each frame
+  const t = simT;
+  if (t - lastSample < 0.02) return; lastSample = t;
+  if (SEN.art === 'ok') { artBuf.push([t, artAt(t)]); }
+  if (SEN.cvp === 'ok') { cvpBuf.push([t, cvpAt(t)]); }
+  if (SEN.co2 === 'ok') { co2Buf.push([t, co2At(t)]); }
+  for (const B of [artBuf, cvpBuf]) while (B.length && B[0][0] < t - 4) B.shift();
+  while (co2Buf.length && co2Buf[0][0] < t - 20) co2Buf.shift();
+}
+function computeMeasures(dt) {
+  const t = simT;
+  // HR from detected QRS
+  const q = beats.filter(b => b.k !== 'P' && b.t <= t);
+  if (SEN.ecg === 'leadsoff' || SEN.ecg === 'none') M.hr = null;
+  else if (R.rhythm === 'vf') M.hr = null;
+  else if (q.length < 2 || t - q[q.length - 1].t > 6) M.hr = q.length ? 0 : 0;
+  else {
+    const n = Math.min(5, q.length - 1); let s = 0;
+    for (let i = q.length - n; i < q.length; i++) s += q[i].t - q[i - 1].t;
+    let hr = 60 / (s / n);
+    const since = t - q[q.length - 1].t;
+    if (since > (s / n) * 1.5) hr = Math.min(hr, 60 / since);
+    M.hr = Math.round(hr);
+  }
+  const vRecent = beats.filter(b => (b.k === 'V') && b.t > t - 60 && b.t <= t).length;
+  M.pvc = (R.rhythm === 'vt' || R.rhythm === 'idio') ? 0 : vRecent;
+  // SpO2 / PR
+  spo2Filt += (P.spo2 - spo2Filt) * Math.min(1, dt / 5);
+  const pulses = beats.filter(b => b.perf > 0.1 && b.t + 0.26 <= t && b.t > t - 10);
+  if (SEN.spo2 !== 'ok') { M.spo2 = null; M.pr = null; }
+  else if (pulses.length < 2 || t - pulses[pulses.length - 1].t > 8) { M.spo2 = null; M.pr = null; }
+  else {
+    M.spo2 = Math.round(clamp(spo2Filt + (R.artifact ? rnd(-3, 1) : 0), 0, 100));
+    const n = Math.min(5, pulses.length - 1); let s = 0;
+    for (let i = pulses.length - n; i < pulses.length; i++) s += pulses[i].t - pulses[i - 1].t;
+    M.pr = Math.round(60 / (s / n));
+  }
+  // ART
+  if (SEN.art === 'ok' && artZeroed && artBuf.length > 20 && t > zeroingUntil + 3) {
+    let mx = -1e9, mn = 1e9, sum = 0;
+    for (const [, v] of artBuf) { mx = Math.max(mx, v); mn = Math.min(mn, v); sum += v; }
+    M.artS = Math.round(mx); M.artD = Math.round(mn); M.artM = Math.round(sum / artBuf.length);
+  } else M.artS = M.artD = M.artM = null;
+  if (SEN.cvp === 'ok' && cvpZeroed && cvpBuf.length > 20 && t > zeroingUntil + 3) {
+    let sum = 0; for (const [, v] of cvpBuf) sum += v; M.cvp = Math.round(sum / cvpBuf.length);
+  } else M.cvp = null;
+  // RR
+  const br = breaths.filter(b => b.t <= t);
+  const lastB = br[br.length - 1];
+  const respSrcOK = SEN.co2 === 'ok' || SEN.ecg === 'ok' || SEN.ecg === 'vlead';
+  if (!respSrcOK) M.rr = null;
+  else if (!lastB || t - lastB.t > Math.max(12, 3 * (lastB ? lastB.per : 5))) M.rr = 0;
+  else { const n = Math.min(2, br.length - 1); M.rr = n > 0 ? Math.round(60 / ((lastB.t - br[br.length - 1 - n].t) / n)) : Math.round(P.rr); }
+  // CO2
+  if (SEN.co2 === 'ok' && co2Buf.length > 10) {
+    let mx = 0, mn = 99; const lb = lastB ? lastB.per * 1.5 : 8;
+    for (const [tt, v] of co2Buf) if (tt > t - Math.max(4, lb)) { mx = Math.max(mx, v); mn = Math.min(mn, v); }
+    M.etco2 = Math.round(mx); M.fico2 = Math.round(Math.max(0, mn));
+  } else if (SEN.co2 === 'occl') { M.etco2 = null; M.fico2 = null; } else { M.etco2 = M.fico2 = null; }
+  M.t1 = SEN.temp === 'ok' ? Math.round(P.temp * 10) / 10 : null;
+}
+
+/* ---------------- NIBP (oscillometric) ---------------- */
+const NB = {state:'idle', cuff:0, target:0, stepT:0, t0:0, last:null, nextAuto:null, statUntil:0, err:null};
+function nibpStart() {
+  if (standby || !powered) return;
+  if (NB.state !== 'idle') { NB.state = 'idle'; NB.cuff = 0; toast('NIBP measurement stopped'); return; }
+  NB.state = 'infl'; NB.cuff = 0; NB.t0 = simT; NB.err = null;
+  NB.target = Math.max(150, Math.min(260, (NB.last ? NB.last.s : P.sys) + 35));
+}
+function nibpUpdate(dt) {
+  if (NB.state === 'infl') {
+    if (SEN.nibp === 'loose') { NB.cuff = Math.min(28, NB.cuff + dt * 6); if (simT - NB.t0 > 12) nibpFail('NIBP Cuff Loose'); return; }
+    NB.cuff += dt * 32;
+    if (NB.cuff >= NB.target) { NB.cuff = NB.target; NB.state = 'defl'; NB.stepT = simT; }
+  } else if (NB.state === 'defl') {
+    if (simT - NB.stepT > 0.85) { NB.stepT = simT; NB.cuff -= rnd(6, 8.5); }
+    if (simT - NB.t0 > 120) return nibpFail('NIBP Measurement Failed');
+    if (NB.cuff < Math.max(15, P.dia - 15)) {
+      const pulses = beats.filter(b => b.perf > 0.1 && b.t > simT - 10).length;
+      if (pulses < 4 || P.sys < 40) return nibpFail('NIBP Measurement Failed');
+      const noise = R.artifact ? 7 : 2;
+      const s = Math.round(P.sys + rnd(-noise, noise) - 2), d = Math.round(P.dia + rnd(-noise, noise) + 1);
+      NB.last = {s: s, d: d, m: Math.round(d + (s - d) / 3), time: new Date(), ack: false};
+      NB.state = 'idle'; NB.cuff = 0;
+      addTrend(true);
+    }
+  }
+  // auto cycle
+  if (S.nibpAuto > 0 && NB.state === 'idle') {
+    if (NB.nextAuto == null) NB.nextAuto = simT + S.nibpAuto * 60;
+    if (simT >= NB.nextAuto) { NB.nextAuto = simT + S.nibpAuto * 60; nibpStart(); }
+  } else if (S.nibpAuto === 0) NB.nextAuto = null;
+  if (NB.statUntil > simT && NB.state === 'idle' && simT - (NB.lastEnd || 0) > 3) nibpStart();
+  if (NB.state === 'idle' && NB.prevState !== 'idle') NB.lastEnd = simT;
+  NB.prevState = NB.state;
+}
+function nibpFail(msg) { NB.state = 'idle'; NB.cuff = 0; NB.err = {msg: msg, t: simT}; }
+
+/* ---------------- alarm engine ---------------- */
+const PRI = {high: 3, medium: 2, low: 1, info: 0};
+let alarms = {};          // id -> {id, pri, msg, since, param, latch, latched, breakthrough, ack}
+let pending = {};         // id -> first time condition seen (for delays)
+let events = {};          // arrhythmia event id -> until time
+let pauseUntil = 0, pauseStart = -1, alarmHist = [];
+let arrSuspended = false;
+
+function fmtLimMsg(name, v, dir, lim) { return name + ' ' + (dir > 0 ? 'High ' + v + ' > ' + lim : 'Low ' + v + ' < ' + lim); }
+function evalAlarms() {
+  const t = simT, cur = {};
+  const want = (id, pri, msg, o = {}) => {
+    if (!pri || pri === 'off') return;
+    wantedThisTick.add(id);
+    const d = o.delay || 0;
+    if (pending[id] == null) pending[id] = t;
+    if (t - pending[id] < d) return;
+    cur[id] = Object.assign({pri: pri, msg: msg}, o);
+  };
+  wantedThisTick.clear();
+  if (standby || !powered) { alarms = {}; pending = {}; return; }
+  const lim = S.lim;
+  const limCheck = (key, val, name, param, delay) => {
+    const L = lim[key]; if (!L || !L.on || val == null) return;
+    if (val > L.hi) want(key + 'Hi', L.pri, fmtLimMsg(name, val, 1, L.hi), {param: param, delay: delay});
+    else if (val < L.lo) want(key + 'Lo', L.pri, fmtLimMsg(name, val, -1, L.lo), {param: param, delay: delay});
+  };
+  // --- ECG / arrhythmia ---
+  const ecgOk = SEN.ecg === 'ok' || SEN.ecg === 'vlead';
+  arrSuspended = !ecgOk && SEN.ecg !== 'none';
+  if (SEN.ecg === 'leadsoff') want('leads', 'medium', 'Leads Fail', {param: 'hr'});
+  if (SEN.ecg === 'vlead') want('vlead', 'low', 'V Lead Fail', {param: 'hr'});
+  if (arrSuspended) want('arrsusp', 'low', 'Arrhythmia Suspended', {param: 'hr'});
+  if (ecgOk) {
+    const A = S.arr;
+    const q = beats.filter(b => b.k !== 'P' && b.t <= t);
+    const lastQ = q.length ? q[q.length - 1].t : -99;
+    if (R.rhythm === 'vf') want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', delay: 3, latch: true, bt: true});
+    else if (t - lastQ > 4 && t > 6) want('asys', 'high', 'Asystole', {param: 'hr', latch: true, bt: true});
+    // run analysis on newly detected beats
+    detectArrhythmia(q);
+    for (const id in events) {
+      if (events[id] > t) { const a = A[id]; if (a) want(id, a.pri, ARR_NAME[id], {param: 'hr', latch: a.latch, bt: id === 'vtach'}); }
+      else delete events[id];
+    }
+    if (R.rhythm === 'afib') want('afib', A.afib.pri, 'A Fib', {param: 'hr', delay: 12});
+    if (R.rhythm === 'wenck' || R.rhythm === 'mob2') want('irreg', A.irreg.pri, 'Irregular', {param: 'hr', delay: 10});
+    // rate alarms (Tachy/Brady use HR limits)
+    if (M.hr != null && lim.hr.on && R.rhythm !== 'vf' && !cur.asys) {
+      if (M.hr >= S.xtachy) want('xtachy', A.xtachy.pri, 'Extreme Tachy ' + M.hr, {param: 'hr', delay: 4, latch: A.xtachy.latch});
+      else if (M.hr > lim.hr.hi && !events.vtach) want('tachy', A.tachy.pri, 'Tachy ' + M.hr + ' > ' + lim.hr.hi, {param: 'hr', delay: 4});
+      if (M.hr > 0 && M.hr <= S.xbrady) want('xbrady', A.xbrady.pri, 'Extreme Brady ' + M.hr, {param: 'hr', delay: 4, latch: A.xbrady.latch});
+      else if (M.hr > 0 && M.hr < lim.hr.lo) want('brady', A.brady.pri, 'Brady ' + M.hr + ' < ' + lim.hr.lo, {param: 'hr', delay: 4});
+    }
+  } else { lastDetIdx = -1; }
+  // --- SpO2 ---
+  if (SEN.spo2 === 'probeoff') want('spo2off', 'medium', 'SpO2 Probe Off', {param: 'spo2'});
+  else if (SEN.spo2 === 'ok') {
+    if (M.spo2 == null && t > 10) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2', delay: 4});
+    if (R.artifact) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: 3});
+    limCheck('spo2', M.spo2, 'SpO2', 'spo2', 5);
+  }
+  // --- ART / CVP ---
+  if (SEN.art === 'ok') {
+    if (!artZeroed) want('artnz', 'low', 'ART Not Zeroed', {param: 'art'});
+    else { limCheck('artS', M.artS, 'ART Sys', 'art', 2); limCheck('artD', M.artD, 'ART Dia', 'art', 2); limCheck('artM', M.artM, 'ART Mean', 'art', 2);
+    }
+  }
+  if (SEN.cvp === 'ok') {
+    if (!cvpZeroed) want('cvpnz', 'low', 'CVP Not Zeroed', {param: 'cvp'});
+    else limCheck('cvp', M.cvp, 'CVP', 'cvp', 4);
+  }
+  // --- NIBP ---
+  if (NB.last && !NB.last.ack) {
+    limCheck('nibpS', NB.last.s, 'NIBP Sys', 'nibp', 0); limCheck('nibpD', NB.last.d, 'NIBP Dia', 'nibp', 0); limCheck('nibpM', NB.last.m, 'NIBP Mean', 'nibp', 0);
+    for (const k of ['nibpSHi','nibpSLo','nibpDHi','nibpDLo','nibpMHi','nibpMLo']) if (cur[k]) cur[k].ackable = true;
+  }
+  if (NB.err && t - NB.err.t < 60 && !NB.err.ack) want('nibperr', 'low', NB.err.msg, {param: 'nibp', ackable: true});
+  // --- Respiration / CO2 ---
+  if (S.apnea.on && M.rr === 0 && (SEN.co2 === 'ok' || SEN.ecg === 'ok')) {
+    const lb = lastBreath(t);
+    if (lb && t - lb.t > S.apnea.time) want('apnea', 'high', 'Apnea', {param: SEN.co2 === 'ok' ? 'co2' : 'resp'});
+  }
+  if (M.rr) limCheck('rr', M.rr, 'RR', SEN.co2 === 'ok' ? 'co2' : 'resp', 8);
+  if (SEN.co2 === 'occl') want('co2occl', 'medium', 'CO2 Occlusion', {param: 'co2'});
+  if (SEN.co2 === 'ok') { if (M.rr) limCheck('etco2', M.etco2, 'EtCO2', 'co2', 8); limCheck('fico2', M.fico2, 'FiCO2', 'co2', 8);
+    if (lim.fico2.lo === 0 && cur.fico2Lo) delete cur.fico2Lo; }
+  // --- Temp ---
+  if (SEN.temp === 'ok') limCheck('t1', M.t1, 'T1', 'temp', 10);
+  // --- System ---
+  if (!SEN.ac && battery < 20) want('batlow', battery < 8 ? 'high' : 'medium', battery < 8 ? 'Battery Critically Low' : 'Battery Low', {param: null});
+
+  // forget delay timers for conditions that are no longer true
+  for (const id in pending) if (!wantedThisTick.has(id)) delete pending[id];
+  wantedThisTick.clear();
+
+  // merge into active set
+  for (const id in cur) {
+    const c = cur[id], a = alarms[id];
+    if (!a) {
+      alarms[id] = {id: id, pri: c.pri, msg: c.msg, param: c.param, since: t, latch: !!c.latch, bt: !!c.bt, ackable: !!c.ackable, latched: false};
+      logAlarm(c.pri, c.msg);
+    } else { a.msg = c.msg; a.latched = false; if (PRI[c.pri] > PRI[a.pri]) a.pri = c.pri; }
+  }
+  for (const id in alarms) if (!cur[id]) {
+    const a = alarms[id];
+    if (a.latch && !a.acked) a.latched = true; else delete alarms[id];
+  }
+}
+const wantedThisTick = new Set();
+
+let lastDetIdx = -1, lastDetT = 0;
+function detectArrhythmia(q) {
+  const t = simT;
+  // process QRS beats once they are ≥150 ms in the past
+  const newBeats = q.filter(b => !b.det && b.t <= t - 0.15);
+  for (const b of newBeats) {
+    b.det = true;
+    const i = q.indexOf(b); if (i < 1) continue;
+    const prev = q[i - 1], rr = b.t - prev.t;
+    if (rr > 3.0 && rr < 4 && R.rhythm !== 'asys') events.pause = t + 8;
+    if (b.k !== 'V') continue;
+    let k = 0, j = i; while (j >= 0 && q[j].k === 'V') { k++; j--; }
+    const runRate = k > 1 ? 60 / ((b.t - q[i - k + 1].t) / (k - 1)) : 0;
+    if (k >= 6 && runRate >= 100) events.vtach = t + 6;
+    else if (k >= 6 && runRate >= 50) events.accv = t + 8;
+    else if (k >= 3 && runRate >= 100) events.vt2 = t + 8;
+    else if (k >= 3 && runRate < 50) events.vbrady = t + 8;
+    else if (k === 2) events.couplet = t + 8;
+    if (b.ront) events.ront = t + 8;
+    // bigeminy / trigeminy pattern check on last 6 beats
+    const pat = q.slice(Math.max(0, i - 5), i + 1).map(x => x.k === 'V' ? 'V' : 'N').join('');
+    if (pat === 'NVNVNV') events.bigem = t + 8;
+    else if (pat === 'NNVNNV') events.trigem = t + 8;
+    else if (k === 1) events.pvc = t + 6;
+  }
+}
+function logAlarm(pri, msg) {
+  alarmHist.unshift({time: new Date(), pri: pri, msg: msg});
+  if (alarmHist.length > 300) alarmHist.pop();
+}
+function pauseAudio() {
+  if (!powered || standby) return;
+  ensureAudio();
+  if (simT < pauseUntil) { pauseUntil = 0; toast('Audio pause cancelled'); return; }
+  pauseStart = simT; pauseUntil = simT + S.pauseTime;
+  // acknowledge: clear latched alarms whose condition ended, ack NIBP / info
+  for (const id in alarms) { const a = alarms[id]; a.acked = true; if (a.latched) delete alarms[id]; }
+  if (NB.last) NB.last.ack = true;
+  if (NB.err) NB.err.ack = true;
+}
+function audibleAlarms() {
+  const out = [];
+  const paused = simT < pauseUntil;
+  for (const id in alarms) {
+    const a = alarms[id];
+    if (a.pri === 'info') continue;
+    if (a.ackable && a.acked) continue;
+    if (paused && !(a.bt && a.since > pauseStart && a.pri === 'high')) continue;
+    out.push(a);
+  }
+  return out;
+}
+function topPriority(list) { let p = 0; for (const a of list) p = Math.max(p, PRI[a.pri]); return p; }
+
+/* ---------------- audio ---------------- */
+let AC = null, master = null, alarmGain = null, qrsGain = null, wave = null;
+function ensureAudio() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = AC.createGain(); master.connect(AC.destination);
+    alarmGain = AC.createGain(); alarmGain.connect(master);
+    qrsGain = AC.createGain(); qrsGain.connect(master);
+    // IEC 60601-1-8 requires >= 4 harmonics in the 300-4000 Hz range
+    const real = new Float32Array([0, 1, 0.5, 0.35, 0.25, 0.15]), imag = new Float32Array(real.length);
+    wave = AC.createPeriodicWave(real, imag);
+    applyVolumes();
+  } catch (e) { AC = null; }
+}
+function applyVolumes() {
+  if (!AC) return;
+  alarmGain.gain.value = 0.02 + 0.075 * S.volAlarm;   // 1..10 (alarm audio cannot be turned off)
+  qrsGain.gain.value = S.volQrs ? 0.012 * S.volQrs : 0;
+}
+function tone(freq, at, dur, gainNode, w) {
+  const o = AC.createOscillator(), g = AC.createGain();
+  if (w) o.setPeriodicWave(wave); else o.type = 'sine';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(0.5, at + 0.015);
+  g.gain.setValueAtTime(0.5, at + dur - 0.02);
+  g.gain.linearRampToValueAtTime(0, at + dur);
+  o.connect(g); g.connect(gainNode); o.start(at); o.stop(at + dur + 0.02);
+}
+// Alarm tone sets. Each pattern: notes = [startOffset s, frequency Hz, duration s], repeat = burst cycle (s).
+// "carescape": built from the GE CARESCAPE manual's IEC tone table - 100 ms tones at 523/698/784/880/988 Hz,
+//   high and medium share the 5-note sequence (high plays it twice per burst, IEC 3+2 pulse grouping),
+//   low uses two 200 ms tones and repeats after a 24.8 s silence.
+// "iec": the IEC 60601-1-8 Annex F "general" melody (C-A-F / A-F).
+// "classic": approximation of legacy GE Solar/Dash crisis / warning / advisory tones.
+function burst5(t0, d, gap) { const f = [523, 698, 784, 880, 988], s = d + gap;
+  return [[t0, f[0], d], [t0 + s, f[1], d], [t0 + 2 * s, f[2], d], [t0 + 2 * s + d + 2 * gap + d, f[3], d], [t0 + 3 * s + d + 2 * gap + d, f[4], d]]; }
+const TONESETS = {
+  carescape: {
+    high:   {notes: [...burst5(0, .1, .08), ...burst5(1.4, .1, .08)], repeat: 4.8},
+    medium: {notes: burst5(0, .1, .08), repeat: 7.0},
+    low:    {notes: [[0, 784, .2], [.4, 523, .2]], repeat: 25.4},
+  },
+  iec: {
+    high:   {notes: [[0,523,.15],[.25,880,.15],[.5,698,.15],[1.0,880,.15],[1.25,698,.15],[1.85,523,.15],[2.1,880,.15],[2.35,698,.15],[2.85,880,.15],[3.1,698,.15]], repeat: 6.0},
+    medium: {notes: [[0,523,.2],[.32,880,.2],[.64,698,.2]], repeat: 7.5},
+    low:    {notes: [[0,659,.2],[.32,523,.2]], repeat: 16},
+  },
+  classic: {
+    high:   {notes: [[0,960,.11],[.16,960,.11],[.32,960,.11],[.62,960,.11],[.78,960,.11],[.94,960,.11]], repeat: 1.6},
+    medium: {notes: [[0,740,.22],[.3,880,.22]], repeat: 3.2},
+    low:    {notes: [[0,660,.3]], repeat: 12},
+  },
+};
+function playPattern(pat, t0) { for (const [off, f, d] of pat.notes) tone(f, t0 + off, d, alarmGain, true); }
+let audioPri = 0, nextBurst = 0;
+function audioTick() {
+  if (!AC) return;
+  const list = (powered && !standby) ? audibleAlarms() : [];
+  const p = topPriority(list);
+  const name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
+  if (p !== audioPri) { audioPri = p; nextBurst = AC.currentTime + 0.05; if (p > 0 && p < 3) {} }
+  if (!name) return;
+  if (AC.currentTime + 0.15 >= nextBurst) {
+    const pat = (TONESETS[S.toneSet] || TONESETS.carescape)[name];
+    playPattern(pat, nextBurst);
+    nextBurst += pat.repeat;
+  }
+}
+let lastBeepT = 0;
+function qrsBeep(b) {
+  if (!AC || !S.volQrs || standby || !powered) return;
+  // pitch follows SpO2 (lower saturation = lower pitch)
+  const s = M.spo2 != null ? M.spo2 : 100;
+  const f = 880 * Math.pow(2, (clamp(s, 60, 100) - 100) / 24);
+  tone(f, AC.currentTime + 0.005, 0.06, qrsGain, false);
+}
+
+/* ---------------- trends ---------------- */
+let trends = [], lastTrend = -99;
+function addTrend(nibpOnly) {
+  const row = {time: new Date(), hr: M.hr, spo2: M.spo2, pr: M.pr, artS: M.artS, artD: M.artD, artM: M.artM, cvp: M.cvp,
+    rr: M.rr, etco2: M.etco2, t1: M.t1, nibp: nibpOnly && NB.last ? NB.last.s + '/' + NB.last.d + ' (' + NB.last.m + ')' : ''};
+  trends.unshift(row); if (trends.length > 720) trends.pop();
+}
+
+/* ---------------- layout & drawing ---------------- */
+const WAVE_W = 860, WAVE_H = 560, PXMM = 4.9;
+const cv = $('#waveCv'), ctx = cv.getContext('2d');
+let rows = [], chans = [], dpr = 1, scale = 1, frozen = false;
+function layout() {
+  rows = [];
+  const ecgOn = SEN.ecg !== 'none';
+  if (ecgOn) rows.push({id:'ecg1', w:1.25}), S.showEcg2 && rows.push({id:'ecg2', w:1.0});
+  if (SEN.art === 'ok') rows.push({id:'art', w:1.1});
+  if (SEN.cvp === 'ok') rows.push({id:'cvp', w:0.8});
+  if (SEN.spo2 !== 'none') rows.push({id:'spo2', w:0.95});
+  if (SEN.co2 !== 'none') rows.push({id:'co2', w:0.95});
+  else if (ecgOn) rows.push({id:'resp', w:0.85});
+  const tw = rows.reduce((a, r) => a + r.w, 0) || 1;
+  let y = 0;
+  for (const r of rows) { r.h = Math.floor(WAVE_H * r.w / tw); r.y = y; y += r.h; }
+  chans = rows.map(r => ({row: r, x: 0, t: simT, last: null, speed: (r.id === 'co2' || r.id === 'resp' ? S.sweep / 4 : S.sweep) * PXMM}));
+  buildParams(); resizeCanvas(); buildWaveLabels();
+}
+function rowColor(id) {
+  const c = S.colors;
+  return {ecg1:c.ecg, ecg2:c.ecg, art:c.art, cvp:c.cvp, spo2:c.spo2, co2:c.co2, resp:c.resp}[id];
+}
+function artScale() {
+  if (S.artScale !== 'Auto') return +S.artScale;
+  const s = Math.max(P.sys, M.artS || 0);
+  return s > 170 ? 240 : s > 125 ? 180 : s > 85 ? 140 : 100;
+}
+let artScaleNow = 140;
+function rowValueY(r, t) {
+  const top = r.y + 18, h = r.h - 26, mid = top + h / 2;
+  switch (r.id) {
+    case 'ecg1': case 'ecg2': {
+      const lead = r.id === 'ecg1' ? S.lead1 : S.lead2;
+      return mid + 8 - ecgAt(t, lead) * 10 * PXMM * S.gain * 0.85;
+    }
+    case 'art': { if (!artZeroed) return null; const v = artAt(t); return top + h - clamp(v / artScaleNow, -0.05, 1.05) * h; }
+    case 'cvp': { if (!cvpZeroed) return null; const v = cvpAt(t); return top + h - clamp(v / 20, -0.05, 1.05) * h; }
+    case 'spo2': { if (SEN.spo2 !== 'ok') return null; return top + h - clamp(plethAt(t) * 0.85, -0.05, 1.05) * h; }
+    case 'co2': { if (SEN.co2 !== 'ok') return null; return top + h - clamp(co2At(t) / S.co2Scale, 0, 1.05) * h; }
+    case 'resp': return mid + h * 0.35 - respAt(t) * h * 0.7;
+  }
+  return null;
+}
+function resizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  const k = dpr * scale;
+  cv.width = Math.round(WAVE_W * k); cv.height = Math.round(WAVE_H * k);
+  cv.style.width = WAVE_W + 'px'; cv.style.height = WAVE_H + 'px';
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  ctx.clearRect(0, 0, WAVE_W, WAVE_H);
+  drawStatic();
+  for (const c of chans) { c.x = 0; c.t = simT; c.last = null; }
+}
+function drawStatic() {
+  // pressure scale lines
+  for (const r of rows) if (r.id === 'art' || r.id === 'cvp') drawScale(r, 0, WAVE_W);
+}
+function drawScale(r, x0, x1) {
+  const top = r.y + 18, h = r.h - 26;
+  const max = r.id === 'art' ? artScaleNow : 20;
+  ctx.save(); ctx.strokeStyle = rowColor(r.id); ctx.globalAlpha = 0.45; ctx.setLineDash([2, 6]); ctx.lineWidth = 1;
+  for (const f of [0, 0.5, 1]) { const y = Math.round(top + h - f * h) + 0.5; ctx.beginPath(); ctx.moveTo(Math.max(x0, 34), y); ctx.lineTo(x1, y); ctx.stroke(); }
+  ctx.restore();
+}
+function buildWaveLabels() {
+  const box = $('#waveLabels'); box.innerHTML = '';
+  for (const r of rows) {
+    const c = rowColor(r.id);
+    const lbl = document.createElement('div'); lbl.className = 'wlbl'; lbl.style.left = '8px'; lbl.style.top = (48 + r.y + 2) + 'px'; lbl.style.color = c;
+    let txt = '';
+    if (r.id === 'ecg1') txt = S.lead1 + ' &nbsp;<span style="font-weight:400;opacity:.8">x' + S.gain + '</span>';
+    else if (r.id === 'ecg2') txt = S.lead2;
+    else if (r.id === 'art') txt = 'ART';
+    else if (r.id === 'cvp') txt = 'CVP';
+    else if (r.id === 'spo2') txt = 'SpO<sub>2</sub>';
+    else if (r.id === 'co2') txt = 'CO<sub>2</sub>';
+    else if (r.id === 'resp') txt = 'RESP <span style="font-weight:400;opacity:.8">Imped.</span>';
+    lbl.innerHTML = txt; box.appendChild(lbl);
+    if (r.id === 'art' || r.id === 'cvp' || r.id === 'co2') {
+      const sc = document.createElement('div'); sc.className = 'wlbl'; sc.style.left = '4px'; sc.style.color = c; sc.style.fontSize = '11px'; sc.style.fontWeight = '400';
+      sc.style.top = (48 + r.y + 18) + 'px'; sc.dataset.scale = r.id; box.appendChild(sc);
+      const sc0 = sc.cloneNode(); sc0.style.top = (48 + r.y + r.h - 22) + 'px'; sc0.textContent = '0'; delete sc0.dataset.scale; box.appendChild(sc0);
+    }
+    const m = document.createElement('div'); m.className = 'wmsg'; m.style.left = '330px'; m.style.top = (48 + r.y + r.h / 2 - 10) + 'px';
+    m.style.color = c; m.dataset.wmsg = r.id; box.appendChild(m);
+  }
+  updateScaleLabels();
+}
+function updateScaleLabels() {
+  document.querySelectorAll('[data-scale]').forEach(e => { e.textContent = e.dataset.scale === 'art' ? artScaleNow : e.dataset.scale === 'cvp' ? 20 : S.co2Scale; });
+}
+function drawWaves() {
+  if (frozen) { for (const c of chans) c.t = simT; return; }
+  const ns = artScale(); if (ns !== artScaleNow) { artScaleNow = ns; updateScaleLabels(); }
+  const GAP = 14;
+  ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  for (const c of chans) {
+    const r = c.row, step = 0.5 / c.speed; // half-pixel resolution
+    if (simT - c.t > 2) { c.t = simT - 2; }
+    const pts = [];
+    let x = c.x;
+    while (c.t + step <= simT) {
+      c.t += step; x += 0.5;
+      if (x >= WAVE_W) { // wrap
+        if (pts.length) flush(c, pts, GAP); pts.length = 0;
+        x = 0; c.last = null; c.x = 0;
+      }
+      pts.push([x, rowValueY(r, c.t)]);
+    }
+    if (pts.length) flush(c, pts, GAP);
+    c.x = x;
+  }
+}
+function flush(c, pts, GAP) {
+  const r = c.row;
+  const x0 = c.last ? c.last[0] : pts[0][0], x1 = pts[pts.length - 1][0];
+  ctx.clearRect(x0 + 1, r.y, x1 - x0 + GAP, r.h);
+  if (x1 + GAP > WAVE_W) ctx.clearRect(0, r.y, x1 + GAP - WAVE_W, r.h);
+  if (r.id === 'art' || r.id === 'cvp') { drawScale(r, x0 + 1, Math.min(WAVE_W, x1 + GAP)); }
+  ctx.strokeStyle = rowColor(r.id);
+  ctx.beginPath();
+  let pen = false;
+  if (c.last && c.last[1] != null) { ctx.moveTo(c.last[0], c.last[1]); pen = true; }
+  for (const p of pts) {
+    if (p[1] == null) { pen = false; continue; }
+    if (pen) ctx.lineTo(p[0], p[1]); else { ctx.moveTo(p[0], p[1]); pen = true; }
+  }
+  ctx.stroke();
+  c.last = pts[pts.length - 1];
+}
+
+/* ---------------- parameter windows ---------------- */
+let PW = {};
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function place(e, css) { Object.assign(e.style, css); return e; }
+function buildParams() {
+  const box = $('#params'); box.innerHTML = ''; PW = {};
+  const rmap = Object.fromEntries(rows.map(r => [r.id, r]));
+  const mk = (id, r1, r2, color) => {
+    const top = r1.y, h = (r2 ? r2.y + r2.h : r1.y + r1.h) - top;
+    const w = place(el('div', 'pw'), {left: '0px', top: top + 'px', width: '420px', height: h + 'px', color: color});
+    w.onclick = () => openAlarmsSetup();
+    box.appendChild(w); PW[id] = {el: w, h: h}; return w;
+  };
+  const c = S.colors;
+  if (rmap.ecg1) {
+    const w = mk('hr', rmap.ecg1, rmap.ecg2, c.ecg);
+    w.innerHTML = `<div class="lbl">HR <span style="font-size:12px;font-weight:400">bpm</span><span class="belloff" data-bell="hr"></span></div>
+      <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="hr"></div>
+      <div class="big" data-v="hr" style="right:16px;top:${Math.max(18, PW.hr.h / 2 - 62)}px;font-size:${Math.min(118, PW.hr.h * 0.62)}px"></div>
+      <div class="sub" style="left:8px;bottom:26px" data-v="pvc"></div>
+      <div class="sub" style="left:110px;bottom:26px;opacity:.85" data-v="st"></div>
+      <div class="msg" data-msg="hr"></div>`;
+  }
+  if (rmap.art) {
+    const w = mk('art', rmap.art, null, c.art), h = PW.art.h;
+    w.innerHTML = `<div class="lbl">ART <span style="font-size:12px;font-weight:400">mmHg</span><span class="belloff" data-bell="art"></span></div>
+      <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="art"></div>
+      <div class="big" data-v="artSD" style="right:14px;top:${h * 0.16}px;font-size:${Math.min(64, h * 0.42)}px"></div>
+      <div class="big" data-v="artM" style="right:14px;top:${h * 0.58}px;font-size:${Math.min(40, h * 0.26)}px"></div>
+      <div class="msg" data-msg="art"></div>`;
+  }
+  if (rmap.cvp) {
+    const w = mk('cvp', rmap.cvp, null, c.cvp), h = PW.cvp.h;
+    w.innerHTML = `<div class="lbl">CVP <span style="font-size:12px;font-weight:400">mmHg</span><span class="belloff" data-bell="cvp"></span></div>
+      <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="cvp"></div>
+      <div class="big" data-v="cvp" style="right:24px;top:${h * 0.12}px;font-size:${Math.min(64, h * 0.6)}px"></div>
+      <div class="msg" data-msg="cvp"></div>`;
+  }
+  if (rmap.spo2) {
+    const w = mk('spo2', rmap.spo2, null, c.spo2), h = PW.spo2.h;
+    w.innerHTML = `<div class="lbl">SpO<sub>2</sub> <span style="font-size:12px;font-weight:400">%</span><span class="belloff" data-bell="spo2"></span></div>
+      <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="spo2"></div>
+      <div class="big" data-v="spo2" style="right:150px;top:${h * 0.08}px;font-size:${Math.min(80, h * 0.62)}px"></div>
+      <div class="sub" style="right:16px;top:${h * 0.18}px;text-align:right">PR<br><span data-v="pr" style="font-size:${Math.min(40, h * 0.32)}px;font-weight:600"></span></div>
+      <div data-v="pi" style="position:absolute;left:60px;bottom:24px;width:8px;height:${h * 0.35}px;border:1px solid currentColor"><i style="position:absolute;bottom:0;left:0;right:0;background:currentColor"></i></div>
+      <div class="msg" data-msg="spo2"></div>`;
+  }
+  if (rmap.co2) {
+    const w = mk('co2', rmap.co2, null, c.co2), h = PW.co2.h;
+    w.innerHTML = `<div class="lbl">CO<sub>2</sub> <span style="font-size:12px;font-weight:400">mmHg</span><span class="belloff" data-bell="co2"></span></div>
+      <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="co2"></div>
+      <div class="sub" style="left:90px;top:${h * 0.2}px">Et</div>
+      <div class="big" data-v="etco2" style="left:118px;top:${h * 0.1}px;font-size:${Math.min(66, h * 0.5)}px"></div>
+      <div class="sub" style="left:90px;top:${h * 0.68}px">Fi <span data-v="fico2" style="font-size:20px;font-weight:600"></span></div>
+      <div class="sub" style="right:16px;top:${h * 0.14}px;text-align:right">RR<br><span data-v="rr" style="font-size:${Math.min(44, h * 0.34)}px;font-weight:600"></span></div>
+      <div class="msg" data-msg="co2"></div>`;
+  }
+  if (rmap.resp) {
+    const w = mk('resp', rmap.resp, null, c.resp), h = PW.resp.h;
+    w.innerHTML = `<div class="lbl">RESP <span style="font-size:12px;font-weight:400">rpm</span><span class="belloff" data-bell="resp"></span></div>
+      <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="rr"></div>
+      <div class="big" data-v="rr" style="right:24px;top:${h * 0.1}px;font-size:${Math.min(64, h * 0.6)}px"></div>
+      <div class="msg" data-msg="resp"></div>`;
+  }
+  // bottom row: NIBP, Temp, (SpO2/CO2 without waveform are not shown)
+  const br = $('#bottomRow'); br.innerHTML = '';
+  const nb = el('div', 'bpw'); nb.style.flex = '2.2'; nb.style.color = c.nibp; br.appendChild(nb); PW.nibp = {el: nb, h: 130};
+  nb.innerHTML = `<div class="lbl">NIBP <span style="font-size:12px;font-weight:400">mmHg</span><span class="belloff" data-bell="nibp"></span></div>
+    <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="nibp"></div>
+    <div class="big" data-v="nibpSD" style="left:150px;top:22px;font-size:66px"></div>
+    <div class="big" data-v="nibpM" style="left:430px;top:36px;font-size:40px"></div>
+    <div class="sub" style="right:12px;top:6px;text-align:right" data-v="nibpInfo"></div>
+    <div class="msg" data-msg="nibp"></div>`;
+  nb.onclick = () => openNibpMenu();
+  const tp = el('div', 'bpw'); tp.style.color = c.temp; br.appendChild(tp); PW.temp = {el: tp, h: 130};
+  tp.innerHTML = `<div class="lbl">T1 <span style="font-size:12px;font-weight:400" data-v="tunit"></span><span class="belloff" data-bell="temp"></span></div>
+    <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="t1"></div>
+    <div class="big" data-v="t1" style="right:20px;top:30px;font-size:58px"></div>
+    <div class="msg" data-msg="temp"></div>`;
+  tp.onclick = () => openAlarmsSetup();
+  const ex = el('div', 'bpw'); ex.style.color = '#c9d3df'; ex.style.flex = '1.05'; br.appendChild(ex); PW.info = {el: ex, h: 130};
+  ex.innerHTML = `<div class="lbl" style="color:#9fb3c8">Patient</div>
+    <div class="sub" style="left:10px;top:30px;font-size:14px;line-height:1.5" data-v="info"></div>`;
+  ex.onclick = () => openPatientMenu();
+}
+const fmt = v => v == null ? '---' : String(v);
+function setV(sel, html) { document.querySelectorAll('[data-v="' + sel + '"]').forEach(e => { if (e.innerHTML !== html) e.innerHTML = html; }); }
+function tempStr(c) { if (c == null) return '---'; return S.tempUnit === 'F' ? (c * 9 / 5 + 32).toFixed(1) : c.toFixed(1); }
+function limTxt(k) { const L = S.lim[k]; if (!L.on) return 'OFF'; return L.hi + '<br>' + L.lo; }
+function updateParams() {
+  const L = S.lim;
+  setV('hr', fmt(M.hr));
+  setV('pvc', M.hr == null ? '' : 'PVC ' + M.pvc);
+  setV('st', P.st && SEN.ecg === 'ok' ? 'ST-' + S.lead1 + ' ' + (P.st > 0 ? '+' : '') + P.st.toFixed(1) : '');
+  setV('artSD', M.artS == null ? '---/---' : M.artS + '/' + M.artD);
+  setV('artM', M.artM == null ? '(---)' : '(' + M.artM + ')');
+  setV('cvp', fmt(M.cvp));
+  setV('spo2', fmt(M.spo2)); setV('pr', fmt(M.pr));
+  setV('etco2', fmt(M.etco2)); setV('fico2', fmt(M.fico2)); setV('rr', fmt(M.rr));
+  setV('t1', tempStr(M.t1)); setV('tunit', S.tempUnit === 'F' ? '°F' : '°C');
+  const pi = document.querySelector('[data-v="pi"] i');
+  if (pi) pi.style.height = (M.spo2 == null ? 0 : clamp((P.sys - P.dia) / 60, 0.15, 1) * 100 * (R.artifact ? rnd(.4, 1) : 1)) + '%';
+  // NIBP
+  let sd, mm, info;
+  if (NB.state !== 'idle') { sd = '<span style="font-size:20px;font-weight:400">Cuff </span>' + Math.round(NB.cuff); mm = ''; }
+  else if (NB.last) { sd = NB.last.s + '/' + NB.last.d; mm = '(' + NB.last.m + ')'; }
+  else { sd = '---/---'; mm = '(---)'; }
+  info = (S.nibpAuto ? 'Auto ' + S.nibpAuto + ' min' : 'Manual') + (NB.statUntil > simT ? ' · STAT' : '') + '<br>';
+  if (NB.last) info += NB.last.time.toTimeString().slice(0, 5) + '<br>';
+  if (S.nibpAuto && NB.nextAuto != null && NB.state === 'idle') { const r = Math.max(0, NB.nextAuto - simT); info += 'Next ' + Math.floor(r / 60) + ':' + pad2(Math.floor(r % 60)); }
+  setV('nibpSD', sd); setV('nibpM', mm); setV('nibpInfo', info);
+  setV('info', (S.name || '<span style="opacity:.6">No name</span>') + '<br>' + S.cat + (S.mrn ? ' · ' + S.mrn : '') + '<br>' +
+    '<span style="opacity:.7">Alarm vol ' + S.volAlarm + ' · QRS ' + S.volQrs + '</span>');
+  // limits
+  const lt = (h, l) => '<span>' + h + '</span><br><span>' + l + '</span>';
+  const q = (k, sel) => document.querySelectorAll('[data-lim="' + sel + '"]').forEach(e => e.innerHTML = k);
+  q(L.hr.on ? lt(L.hr.hi, L.hr.lo) : 'OFF', 'hr');
+  q(L.artS.on ? lt(L.artS.hi, L.artS.lo) : 'OFF', 'art');
+  q(L.cvp.on ? lt(L.cvp.hi, L.cvp.lo) : 'OFF', 'cvp');
+  q(L.spo2.on ? lt(L.spo2.hi, L.spo2.lo) : 'OFF', 'spo2');
+  q(L.etco2.on ? lt(L.etco2.hi, L.etco2.lo) : 'OFF', 'co2');
+  q(L.rr.on ? lt(L.rr.hi, L.rr.lo) : 'OFF', 'rr');
+  q(L.nibpS.on ? lt(L.nibpS.hi, L.nibpS.lo) : 'OFF', 'nibp');
+  q(L.t1.on ? lt(L.t1.hi, L.t1.lo) : 'OFF', 't1');
+  const bell = {hr: L.hr.on, art: L.artS.on, cvp: L.cvp.on, spo2: L.spo2.on, co2: L.etco2.on, resp: L.rr.on, nibp: L.nibpS.on, temp: L.t1.on};
+  document.querySelectorAll('[data-bell]').forEach(e => { e.innerHTML = bell[e.dataset.bell] ? '' : '&#128277;'; });
+  // alarm states in windows
+  const byParam = {};
+  for (const a of sortedAlarms()) if (a.param && !byParam[a.param]) byParam[a.param] = a;
+  for (const k in PW) {
+    const w = PW[k].el, a = byParam[k];
+    w.classList.remove('flash-high', 'flash-medium', 'solid-low');
+    const msgEl = w.querySelector('[data-msg]');
+    if (a && !a.latched) { w.classList.add(a.pri === 'high' ? 'flash-high' : a.pri === 'medium' ? 'flash-medium' : 'solid-low'); }
+    if (msgEl) {
+      let m = a ? a.msg : '';
+      if (!m && k === 'art' && simT < zeroingUntil + 3 && SEN.art === 'ok') m = 'Zeroing…';
+      if (!m && k === 'nibp' && NB.state !== 'idle') m = NB.state === 'infl' ? 'Inflating' : 'Measuring';
+      if (msgEl.textContent !== m) msgEl.textContent = m;
+    }
+  }
+  // waveform messages
+  document.querySelectorAll('[data-wmsg]').forEach(e => {
+    const id = e.dataset.wmsg; let m = '';
+    if ((id === 'ecg1' || id === 'ecg2') && SEN.ecg === 'leadsoff') m = 'Leads Fail';
+    if (id === 'ecg2' && SEN.ecg === 'vlead') m = 'V Lead Fail';
+    if (id === 'spo2' && SEN.spo2 === 'probeoff') m = 'Probe Off';
+    if (id === 'art' && !artZeroed) m = 'Not Zeroed';
+    if (id === 'cvp' && !cvpZeroed) m = 'Not Zeroed';
+    if (id === 'co2' && SEN.co2 === 'occl') m = 'Occlusion';
+    if ((id === 'ecg1') && R.rhythm !== 'vf' && SEN.ecg === 'ok' && alarms.asys) m = '';
+    if (e.textContent !== m) e.textContent = m;
+  });
+}
+
+/* ---------------- top bar & alarm light ---------------- */
+function updateTop() {
+  $('#bedTxt').innerHTML = esc(S.bed) + '<span>' + esc(S.unit) + '</span>';
+  $('#ptTxt').textContent = (S.name ? S.name + ' · ' : '') + S.cat;
+  const d = new Date();
+  $('#clkT').textContent = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  $('#clkD').textContent = d.toLocaleDateString(undefined, {day: '2-digit', month: 'short', year: 'numeric'});
+  const area = $('#alarmArea');
+  const list = sortedAlarms();
+  let html = '';
+  const show = list.slice(0, 2);
+  show.forEach((a, i) => {
+    html += `<div class="abox ${a.pri}${a.latched ? ' latched' : ''}">${esc(a.msg)}${i === show.length - 1 && list.length > 2 ? '<span class="more">+' + (list.length - 2) + '</span>' : ''}</div>`;
+  });
+  if (!show.length && infoMsg && infoMsg.until > simT) html = `<div class="abox info">${esc(infoMsg.msg)}</div>`;
+  if (area.innerHTML !== html) area.innerHTML = html;
+  // pause indicator
+  const paused = simT < pauseUntil && powered;
+  $('#pauseInd').classList.toggle('on', paused);
+  const r = Math.max(0, pauseUntil - simT);
+  $('#pauseCnt').textContent = Math.floor(r / 60) + ':' + pad2(Math.floor(r % 60));
+  const mkP = $('#mkPause');
+  if (mkP) { mkP.classList.toggle('paused', paused); mkP.querySelector('.cnt').textContent = paused ? Math.floor(r / 60) + ':' + pad2(Math.floor(r % 60)) : ''; }
+  // battery
+  $('#battFill').style.width = battery + '%';
+  $('#battFill').style.background = battery < 20 ? '#ff3030' : battery < 40 ? '#ffd400' : '#3cff5a';
+  $('#acIco').style.visibility = SEN.ac ? 'visible' : 'hidden';
+  $('#ledAc').className = SEN.ac ? 'on' : '';
+  $('#ledBat').className = SEN.ac ? '' : 'bat';
+}
+function updateAlarmLight(now) {
+  const L = $('#alarmLight');
+  let p = 0; for (const id in alarms) { const a = alarms[id]; if (!a.latched || true) p = Math.max(p, PRI[a.pri]); }
+  let cls = '';
+  if (powered && !standby) {
+    if (p === 3) cls = (now % 500) < 250 ? 'red' : '';            // ~2 Hz
+    else if (p === 2) cls = (now % 1600) < 800 ? 'yellow' : '';   // ~0.6 Hz
+    else if (p === 1) cls = 'cyan';                               // steady
+  }
+  if (L.className !== cls) L.className = cls;
+}
+const LETHAL = {vfib: 3, asys: 3, vtach: 2};
+function sortedAlarms() {
+  // active before latched, then priority, lethal arrhythmias first, newest first
+  return Object.values(alarms).sort((a, b) => (a.latched - b.latched) || PRI[b.pri] - PRI[a.pri] ||
+    (LETHAL[b.id] || 0) - (LETHAL[a.id] || 0) || b.since - a.since);
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let infoMsg = null;
+function toast(msg) { infoMsg = {msg: msg, until: simT + 4}; }
+
+/* ---------------- main menu bar ---------------- */
+const BELL_SVG = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/><path stroke="#ff4040" stroke-width="2.4" d="M3 3l18 18"/></svg>';
+function buildMenuBar() {
+  const keys = [
+    ['mkPause', BELL_SVG, 'Pause Audio', pauseAudio],
+    ['mkAlarms', '&#9888;', 'Alarms Setup', () => openAlarmsSetup()],
+    ['mkMon', '&#9881;', 'Monitor Setup', () => openMonitorSetup()],
+    ['mkPt', '&#128100;', 'Patient', () => openPatientMenu()],
+    ['mkData', '&#128200;', 'Data &amp; Pages', () => openDataMenu()],
+    ['mkNibp', '&#9654;', 'NIBP<br>Start/Stop', nibpStart],
+    ['mkAuto', '&#8635;', 'NIBP<br>Setup', () => openNibpMenu()],
+    ['mkZero', '0', 'Zero All', zeroAll],
+    ['mkFreeze', '&#10074;&#10074;', 'Freeze', toggleFreeze],
+    ['mkStby', '&#9789;', 'Standby', () => setStandby(true)],
+  ];
+  const bar = $('#menubar'); bar.innerHTML = '';
+  for (const [id, ic, label, fn] of keys) {
+    const k = el('div', 'mk', `<span class="ic">${ic}</span><span>${label}</span>${id === 'mkPause' ? '<span class="cnt"></span>' : ''}`);
+    k.id = id; k.onclick = e => { ensureAudio(); fn(); }; bar.appendChild(k);
+  }
+}
+function zeroAll() {
+  if (SEN.art !== 'ok' && SEN.cvp !== 'ok') { toast('No invasive pressure channels'); return; }
+  zeroingUntil = simT + 2; artZeroed = true; cvpZeroed = true; toast('Zeroing invasive pressures…');
+  setTimeout(() => toast('ART / CVP zeroed'), 2200);
+}
+function toggleFreeze() {
+  frozen = !frozen; $('#frozen').style.display = frozen ? 'block' : 'none'; $('#mkFreeze').classList.toggle('on', frozen);
+  if (frozen) freezeTimer = setTimeout(() => frozen && toggleFreeze(), 60000);
+  else { clearTimeout(freezeTimer); resizeCanvas(); }
+}
+let freezeTimer = null;
+let standby = false, powered = false;
+function setStandby(on) {
+  if (on) { openConfirm('Put the monitor in Standby?', 'Monitoring and alarms will be suspended.', () => { standby = true; $('#standby').classList.add('on'); closeMenu(); }); }
+  else { standby = false; $('#standby').classList.remove('on'); resizeCanvas(); }
+}
+
+/* ---------------- menus ---------------- */
+let menuTabs = [], menuTab = 0;
+function openMenu(title, tabs, idx = 0) {
+  menuTabs = tabs; menuTab = idx;
+  $('#menuTitle').textContent = title; $('#menuWin').classList.add('open');
+  renderMenu();
+}
+function renderMenu() {
+  const tb = $('#menuTabs'); tb.innerHTML = '';
+  menuTabs.forEach((t, i) => { const e = el('div', 'tab' + (i === menuTab ? ' on' : ''), t.name); e.onclick = () => { menuTab = i; renderMenu(); }; tb.appendChild(e); });
+  tb.style.display = menuTabs.length > 1 ? 'flex' : 'none';
+  const b = $('#menuBody'); b.innerHTML = ''; menuTabs[menuTab].build(b);
+}
+function closeMenu() { $('#menuWin').classList.remove('open'); menuTabs = []; }
+$('#menuClose').onclick = closeMenu;
+function row(parent, label, ...ctls) { const r = el('div', 'row'); r.appendChild(el('div', 'k', label)); const c = el('div', 'ctl'); ctls.forEach(x => c.appendChild(x)); r.appendChild(c); parent.appendChild(r); return r; }
+function stepper(get, set, min, max, step, f = v => v) {
+  const w = el('div', 'step'), m = el('button', 'btn', '&#9664;'), v = el('div', 'v'), p = el('button', 'btn', '&#9654;');
+  const upd = () => v.textContent = f(get());
+  const go = d => { let x = Math.round((get() + d) * 100) / 100; x = clamp(x, min, max); set(x); upd(); save(); };
+  m.onclick = () => go(-step); p.onclick = () => go(step);
+  w.append(m, v, p); upd(); return w;
+}
+function choice(opts, get, set) {
+  const s = el('select', 'sel');
+  for (const o of opts) { const [val, lab] = Array.isArray(o) ? o : [o, o]; const op = el('option', null, lab); op.value = val; s.appendChild(op); }
+  s.value = String(get()); s.onchange = () => { set(s.value); save(); }; return s;
+}
+function toggle(get, set, on = 'On', off = 'Off') {
+  const b = el('button', 'btn'); const upd = () => { b.textContent = get() ? on : off; b.classList.toggle('on', !!get()); };
+  b.onclick = () => { set(!get()); upd(); save(); }; upd(); return b;
+}
+function button(label, fn, cls = '') { const b = el('button', 'btn ' + cls, label); b.onclick = fn; return b; }
+function textIn(get, set, w = 220) { const i = el('input', 'inp'); i.value = get(); i.style.width = w + 'px'; i.oninput = () => { set(i.value); save(); }; return i; }
+function openConfirm(title, text, ok) {
+  openMenu(title, [{name: '', build: b => { b.appendChild(el('div', 'note', esc(text))); const r = el('div'); r.style.marginTop = '14px';
+    r.append(button('Confirm', () => { closeMenu(); ok(); }, 'on'), document.createTextNode(' '), button('Cancel', closeMenu)); b.appendChild(r); }}]);
+}
+
+function openAlarmsSetup(idx = 0) {
+  openMenu('Alarms Setup', [
+    {name: 'Parameters', build: b => {
+      const t = el('table', 'lt'); t.innerHTML = '<tr><th>Parameter</th><th>Low</th><th>High</th><th>Alarm</th><th>Priority</th></tr>';
+      for (const k of LIM_KEYS) {
+        const L = S.lim[k], tr = el('tr');
+        const stepSz = k === 't1' ? 0.1 : (k.startsWith('nibp') || k.startsWith('art') || k === 'hr') ? 5 : 1;
+        const f = v => k === 't1' ? (+v).toFixed(1) : v;
+        const td = (...c) => { const d = el('td'); c.forEach(x => d.appendChild(x)); tr.appendChild(d); };
+        td(el('span', null, LIM_LABEL[k]));
+        td(stepper(() => L.lo, v => L.lo = Math.min(v, L.hi), 0, 300, stepSz, f));
+        td(stepper(() => L.hi, v => L.hi = Math.max(v, L.lo), 0, 300, stepSz, f));
+        td(toggle(() => L.on, v => L.on = v));
+        td(choice([['high','High'],['medium','Medium'],['low','Low']], () => L.pri, v => L.pri = v));
+        t.appendChild(tr);
+      }
+      b.appendChild(t);
+      row(b, 'Apnea time (s)', stepper(() => S.apnea.time, v => S.apnea.time = v, 10, 60, 5), toggle(() => S.apnea.on, v => S.apnea.on = v));
+      row(b, 'Extreme Tachy (bpm)', stepper(() => S.xtachy, v => S.xtachy = v, 100, 300, 5));
+      row(b, 'Extreme Brady (bpm)', stepper(() => S.xbrady, v => S.xbrady = v, 20, 100, 5));
+      const r = el('div'); r.style.marginTop = '10px';
+      r.append(button('Auto Limits (around current values)', autoLimits), document.createTextNode(' '),
+        button('Default Limits (' + S.cat + ')', () => { const d = defaultSettings(S.cat); S.lim = d.lim; S.apnea = d.apnea; S.xtachy = d.xtachy; S.xbrady = d.xbrady; save(); renderMenu(); }));
+      b.appendChild(r);
+    }},
+    {name: 'Arrhythmia', build: b => {
+      b.appendChild(el('div', 'note', 'Lethal arrhythmia alarms (Asystole, V Fib/V Tach, V Tach) are always High priority and cannot be turned off. They break through an active audio pause.'));
+      const t = el('table', 'lt'); t.innerHTML = '<tr><th>Arrhythmia</th><th>Group</th><th>Priority</th><th>Latching</th></tr>';
+      for (const [id, name, , grp] of ARR_DEFS) {
+        const a = S.arr[id], tr = el('tr');
+        const td = (...c) => { const d = el('td'); c.forEach(x => d.appendChild(typeof x === 'string' ? el('span', null, x) : x)); tr.appendChild(d); };
+        td(name); td({lethal:'Lethal', vent:'Ventricular', hr:'Rate', atrial:'Atrial'}[grp]);
+        if (grp === 'lethal') { td('High'); td('Yes'); }
+        else { td(choice([['high','High'],['medium','Medium'],['low','Low'],['off','Off']], () => a.pri, v => a.pri = v)); td(toggle(() => a.latch, v => a.latch = v, 'Yes', 'No')); }
+        t.appendChild(tr);
+      }
+      b.appendChild(t);
+    }},
+    {name: 'Audio', build: b => {
+      row(b, 'Alarm volume', stepper(() => S.volAlarm, v => { S.volAlarm = v; applyVolumes(); }, 1, 10, 1), button('Test', () => testAlarm('high')));
+      row(b, 'Audio pause time', choice([[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min']], () => S.pauseTime, v => S.pauseTime = +v));
+      row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','Legacy (Solar/Dash-style)']], () => S.toneSet, v => S.toneSet = v),
+        button('High', () => testAlarm('high')), button('Medium', () => testAlarm('medium')), button('Low', () => testAlarm('low')));
+      b.appendChild(el('div', 'note', 'Alarm audio cannot be turned off; the minimum volume is 1. Pause Audio silences active alarms for the pause time; pressing it with no active alarm pre-pauses new alarms.'));
+    }},
+    {name: 'Active Alarms', build: b => {
+      const list = Object.values(alarms);
+      if (!list.length) b.appendChild(el('div', 'note', 'No active alarms.'));
+      const t = el('table', 'lt'); t.innerHTML = '<tr><th>Priority</th><th>Message</th><th>Since</th><th>State</th></tr>';
+      for (const a of list.sort((x, y) => PRI[y.pri] - PRI[x.pri])) {
+        const tr = el('tr'); tr.innerHTML = `<td style="color:${a.pri === 'high' ? '#ff5050' : a.pri === 'medium' ? '#ffd400' : '#00d8ff'}">${a.pri.toUpperCase()}</td><td>${esc(a.msg)}</td><td>${Math.round(simT - a.since)} s</td><td>${a.latched ? 'Latched' : 'Active'}</td>`;
+        t.appendChild(tr);
+      }
+      if (list.length) b.appendChild(t);
+    }},
+  ], idx);
+}
+function autoLimits() {
+  const L = S.lim, set = (k, v, lo, hi) => { if (v == null) return; L[k].lo = Math.round(lo(v)); L[k].hi = Math.round(hi(v)); };
+  set('hr', M.hr, v => v * 0.8, v => v * 1.25);
+  set('artS', M.artS, v => v * 0.8, v => v * 1.25); set('artD', M.artD, v => v * 0.8, v => v * 1.25); set('artM', M.artM, v => v * 0.8, v => v * 1.25);
+  if (NB.last) { set('nibpS', NB.last.s, v => v * 0.8, v => v * 1.25); set('nibpD', NB.last.d, v => v * 0.8, v => v * 1.25); set('nibpM', NB.last.m, v => v * 0.8, v => v * 1.25); }
+  set('rr', M.rr || null, v => v * 0.6, v => v * 1.6);
+  save(); renderMenu(); toast('Auto limits set');
+}
+function testAlarm(level) {
+  ensureAudio(); if (!AC) return;
+  playPattern((TONESETS[S.toneSet] || TONESETS.carescape)[level || 'high'], AC.currentTime + 0.05);
+}
+function openMonitorSetup() {
+  openMenu('Monitor Setup', [
+    {name: 'Screen Setup', build: b => {
+      row(b, 'Sweep speed', choice([[12.5,'12.5 mm/s'],[25,'25 mm/s'],[50,'50 mm/s']], () => S.sweep, v => { S.sweep = +v; layout(); }));
+      row(b, 'Second ECG waveform', toggle(() => S.showEcg2, v => { S.showEcg2 = v; layout(); }));
+      row(b, 'Brightness', stepper(() => S.brightness, v => { S.brightness = v; applyBrightness(); }, 20, 100, 10, v => v + '%'));
+      row(b, 'Show monitor housing', toggle(() => S.bezel, v => { S.bezel = v; fit(); }));
+      row(b, 'Temperature unit', choice([['C','°C'],['F','°F']], () => S.tempUnit, v => S.tempUnit = v));
+      row(b, 'Full screen', button('Toggle full screen (F11)', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }));
+    }},
+    {name: 'ECG', build: b => {
+      const leads = Object.keys(LEADS);
+      row(b, 'Primary lead', choice(leads, () => S.lead1, v => { S.lead1 = v; buildWaveLabels(); }));
+      row(b, 'Second lead', choice(leads, () => S.lead2, v => { S.lead2 = v; buildWaveLabels(); }));
+      row(b, 'ECG size', choice([[0.5,'x0.5'],[1,'x1'],[2,'x2'],[4,'x4']], () => S.gain, v => { S.gain = +v; buildWaveLabels(); }));
+      row(b, 'QRS volume', stepper(() => S.volQrs, v => { S.volQrs = v; applyVolumes(); }, 0, 10, 1));
+    }},
+    {name: 'Pressures / CO2', build: b => {
+      row(b, 'ART scale', choice(['Auto', '100', '140', '180', '240'], () => S.artScale, v => { S.artScale = v; layout(); }));
+      row(b, 'CO2 scale (mmHg)', choice([[50,'50'],[75,'75'],[100,'100']], () => S.co2Scale, v => { S.co2Scale = +v; layout(); }));
+      row(b, 'Zero invasive pressures', button('Zero All', zeroAll));
+    }},
+    {name: 'Colors', build: b => {
+      const names = {ecg:'ECG / HR', art:'ART', cvp:'CVP', spo2:'SpO2', co2:'CO2', resp:'RESP', nibp:'NIBP', temp:'Temp'};
+      for (const k in names) {
+        const r = row(b, names[k]);
+        for (const [pn, hex] of Object.entries(PALETTE)) {
+          const s = el('span', 'swatch' + (S.colors[k] === hex ? ' on' : '')); s.style.background = hex; s.title = pn;
+          s.onclick = () => { S.colors[k] = hex; save(); layout(); renderMenu(); };
+          r.querySelector('.ctl').appendChild(s);
+        }
+      }
+    }},
+    {name: 'Sound', build: b => {
+      row(b, 'Alarm volume', stepper(() => S.volAlarm, v => { S.volAlarm = v; applyVolumes(); }, 1, 10, 1), button('Test', () => testAlarm('high')));
+      row(b, 'QRS / pulse tone volume', stepper(() => S.volQrs, v => { S.volQrs = v; applyVolumes(); }, 0, 10, 1));
+      b.appendChild(el('div', 'note', 'The QRS tone pitch follows SpO2: it drops as saturation falls.'));
+    }},
+    {name: 'About', build: b => {
+      b.appendChild(el('div', 'note', `B450 monitor simulator v${VERSION}. A training / hobby simulation modeled on the look and behavior of the GE HealthCare CARESCAPE B450 patient monitor.
+        It is not a medical device, does not measure anything and must never be used with a real patient. Not affiliated with, endorsed or sponsored by GE HealthCare.
+        CARESCAPE is a trademark of GE HealthCare, used here only to describe what the simulation resembles.`));
+      row(b, 'Reset all settings', button('Factory defaults', () => { S = defaultSettings(); save(); layout(); renderMenu(); }, 'warn'));
+    }},
+  ]);
+}
+function openPatientMenu() {
+  openMenu('Patient', [
+    {name: 'Admit / Edit', build: b => {
+      row(b, 'Patient name', textIn(() => S.name, v => S.name = v));
+      row(b, 'MRN / ID', textIn(() => S.mrn, v => S.mrn = v));
+      row(b, 'Bed', textIn(() => S.bed, v => S.bed = v, 120));
+      row(b, 'Care unit', textIn(() => S.unit, v => S.unit = v, 120));
+      row(b, 'Patient category', choice(['Adult', 'Pediatric', 'Neonate'], () => S.cat, v => {
+        const d = defaultSettings(v); S.cat = v; S.lim = d.lim; S.apnea = d.apnea; S.xtachy = d.xtachy; S.xbrady = d.xbrady; save(); toast('Category ' + v + ': default limits loaded'); }));
+    }},
+    {name: 'Discharge', build: b => {
+      b.appendChild(el('div', 'note', 'Discharging clears the patient name, trends, alarm history and NIBP results, and restores the default alarm limits.'));
+      b.appendChild(button('Discharge patient', () => {
+        S.name = ''; S.mrn = ''; const d = defaultSettings(S.cat); S.lim = d.lim; S.arr = d.arr; trends = []; alarmHist = []; NB.last = null; save(); closeMenu(); toast('Patient discharged');
+      }, 'warn'));
+    }},
+  ]);
+}
+function openNibpMenu() {
+  openMenu('NIBP Setup', [{name: '', build: b => {
+    row(b, 'Measure now', button(NB.state === 'idle' ? 'Start NIBP' : 'Stop NIBP', () => { nibpStart(); renderMenu(); }));
+    row(b, 'Auto interval', choice([[0,'Off (manual)'],[1,'1 min'],[2,'2 min'],[2.5,'2.5 min'],[3,'3 min'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[30,'30 min'],[60,'60 min']],
+      () => S.nibpAuto, v => { S.nibpAuto = +v; NB.nextAuto = S.nibpAuto ? simT + 2 : null; }));
+    row(b, 'STAT mode (5 min)', button(NB.statUntil > simT ? 'Stop STAT' : 'Start STAT', () => { NB.statUntil = NB.statUntil > simT ? 0 : simT + 300; if (NB.statUntil && NB.state === 'idle') nibpStart(); renderMenu(); }));
+    const t = el('table', 'lt'); t.innerHTML = '<tr><th>Time</th><th>NIBP</th><th>HR</th></tr>';
+    trends.filter(r => r.nibp).slice(0, 12).forEach(r => { const tr = el('tr'); tr.innerHTML = `<td>${r.time.toTimeString().slice(0, 5)}</td><td>${r.nibp}</td><td>${fmt(r.hr)}</td>`; t.appendChild(tr); });
+    b.appendChild(el('div', 'note', 'Recent NIBP results')); b.appendChild(t);
+  }}]);
+}
+function openDataMenu() {
+  openMenu('Data & Pages', [
+    {name: 'Vital Signs Trends', build: b => {
+      const t = el('table', 'lt'); t.innerHTML = '<tr><th>Time</th><th>HR</th><th>SpO2</th><th>NIBP</th><th>ART</th><th>CVP</th><th>RR</th><th>EtCO2</th><th>T1</th></tr>';
+      trends.slice(0, 120).forEach(r => { const tr = el('tr');
+        tr.innerHTML = `<td>${r.time.toTimeString().slice(0, 8)}</td><td>${fmt(r.hr)}</td><td>${fmt(r.spo2)}</td><td>${r.nibp || ''}</td><td>${r.artS == null ? '' : r.artS + '/' + r.artD + ' (' + r.artM + ')'}</td><td>${fmt(r.cvp)}</td><td>${fmt(r.rr)}</td><td>${fmt(r.etco2)}</td><td>${tempStr(r.t1)}</td>`;
+        t.appendChild(tr); });
+      b.appendChild(el('div', 'note', 'Trend data are stored every 30 seconds and with every NIBP measurement.')); b.appendChild(t);
+    }},
+    {name: 'Graphic Trends', build: b => {
+      const c = el('canvas'); c.width = 860; c.height = 470; b.appendChild(c); drawGraphTrends(c);
+    }},
+    {name: 'Alarm History', build: b => {
+      const t = el('table', 'lt'); t.innerHTML = '<tr><th>Time</th><th>Priority</th><th>Message</th></tr>';
+      alarmHist.slice(0, 200).forEach(a => { const tr = el('tr');
+        tr.innerHTML = `<td>${a.time.toTimeString().slice(0, 8)}</td><td style="color:${a.pri === 'high' ? '#ff5050' : a.pri === 'medium' ? '#ffd400' : '#00d8ff'}">${a.pri.toUpperCase()}</td><td>${esc(a.msg)}</td>`; t.appendChild(tr); });
+      if (!alarmHist.length) b.appendChild(el('div', 'note', 'No alarms recorded.')); else b.appendChild(t);
+    }},
+  ]);
+}
+function drawGraphTrends(c) {
+  const g = c.getContext('2d'), W = c.width, H = c.height;
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  const data = trends.slice(0, 120).reverse();
+  const series = [['HR', 'hr', S.colors.ecg, 0, 200, 0], ['SpO2', 'spo2', S.colors.spo2, 50, 100, 1], ['ART Sys', 'artS', S.colors.art, 0, 200, 2], ['RR', 'rr', S.colors.co2, 0, 60, 3]];
+  const ph = H / series.length;
+  series.forEach(([name, key, col, lo, hi, i]) => {
+    const y0 = i * ph;
+    g.strokeStyle = '#223'; g.strokeRect(50, y0 + 6, W - 60, ph - 12);
+    g.fillStyle = col; g.font = '13px Segoe UI, Arial'; g.fillText(name, 4, y0 + 20); g.fillText(hi, 18, y0 + 36); g.fillText(lo, 18, y0 + ph - 10);
+    g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); let pen = false;
+    data.forEach((r, j) => { const v = r[key]; if (v == null) { pen = false; return; }
+      const x = 50 + (W - 60) * (data.length > 1 ? j / (data.length - 1) : 0), y = y0 + 6 + (ph - 12) * (1 - (clamp(v, lo, hi) - lo) / (hi - lo));
+      if (pen) g.lineTo(x, y); else { g.moveTo(x, y); pen = true; } });
+    g.stroke();
+  });
+  if (!data.length) { g.fillStyle = '#9fb3c8'; g.font = '16px Segoe UI, Arial'; g.fillText('Trends will appear here after monitoring for a short time.', 220, H / 2); }
+}
+function applyBrightness() { $('#dim').style.opacity = String((100 - S.brightness) / 100 * 0.8); }
+
+/* ---------------- instructor panel ---------------- */
+const PRESETS = {
+  'Healthy adult':        {rhythm:'nsr', ectopy:'none', hr:75, spo2:98, sys:120, dia:78, cvp:6, rr:14, etco2:37, temp:37.0, st:0},
+  'Sepsis':               {rhythm:'stach', ectopy:'none', hr:128, spo2:93, sys:86, dia:44, cvp:3, rr:28, etco2:28, temp:39.4, st:0},
+  'Hemorrhagic shock':    {rhythm:'stach', ectopy:'none', hr:142, spo2:95, sys:72, dia:48, cvp:1, rr:30, etco2:26, temp:36.1, st:0},
+  'STEMI + PVCs':         {rhythm:'nsr', ectopy:'freq', hr:96, spo2:95, sys:146, dia:92, cvp:9, rr:20, etco2:34, temp:37.0, st:3},
+  'Hypoxia (COPD)':       {rhythm:'stach', ectopy:'pvc', hr:112, spo2:84, sys:150, dia:88, cvp:11, rr:30, etco2:58, temp:37.3, st:0},
+  'Opioid overdose':      {rhythm:'sbrady', ectopy:'none', hr:52, spo2:82, sys:98, dia:60, cvp:6, rr:4, etco2:68, temp:36.4, st:0},
+  'AFib RVR':             {rhythm:'afib', ectopy:'none', hr:148, spo2:95, sys:104, dia:66, cvp:10, rr:22, etco2:35, temp:37.0, st:0},
+  'SVT':                  {rhythm:'svt', ectopy:'none', hr:188, spo2:97, sys:108, dia:72, cvp:7, rr:20, etco2:35, temp:37.0, st:0},
+  'Complete heart block': {rhythm:'avb3', ectopy:'none', hr:34, spo2:94, sys:82, dia:48, cvp:12, rr:18, etco2:36, temp:36.8, st:0},
+  'VT with pulse':        {rhythm:'vt', ectopy:'none', hr:172, spo2:92, sys:82, dia:54, cvp:12, rr:24, etco2:32, temp:37.0, st:0, vtPulse:true},
+  'Pulseless VT':         {rhythm:'vt', ectopy:'none', hr:190, spo2:90, sys:120, dia:78, cvp:12, rr:0, etco2:12, temp:37.0, st:0, vtPulse:false},
+  'VF arrest':            {rhythm:'vf', ectopy:'none', hr:0, spo2:88, sys:120, dia:78, cvp:14, rr:0, etco2:10, temp:37.0, st:0},
+  'Asystole':             {rhythm:'asys', ectopy:'none', hr:0, spo2:85, sys:120, dia:78, cvp:14, rr:0, etco2:8, temp:36.8, st:0},
+  'PEA':                  {rhythm:'pea', ectopy:'none', hr:64, spo2:85, sys:120, dia:78, cvp:14, rr:0, etco2:12, temp:36.8, st:0},
+  'ROSC':                 {rhythm:'stach', ectopy:'pvc', hr:112, spo2:94, sys:96, dia:58, cvp:10, rr:12, etco2:42, temp:36.6, st:1.5},
+  'Hyperthermia':         {rhythm:'stach', ectopy:'none', hr:118, spo2:96, sys:132, dia:80, cvp:7, rr:24, etco2:32, temp:40.2, st:0},
+};
+const SLIDERS = [['hr','Heart rate',0,250,1,''],['spo2','SpO2',40,100,1,'%'],['sys','Systolic',0,260,1,''],['dia','Diastolic',0,160,1,''],
+  ['cvp','CVP',0,30,1,''],['rr','Resp rate',0,60,1,''],['etco2','EtCO2',0,100,1,''],['temp','Temp °C',30,43,0.1,''],['st','ST (mm)',-5,5,0.5,'']];
+function buildInstructor() {
+  const I = $('#instr');
+  let h = `<h2>Instructor <button class="sb" id="instrClose">Close &#10005;</button></h2>
+   <div class="hint">Controls the simulated patient. Changes ramp over the transition time (like a real patient), so alarms trigger naturally.</div>
+   <h3>Scenarios</h3><div class="presets">${Object.keys(PRESETS).map(k => `<button data-preset="${k}">${k}</button>`).join('')}</div>
+   <h3>Rhythm</h3>
+   <div class="ir"><label>Rhythm</label><select id="iRhythm">${Object.entries(RHYTHMS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+   <div class="ir"><label>Ectopy</label><select id="iEct">${Object.entries(ECTOPY).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+   <div class="ir"><label>Options</label><div class="seg"><button class="sb" id="iPulseless">Pulseless</button><button class="sb" id="iVtPulse">VT has pulse</button><button class="sb" id="iCoarse">Coarse VF</button></div></div>
+   <div class="ir"><label>Defibrillate</label><div class="seg"><button class="sb" id="iShock">&#9889; Shock</button><select id="iShockTo" style="flex:1">
+     <option value="">Shock &rarr; no change</option><option value="nsr">Shock &rarr; Sinus (ROSC)</option><option value="asys">Shock &rarr; Asystole</option><option value="vf">Shock &rarr; VF</option></select></div></div>
+   <h3>Vital signs</h3>
+   <div class="ir"><label>Transition</label><div class="seg" id="iRamp">${[0, 10, 30, 60, 120].map(s => `<button class="sb" data-ramp="${s}">${s ? (s < 60 ? s + 's' : s / 60 + 'm') : 'Now'}</button>`).join('')}</div></div>`;
+  for (const [k, lab, mn, mx, st] of SLIDERS) h += `<div class="ir"><label>${lab}</label><input type="range" min="${mn}" max="${mx}" step="${st}" id="s_${k}"><output id="o_${k}"></output></div>`;
+  h += `<h3>Sensors &amp; faults</h3>
+   <div class="ir"><label>ECG</label><div class="seg" data-sen="ecg">${seg([['ok','Connected'],['leadsoff','Leads off'],['vlead','V lead off'],['none','Unplugged']])}</div></div>
+   <div class="ir"><label>SpO2</label><div class="seg" data-sen="spo2">${seg([['ok','On'],['probeoff','Probe off'],['none','Unplugged']])}</div></div>
+   <div class="ir"><label>ART line</label><div class="seg" data-sen="art">${seg([['ok','On'],['none','Off']])}<button class="sb" id="iDamp">Damped</button></div></div>
+   <div class="ir"><label>CVP</label><div class="seg" data-sen="cvp">${seg([['ok','On'],['none','Off']])}</div></div>
+   <div class="ir"><label>CO2</label><div class="seg" data-sen="co2">${seg([['ok','On'],['occl','Occluded'],['none','Off']])}</div></div>
+   <div class="ir"><label>NIBP cuff</label><div class="seg" data-sen="nibp">${seg([['ok','On'],['loose','Loose']])}</div></div>
+   <div class="ir"><label>Temp</label><div class="seg" data-sen="temp">${seg([['ok','On'],['none','Off']])}</div></div>
+   <div class="ir"><label>Artifact</label><div class="seg"><button class="sb" id="iArt">Patient movement</button></div></div>
+   <div class="ir"><label>Power</label><div class="seg"><button class="sb" id="iAC">Unplug AC (battery)</button></div></div>
+   <h3>Keyboard</h3><div class="hint">Space: Pause Audio · N: NIBP start/stop · F: Freeze · Z: Zero all · I: this panel · Esc: close menu · F11: full screen</div>`;
+  I.innerHTML = h;
+  $('#instrClose').onclick = () => I.classList.remove('open');
+  I.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(PRESETS[b.dataset.preset]));
+  $('#iRhythm').onchange = e => { setRhythm(e.target.value); };
+  $('#iEct').onchange = e => { R.ectopy = e.target.value; };
+  $('#iPulseless').onclick = () => { R.pulseless = !R.pulseless; syncInstr(); };
+  $('#iVtPulse').onclick = () => { R.vtPulse = !R.vtPulse; syncInstr(); };
+  $('#iCoarse').onclick = () => { R.vfCoarse = !R.vfCoarse; syncInstr(); };
+  $('#iShock').onclick = shock;
+  $('#iArt').onclick = () => { R.artifact = !R.artifact; syncInstr(); };
+  $('#iDamp').onclick = () => { artDamped = !artDamped; syncInstr(); };
+  $('#iAC').onclick = () => { SEN.ac = !SEN.ac; syncInstr(); };
+  I.querySelectorAll('[data-ramp]').forEach(b => b.onclick = () => { rampDur = +b.dataset.ramp; syncInstr(); });
+  for (const [k] of SLIDERS) {
+    const s = $('#s_' + k);
+    s.oninput = () => { $('#o_' + k).textContent = s.value; setTarget(k, +s.value, rampDur); };
+  }
+  I.querySelectorAll('[data-sen] .sb[data-v]').forEach(b => b.onclick = () => {
+    const key = b.parentElement.dataset.sen, prev = SEN[key];
+    SEN[key] = b.dataset.v;
+    if (key === 'art' && prev === 'none' && SEN.art === 'ok') artZeroed = false;
+    if (key === 'cvp' && prev === 'none' && SEN.cvp === 'ok') cvpZeroed = false;
+    if ((prev === 'none') !== (SEN[key] === 'none') || key === 'ecg' || key === 'spo2' || key === 'co2') layout();
+    syncInstr();
+  });
+  syncInstr();
+}
+function seg(opts) { return opts.map(([v, l]) => `<button class="sb" data-v="${v}">${l}</button>`).join(''); }
+function syncInstr() {
+  const I = $('#instr'); if (!I.innerHTML) return;
+  $('#iRhythm').value = R.rhythm; $('#iEct').value = R.ectopy;
+  $('#iPulseless').classList.toggle('on', R.pulseless); $('#iVtPulse').classList.toggle('on', R.vtPulse);
+  $('#iCoarse').classList.toggle('on', R.vfCoarse); $('#iArt').classList.toggle('on', R.artifact);
+  $('#iDamp').classList.toggle('on', artDamped); $('#iAC').classList.toggle('on', !SEN.ac);
+  I.querySelectorAll('[data-ramp]').forEach(b => b.classList.toggle('sel', +b.dataset.ramp === rampDur));
+  I.querySelectorAll('[data-sen]').forEach(g => g.querySelectorAll('.sb[data-v]').forEach(b => b.classList.toggle('sel', SEN[g.dataset.sen] === b.dataset.v)));
+  for (const [k] of SLIDERS) { const t = RAMP[k] ? RAMP[k].to : P[k]; $('#s_' + k).value = t; $('#o_' + k).textContent = (+t).toFixed(k === 'temp' ? 1 : k === 'st' ? 1 : 0); }
+}
+function setRhythm(r, keepHr) {
+  const prev = R.rhythm; R.rhythm = r;
+  if (!keepHr) setTarget('hr', RHY_HR[r], (r === 'vf' || r === 'asys' || r === 'vt' || prev === 'vf' || prev === 'asys') ? 0 : Math.min(rampDur, 5));
+  // restart the beat scheduler at the current time so the new rhythm starts promptly
+  beats = beats.filter(b => b.t <= simT + 0.05);
+  const lq = beats.filter(b => b.k !== 'P').pop(); lastQRS = lq ? lq.t : simT;
+  schedT = Math.max(simT + 0.2, lastQRS + 0.3); atrialT = schedT; wenckIdx = 0; mob2Idx = 0;
+  syncInstr();
+}
+function applyPreset(p) {
+  R.ectopy = p.ectopy; if ('vtPulse' in p) R.vtPulse = p.vtPulse; R.pulseless = false;
+  setRhythm(p.rhythm, true);
+  const instant = ['vf', 'asys', 'vt', 'pea'].includes(p.rhythm);
+  for (const k of ['hr','spo2','sys','dia','cvp','rr','etco2','temp','st']) setTarget(k, p[k], (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : rampDur);
+  syncInstr();
+}
+function shock() {
+  shockUntil = simT + 1.2;
+  const to = $('#iShockTo').value;
+  // clear any in-flight beats so the shock is followed by a brief pause
+  beats = beats.filter(b => b.t <= simT); schedT = simT + 1.6; lastQRS = simT;
+  if (to) setTimeout(() => { if (to === 'nsr') applyPreset(PRESETS.ROSC); else setRhythm(to); }, 1200);
+}
+
+/* ---------------- main loop ---------------- */
+let lastFrame = performance.now(), lastSlow = 0, lastAlarmEval = 0, lastBeepIdx = 0;
+function frame(now) {
+  const dt = Math.min(0.1, (now - lastFrame) / 1000); lastFrame = now;
+  if (powered) {
+    simT += dt;
+    // ramps
+    for (const k in RAMP) { const r = RAMP[k], f = clamp((simT - r.t0) / r.dur, 0, 1); P[k] = r.from + (r.to - r.from) * f; if (f >= 1) delete RAMP[k]; }
+    scheduleBeats(simT + 2.5); scheduleBreaths(simT + 8);
+    sampleMeasures();
+    // QRS tones
+    for (const b of beats) {
+      if (b.k !== 'P' && !b.beeped && b.t <= simT) { b.beeped = true;
+        if (simT - b.t < 0.2 && (SEN.ecg === 'ok' || SEN.ecg === 'vlead')) qrsBeep(b);
+        else if (simT - b.t < 0.2 && SEN.ecg !== 'ok' && SEN.spo2 === 'ok' && b.perf > 0.1) qrsBeep(b); }
+    }
+    if (!standby) { drawWaves(); nibpUpdate(dt); }
+    if (!SEN.ac) battery = Math.max(0, battery - dt * 0.05); else battery = Math.min(100, battery + dt * 0.2);
+    if (now - lastAlarmEval > 250) { lastAlarmEval = now; computeMeasures(0.25); evalAlarms(); }
+    if (now - lastSlow > 250) { lastSlow = now; updateParams(); updateTop(); }
+    if (simT - lastTrend >= 30 && simT > 5) { lastTrend = simT; addTrend(false); }
+    updateAlarmLight(now);
+    audioTick();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- fit / resize ---------------- */
+function fit() {
+  const d = $('#device');
+  d.className = S.bezel ? 'bezel' : 'nobezel';
+  const W = S.bezel ? 1340 : 1280, H = S.bezel ? 892 : 800;
+  const pad = S.bezel ? 12 : 0;
+  scale = Math.min((innerWidth - pad * 2) / W, (innerHeight - pad * 2) / H);
+  d.style.transform = `scale(${scale})`;
+  d.style.left = Math.round((innerWidth - W * scale) / 2) + 'px'; d.style.top = Math.round((innerHeight - H * scale) / 2) + 'px';
+  resizeCanvas();
+}
+addEventListener('resize', fit);
+
+/* ---------------- power / boot ---------------- */
+function powerOn() {
+  ensureAudio();
+  $('#off').classList.remove('on'); $('#boot').classList.add('on');
+  requestAnimationFrame(() => $('#bootBar').style.width = '100%');
+  // power-on self test tone (IEC 60601-1-8 requires an audible check at start-up)
+  if (AC) playPattern(TONESETS.carescape.medium, AC.currentTime + 0.2);
+  setTimeout(() => {
+    $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
+    schedT = 0.6; lastQRS = 0; breathT = 0.4; beats = []; breaths = []; alarms = {}; pending = {}; events = {};
+    layout();
+  }, 2600);
+}
+function powerOff() {
+  powered = false; standby = false; $('#standby').classList.remove('on');
+  $('#off').classList.add('on'); $('#bootBar').style.width = '0';
+  $('#alarmLight').className = ''; closeMenu();
+}
+$('#powerOn').onclick = powerOn;
+$('#pwrBtn').onclick = () => powered ? openConfirm('Turn the monitor off?', 'Monitoring will stop.', powerOff) : powerOn();
+$('#resumeBtn').onclick = () => setStandby(false);
+$('#instrBtn').onclick = () => $('#instr').classList.toggle('open');
+$('#alarmArea').onclick = () => openAlarmsSetup(3);
+$('#ptInfo').onclick = () => openPatientMenu();
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  const k = e.key.toLowerCase();
+  if (k === ' ') { e.preventDefault(); pauseAudio(); }
+  else if (k === 'n') { ensureAudio(); nibpStart(); }
+  else if (k === 'f' && powered) toggleFreeze();
+  else if (k === 'z' && powered) zeroAll();
+  else if (k === 'i') $('#instr').classList.toggle('open');
+  else if (k === 'escape') closeMenu();
+  else if (k === 'enter' && !powered && $('#off').classList.contains('on')) powerOn();
+});
+// unlock audio on any interaction (browser autoplay policy)
+addEventListener('pointerdown', () => ensureAudio(), {capture: true});
+
+/* ---------------- start ---------------- */
+buildMenuBar(); buildInstructor(); applyBrightness(); fit(); updateTop();
+requestAnimationFrame(frame);
+if (new URLSearchParams(location.search).has('autostart')) powerOn();
+</script>
+</body>
+</html>
