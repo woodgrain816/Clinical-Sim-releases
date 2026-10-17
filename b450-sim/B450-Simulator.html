@@ -872,7 +872,8 @@ function ensureAudio() {
     master = AC.createGain(); master.gain.value = 0.9;
     const lim = AC.createDynamicsCompressor();
     lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.08;
-    master.connect(lim); lim.connect(AC.destination);
+    const trim = AC.createGain(); trim.gain.value = 0.8;   // headroom after the limiter's make-up gain
+    master.connect(lim); lim.connect(trim); trim.connect(AC.destination);
     alarmGain = AC.createGain(); alarmGain.connect(master);
     qrsGain = AC.createGain(); qrsGain.connect(master);
     // IEC 60601-1-8 requires >= 4 harmonics in the 300-4000 Hz range
@@ -921,9 +922,12 @@ function tone(freq, at, dur, gainNode, w, level = 0.5, attack) {
 // "classic": TV / House M.D. style, measured from the show's V-tach / arrest scene: red alarms = 2512 Hz ~80 ms beep
 //   every 0.18 s with a "beep beep" on top (two 68 ms beeps 0.132 s apart, every 0.9 s; each beep is 662 + 595 Hz
 //   buzzer tones, ~4 dB louder than the fast beeping); yellow alarms = the beep beep alone;
-//   asystole = continuous 1 kHz flatline. SpO2 alarms have their own sound that plays alongside: 3489 Hz,
+//   asystole = continuous 1 kHz flatline with "beR beR beR" under it (~6 dB above the flatline in the band, but low-pitched
+//   so it sounds faint). SpO2 alarms have their own sound that plays alongside: 3489 Hz,
 //   220 ms every 0.334 s (seizure and arrest scenes).
 function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'ge500', .26]]; }
+function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 505, .124, 'ge512', BER_LV], [i * .2, 522, .124, 'ge500', BER_LV]); return out; }
+const BER_LV = .57, FLAT_LV = .43;   // balanced against the pulse-ox tone as measured in the asystole clip
 function hBeep(t) { return [[t, 662, .08, 'h662', .55], [t, 595, .08, 'h595', .55]]; }
 function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
 const TONESETS = {
@@ -945,6 +949,8 @@ const TONESETS = {
     low:    {notes: [[0, 2512, .082]], repeat: 15},
     // pulse-oximeter alarms (seizure and arrest scenes): pure 3489 Hz, 220 ms, every 0.334 s, as loud as the fast beeping
     ox:     {notes: [[0, 3489, .22, 'sine', .5, .006]], repeat: 0.334},
+    // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 505 + 522 Hz)
+    ber:    {notes: berNotes(), repeat: 1.12},
   },
 };
 function playPattern(pat, t0) { for (const [off, f, d, w, lv, att] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv, att); }
@@ -954,7 +960,7 @@ function setFlatline(on) {
   // TV-drama style continuous flatline tone (real monitors use the normal high-priority pattern instead)
   if (on && !flatOsc) {
     const o = AC.createOscillator(), g = AC.createGain();
-    o.setPeriodicWave(WAVES.flat); o.frequency.value = 1000; g.gain.setValueAtTime(0, AC.currentTime); g.gain.linearRampToValueAtTime(0.32, AC.currentTime + 0.03);
+    o.setPeriodicWave(WAVES.flat); o.frequency.value = 1000; g.gain.setValueAtTime(0, AC.currentTime); g.gain.linearRampToValueAtTime(FLAT_LV, AC.currentTime + 0.03);
     o.connect(g); g.connect(alarmGain); o.start(); flatOsc = {o: o, g: g};
   } else if (!on && flatOsc) {
     const f = flatOsc; flatOsc = null; f.g.gain.setTargetAtTime(0, AC.currentTime, 0.02); f.o.stop(AC.currentTime + 0.2);
@@ -973,8 +979,8 @@ function audioTick() {
   if (ox && AC.currentTime + 0.15 >= nextOx) { playPattern(set.ox, nextOx); nextOx += set.ox.repeat; }
   const p = topPriority(set.ox ? list.filter(a => !OX_IDS.has(a.id)) : list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
-  // TV mode follows the House M.D. scene: only the flatline in asystole
-  if (flat) name = null;
+  // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
+  if (flat) name = 'ber';
   if (name !== audioName) { audioName = name; nextBurst = AC.currentTime + 0.05; nextLayer = AC.currentTime + 0.4; }
   audioPri = p;
   if (!name) return;
