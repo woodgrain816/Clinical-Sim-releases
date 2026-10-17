@@ -236,7 +236,7 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
    <div id="boot"><div class="t">CARESCAPE B450 SIMULATOR</div><div class="note" style="font-size:14px;margin-top:10px">Self test&hellip;</div><div class="bar"><i id="bootBar"></i></div></div>
    <div id="off" class="on"><div class="t">Monitor is off</div><button id="powerOn">&#9211;&nbsp; Power On</button>
      <div style="margin-top:18px;font-size:15px;color:#9fb3c8">Monitor:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
-       <option value="real">CARESCAPE B450 (real monitor)</option><option value="tv">House M.D. monitor (screen + sounds)</option></select></div>
+       <option value="tv">House M.D. monitor (screen + sounds)</option><option value="real">CARESCAPE B450 (real monitor)</option></select></div>
      <div class="note" style="margin-top:26px;font-size:13px;text-align:center;max-width:620px">Training simulator only &mdash; not a medical device. Not affiliated with or endorsed by GE HealthCare.<br>
      Space = Pause Audio &nbsp;&middot;&nbsp; N = Start NIBP &nbsp;&middot;&nbsp; I = Instructor panel &nbsp;&middot;&nbsp; F11 = Full screen</div></div>
    <div id="dim"></div>
@@ -299,7 +299,7 @@ function defaultSettings(cat = 'Adult') {
     bed: 'BED 1', unit: 'ICU', name: '', mrn: '', cat: cat,
     sweep: 25, lead1: 'II', lead2: 'V', gain: 1, showEcg2: true, artScale: 'Auto', co2Scale: 50, tempUnit: 'C',
     colors: {ecg:'#00ff3c', art:'#ff2a2a', cvp:'#4aa3ff', spo2:'#00e5ff', co2:'#ffee00', resp:'#ffee00', nibp:'#ffffff', temp:'#ffffff'},
-    volAlarm: 6, volQrs: 3, toneSet: 'carescape', tvFlatline: false, display: 'carescape', pauseTime: 120, bezel: true, brightness: 100,
+    volAlarm: 6, volQrs: 3, toneSet: 'classic', tvFlatline: true, display: 'house', pauseTime: 120, bezel: true, brightness: 100,
     lim: lim, apnea: {time: L.apnea, on: true}, xtachy: L.xtachy, xbrady: L.xbrady, arr: arr, nibpAuto: 0,
   };
 }
