@@ -20,6 +20,13 @@ Keys:    Space = Pause Audio    N = NIBP start/stop    F = Freeze
 The Instructor panel (button at the top right, or the I key) controls the
 patient: scenarios, rhythm, ectopy, vital signs, sensor faults, shocks.
 
+House M.D. screen: the header, labels, keys, bezel buttons and battery all
+work (click them). ◀◀ / ▶▶ switch between two pages of keys. Realtime and
+Delayed Record save waveform strips under Data & Pages -> Recordings.
+
+Fonts embedded for the House screen: Archivo Narrow (SIL Open Font License
+1.1) and Roboto Condensed (Apache License 2.0).
+
 Training/hobby simulation only. Not a medical device, never use with a real
 patient. Not affiliated with or endorsed by GE HealthCare; CARESCAPE is a
 GE HealthCare trademark, used only to describe what this resembles.
