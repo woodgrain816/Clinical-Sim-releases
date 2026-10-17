@@ -857,9 +857,11 @@ function tone(freq, at, dur, gainNode, w, level = 0.5) {
 //   The same alarm is the three-beep sound in the House M.D. arrest scene. Medium and low use the same tone; their
 //   timing has not been measured yet.
 // "iec": the IEC 60601-1-8 Annex F "general" melody (C-A-F / A-F).
-// "classic": TV / House M.D. style, measured from the show: 2512 Hz, ~80 ms beep every 0.18 s while the patient
-//   crashes, and a continuous 1 kHz flatline (alone) in asystole.
+// "classic": TV / House M.D. style, measured from the show: red alarms = "beR beR beR" (3 beeps, each two tones
+//   505 + 522 Hz beating at ~17 Hz, 0.2 s apart, every 1.12 s); yellow alarms = 2512 Hz ~80 ms beep every 0.18 s;
+//   asystole = continuous 1 kHz flatline on its own.
 function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'ge500', .26]]; }
+function berGroup() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 505, .124, 'ge512', .26], [i * .2, 522, .124, 'ge500', .26]); return out; }
 function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
 const TONESETS = {
   carescape: {
@@ -873,7 +875,7 @@ const TONESETS = {
     low:    {notes: [[0,659,.2],[.32,523,.2]], repeat: 16},
   },
   classic: {
-    high:   {notes: geGroup(3), repeat: 1.0},
+    high:   {notes: berGroup(), repeat: 1.12},
     fast:   {notes: [[0, 2512, .082]], repeat: 0.18},
     medium: {notes: geGroup(3), repeat: 3.0},
     low:    {notes: geGroup(1), repeat: 15},
@@ -899,9 +901,9 @@ function audioTick() {
   const p = topPriority(list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   const set = TONESETS[S.toneSet] || TONESETS.carescape;
-  // TV mode follows the House M.D. scene: fast beeping while the patient crashes, only the flatline in asystole
+  // TV mode follows the House M.D. scene: "beR beR beR" for red alarms, fast beeping for yellow, only the flatline in asystole
   if (flat) name = null;
-  else if (set.fast && (name === 'medium' || name === 'high')) name = 'fast';
+  else if (set.fast && name === 'medium') name = 'fast';
   if (name !== audioName) { audioName = name; nextBurst = AC.currentTime + 0.05; }
   audioPri = p;
   if (!name) return;
@@ -1395,7 +1397,8 @@ function openAlarmsSetup(idx = 0) {
       row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','GE legacy / TV (House MD style)']], () => S.toneSet, v => S.toneSet = v),
         button('High', () => testAlarm('high')), button('Medium', () => testAlarm('medium')), button('Low', () => testAlarm('low')));
       if (S.toneSet === 'classic') row(b, 'TV crisis sounds', button('Asystole (flatline)', () => { ensureAudio(); setFlatline(true); setTimeout(() => setFlatline(false), 3400); }),
-        button('Crashing (fast beeping)', () => { const p = TONESETS.classic.fast; for (let i = 0; i < 16; i++) playPattern(p, AC.currentTime + 0.05 + i * p.repeat); }));
+        button('Red alarm (beR beR beR)', () => testAlarm('high')),
+        button('Yellow (fast beeping)', () => { const p = TONESETS.classic.fast; for (let i = 0; i < 16; i++) playPattern(p, AC.currentTime + 0.05 + i * p.repeat); }));
       b.appendChild(el('div', 'note', 'Alarm audio cannot be turned off; the minimum volume is 1. Pause Audio silences active alarms for the pause time; pressing it with no active alarm pre-pauses new alarms.'));
     }},
     {name: 'Active Alarms', build: b => {
