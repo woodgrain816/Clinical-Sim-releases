@@ -249,7 +249,7 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #hLeds b{width:8px;height:8px;border-radius:50%;background:#59ff6c;box-shadow:0 0 6px #59ff6c;margin-left:6px}
 
 /* ---------- instructor ---------- */
-#instrBtn{position:fixed;right:10px;top:10px;z-index:50;background:#203247;color:#fff;border:1px solid #4c6f96;
+#instrBtn{position:fixed;right:80px;top:6px;z-index:50;background:#203247;color:#fff;border:1px solid #4c6f96;
   padding:7px 12px;border-radius:6px;font-size:13px;cursor:pointer;opacity:.85;font-family:inherit}
 #instrBtn:hover{opacity:1}
 #instr{position:fixed;right:0;top:0;bottom:0;width:380px;background:#121820;border-left:1px solid #34465c;z-index:60;
@@ -346,7 +346,11 @@ function openInstrWindow() {
   });
   setInstrMode();
 }
-function toggleInstr() { if (instrWin && !instrWin.closed) instrWin.focus(); else $('#instr').classList.toggle('open'); }
+function toggleInstr() {
+  if (instrWin && !instrWin.closed) return instrWin.focus();
+  const I = $('#instr'); if (I.classList.contains('open')) return I.classList.remove('open');
+  openInstrWindow(); if (!instrWin) I.classList.add('open');
+}
 function setInstrMode() {
   const b = $('#iWin'); if (b) b.textContent = instrWin ? 'Back to monitor' : 'Separate window';
 }
@@ -390,7 +394,7 @@ function defaultSettings(cat = 'Adult') {
     bed: 'BED 1', unit: 'ICU', name: '', mrn: '', cat: cat,
     sweep: 25, lead1: 'II', lead2: 'V', gain: 1, showEcg2: true, artScale: 'Auto', co2Scale: 50, tempUnit: 'C',
     colors: {ecg:'#00ff3c', art:'#ff2a2a', cvp:'#4aa3ff', spo2:'#00e5ff', co2:'#ffee00', resp:'#ffee00', nibp:'#ffffff', temp:'#ffffff'},
-    volAlarm: 6, volQrs: 3, toneSet: 'classic', tvFlatline: true, display: 'house', pauseTime: 120, bezel: true, brightness: 100,
+    volAlarm: 6, volQrs: 3, toneSet: 'classic', tvFlatline: true, display: 'house', pauseTime: 120, bezel: false, brightness: 100,
     lim: lim, apnea: {time: L.apnea, on: true}, xtachy: L.xtachy, xbrady: L.xbrady, arr: arr, nibpAuto: 0,
   };
 }
@@ -399,6 +403,8 @@ try { const saved = JSON.parse(localStorage.getItem('b450sim.settings') || 'null
   if (saved && saved.lim && saved.arr) S = Object.assign(defaultSettings(saved.cat || 'Adult'), saved); } catch (e) {}
 // settings saved by older versions latched the lethal alarms with no way to change it
 for (const id of ['asys', 'vfib', 'vtach', 'xtachy', 'xbrady']) if (S.arr[id] && !S.latchSet) S.arr[id].latch = false;
+// the real frame is around the TV: no drawn housing unless it was switched on in Monitor Setup after this change
+if (!S.bezelSet) S.bezel = false;
 function save() { try { localStorage.setItem('b450sim.settings', JSON.stringify(S)); } catch (e) {} }
 
 /* ---------------- patient model ---------------- */
@@ -1999,7 +2005,7 @@ function openMonitorSetup(tab = 0) {
       row(b, 'Second ECG waveform', toggle(() => S.showEcg2, v => { S.showEcg2 = v; layout(); }));
       row(b, 'Brightness', stepper(() => S.brightness, v => { S.brightness = v; applyBrightness(); }, 20, 100, 10, v => v + '%'));
       row(b, 'Screen style', choice([['carescape', 'CARESCAPE B450'], ['house', 'House M.D. set monitor']], () => S.display, v => { S.display = v; layout(); }));
-      row(b, 'Show monitor housing', toggle(() => S.bezel, v => { S.bezel = v; fit(); }));
+      row(b, 'Show monitor housing', toggle(() => S.bezel, v => { S.bezel = v; S.bezelSet = true; save(); fit(); }));
       row(b, 'Temperature unit', choice([['C','°C'],['F','°F']], () => S.tempUnit, v => S.tempUnit = v));
       row(b, 'Monitor standby', button('Standby', () => setStandby(true)));
       row(b, 'Full screen', button('Toggle full screen (F11)', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }));

@@ -19,6 +19,9 @@ Keys:    Space = Pause Audio    N = NIBP start/stop    F = Freeze
 
 The Instructor panel (button at the top right, or the I key) controls the
 patient: scenarios, rhythm, ectopy, vital signs, sensor faults, shocks.
+It opens in its own window (put it on a second screen); move the mouse to
+show the faded Instructor button. The monitor fills the window with no
+drawn frame (Monitor Setup -> Show monitor housing turns one on).
 
 House M.D. screen: the header, labels, keys, bezel buttons and battery all
 work (click them). ◀◀ / ▶▶ switch between two pages of keys. Realtime and
