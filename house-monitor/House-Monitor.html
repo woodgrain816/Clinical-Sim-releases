@@ -426,7 +426,13 @@ function setTarget(k, v, dur) {
   RAMP[k] = {from: P[k], to: v, t0: simT, dur: Math.max(0.001, dur)};
   if (dur <= 0) P[k] = v;
   // an instant change of breathing rate (e.g. arrest) drops breaths that were already scheduled
-  if (k === 'rr' && dur <= 0) { breaths = breaths.filter(b => b.t <= simT); breathT = simT + 0.3; }
+  // the next breath comes one NEW breathing period after the last one: squeezing one in 0.3 s after the previous breath
+  // read as fast breathing (an opioid overdose showed RR 14 -> 22 -> 4 instead of simply falling)
+  if (k === 'rr' && dur <= 0) {
+    breaths = breaths.filter(b => b.t <= simT);
+    const lb = breaths[breaths.length - 1];
+    breathT = v >= 1 ? Math.max(simT + 0.3, (lb ? lb.t : simT) + 60 / v) : simT + 0.3;
+  }
 }
 let rampDur = 0; // seconds (instructor changes apply at once unless a transition time is chosen)
 const R = {rhythm:'nsr', ectopy:'none', pulseless:false, artifact:false, vfCoarse:true, vtPulse:true};
@@ -799,8 +805,14 @@ function computeMeasures(dt) {
   const lastB = br[br.length - 1];
   const respSrcOK = SEN.co2 === 'ok' || SEN.ecg === 'ok' || SEN.ecg === 'vlead';
   if (!respSrcOK) M.rr = null;
-  else if (!lastB || t - lastB.t > Math.max(12, 3 * (lastB ? lastB.per : 5))) M.rr = 0;
-  else { const n = Math.min(2, br.length - 1); M.rr = n > 0 ? Math.round(60 / ((lastB.t - br[br.length - 1 - n].t) / n)) : Math.round(P.rr);
+  // RR reads 0 only after the apnoea delay (20 s by default) with no breath; before that it keeps falling as the gap
+  // grows (below), so slowing breathing never flashes 0
+  else if (!lastB || t - lastB.t > Math.max(S.apnea.time || 20, 3 * (lastB ? lastB.per : 5))) M.rr = 0;
+  else { let n = Math.min(2, br.length - 1);
+    // after a sudden change of breathing rate, average only the new breaths: mixing in the old, faster interval made a
+    // falling rate tick back up (4 -> 6 -> 4)
+    if (n === 2) { const i1 = lastB.t - br[br.length - 2].t, i0 = br[br.length - 2].t - br[br.length - 3].t; if (i1 > 1.5 * i0 || i0 > 1.5 * i1) n = 1; }
+    M.rr = n > 0 ? Math.round(60 / ((lastB.t - br[br.length - 1 - n].t) / n)) : Math.round(P.rr);
     const gap = t - lastB.t; if (n > 0 && gap > (lastB.t - br[br.length - 2].t)) M.rr = Math.min(M.rr, Math.round(60 / gap)); }
   // CO2
   if (SEN.co2 === 'ok' && co2Buf.length > 10) {
