@@ -1165,6 +1165,8 @@ function audioTick() {
 let lastBeepT = 0;
 function qrsBeep(b) {
   if (!AC || !S.volQrs || standby || !powered) return;
+  // the show's seizure scene has no per-beat tone under the alarms: only the pulse-ox tone and the fast beeping
+  if (S.toneSet === 'classic' && R.scene === 'seizure') return;
   // pitch follows SpO2 (lower saturation = lower pitch)
   const s = M.spo2 != null ? M.spo2 : 100;
   if (S.toneSet === 'classic') return tone(960, AC.currentTime + 0.005, 0.08, qrsGain, false); // legacy fixed-pitch beep
