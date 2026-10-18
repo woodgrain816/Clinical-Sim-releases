@@ -778,8 +778,10 @@ function evalAlarms() {
     const A = S.arr;
     const q = beats.filter(b => b.k !== 'P' && b.t <= t);
     const lastQ = q.length ? q[q.length - 1].t : -99;
-    if (R.rhythm === 'vf') want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', delay: 1.5, latch: S.arr.vfib.latch, bt: true});
-    else if (t - lastQ > 3 && t > 4) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
+    // a set V-tach rhythm alarms after ~1 s instead of waiting for 6 counted beats
+    if (R.rhythm === 'vt' && t - hrResetT > 1 && t > 4) events.vtach = t + 6;
+    if (R.rhythm === 'vf') want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', delay: 0.5, latch: S.arr.vfib.latch, bt: true});
+    else if (t - lastQ > (R.rhythm === 'asys' ? 0.8 : 3) && t > 4) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
     // run analysis on newly detected beats
     detectArrhythmia(q);
     for (const id in events) {
@@ -1497,7 +1499,7 @@ function updateParams() {
     setV('hbatt', [0, 1, 2, 3, 4].map(i => `<u style="opacity:${i < segs ? 1 : 0.15};background:${battery < 20 ? '#ff4040' : ''}"></u>`).join(''));
     const bell = document.querySelector('.house .hbell svg path'); if (bell) bell.setAttribute('fill', S.volQrs ? '#e9edf2' : '#59616d');
     if (houseClassic()) {
-      if (NB.state !== 'idle') { setV('nibpSD', '---/---'); setV('nibpM', '(---)'); }
+      if (NB.state !== 'idle') { setV('nibpSD', String(Math.round(NB.cuff))); setV('nibpM', ''); }   // cuff pressure while measuring
       // like the set monitor, no pulse reads 0 rather than dashes
       if (SEN.spo2 === 'ok' && M.spo2 == null && simT > 8) { setV('spo2', '0'); setV('pr', '0'); }
       // a failed NBP reading (no pulse) shows as a red 0/0 (0), as on the set
@@ -1999,6 +2001,8 @@ function buildInstructor() {
    <h3>Vital signs</h3>
    <div class="ir"><label>Transition</label><div class="seg" id="iRamp">${[0, 10, 30, 60, 120].map(s => `<button class="sb" data-ramp="${s}">${s ? (s < 60 ? s + 's' : s / 60 + 'm') : 'Now'}</button>`).join('')}</div></div>`;
   for (const [k, lab, mn, mx, st] of SLIDERS) h += `<div class="ir"><label>${lab}</label><input type="range" min="${mn}" max="${mx}" step="${st}" id="s_${k}"><output id="o_${k}"></output></div>`;
+  h += `<h3>NBP</h3>
+   <div class="ir"><label>Cuff</label><div class="seg"><button class="sb" id="iNbp">Measure now</button><button class="sb" id="iNbpNow">Instant result</button></div></div>`;
   h += `<h3>Sensors &amp; faults</h3>
    <div class="ir"><label>ECG</label><div class="seg" data-sen="ecg">${seg([['ok','Connected'],['leadsoff','Leads off'],['vlead','V lead off'],['none','Unplugged']])}</div></div>
    <div class="ir"><label>SpO2</label><div class="seg" data-sen="spo2">${seg([['ok','On'],['probeoff','Probe off'],['none','Unplugged']])}</div></div>
@@ -2022,6 +2026,13 @@ function buildInstructor() {
   $('#iArt').onclick = () => { R.artifact = !R.artifact; syncInstr(); };
   $('#iDamp').onclick = () => { artDamped = !artDamped; syncInstr(); };
   $('#iAC').onclick = () => { SEN.ac = !SEN.ac; syncInstr(); };
+  $('#iNbp').onclick = () => { ensureAudio(); if (NB.state === 'idle') nibpStart(); };
+  $('#iNbpNow').onclick = () => {   // skip the 20 s cuff cycle: post a reading of the current pressure at once
+    NB.state = 'idle'; NB.cuff = 0;
+    if (beats.filter(b => b.perf > 0.1 && b.t > simT - 10).length < 4 || P.sys < 40) { nibpFail('NIBP Measurement Failed'); return; }
+    const s = Math.round(P.sys + rnd(-2, 2)), d = Math.round(P.dia + rnd(-2, 2));
+    NB.last = {s: s, d: d, m: Math.round(d + (s - d) / 3), time: new Date(), ack: false}; NB.err = null; addTrend(true);
+  };
   I.querySelectorAll('[data-ramp]').forEach(b => b.onclick = () => { rampDur = +b.dataset.ramp; syncInstr(); });
   for (const [k] of SLIDERS) {
     const s = $('#s_' + k);
@@ -2120,6 +2131,8 @@ function powerOn() {
   setTimeout(() => {
     $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
     schedT = 0.6; lastQRS = 0; breathT = 0.4; beats = []; breaths = []; alarms = {}; pending = {}; events = {}; hrResetT = -1;
+    if (isHouse() && !S.nibpAuto) S.nibpAuto = 15;          // the set monitor ran NBP on Auto 15 min
+    NB.state = 'idle'; NB.last = null; NB.err = null; NB.nextAuto = S.nibpAuto ? 3 : null;   // first reading right after power-on
     if (isHouse()) { SEN.art = SEN.cvp = SEN.co2 = SEN.temp = 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
     layout();
   }, 2600);
