@@ -330,8 +330,12 @@ let instrWin = null;
 const $ = s => document.querySelector(s) || (instrWin && !instrWin.closed ? instrWin.document.querySelector(s) : null);
 function openInstrWindow() {
   if (instrWin && !instrWin.closed) { instrWin.focus(); return; }
+  // phones, tablets and app wrappers (WebView) have no second window: there window.open fails or reuses this very
+  // page (which wiped it to black), so they keep the slide-in panel
+  if (!canPopOut()) return;
   const w = window.open('', 'b450instr', 'width=430,height=' + Math.min(980, screen.availHeight - 40));
-  if (!w) { toast('Allow pop-ups to open the instructor window'); return; }
+  let ok = false; try { ok = !!w && w !== window && w.document && w.document !== document; } catch (e) {}
+  if (!ok) { toast('Separate window not available here'); return; }
   instrWin = w;
   const d = w.document; d.title = 'Instructor';
   d.head.innerHTML = '<meta charset="utf-8">' + [...document.querySelectorAll('style')].map(x => x.outerHTML).join('');
@@ -346,13 +350,17 @@ function openInstrWindow() {
   });
   setInstrMode();
 }
+function canPopOut() {
+  const touch = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|Mobile|wv\)/.test(navigator.userAgent);
+  return !touch && screen.width >= 900;
+}
 function toggleInstr() {
   if (instrWin && !instrWin.closed) return instrWin.focus();
   const I = $('#instr'); if (I.classList.contains('open')) return I.classList.remove('open');
   openInstrWindow(); if (!instrWin) I.classList.add('open');
 }
 function setInstrMode() {
-  const b = $('#iWin'); if (b) b.textContent = instrWin ? 'Back to monitor' : 'Separate window';
+  const b = $('#iWin'); if (b) { b.textContent = instrWin ? 'Back to monitor' : 'Separate window'; b.style.display = canPopOut() ? '' : 'none'; }
 }
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const gauss = (x, mu, sd) => Math.exp(-0.5 * ((x - mu) / sd) ** 2);
