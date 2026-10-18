@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>B450 Monitor Simulator</title>
+<title>Patient Monitor</title>
 <style>
 :root{
   --bg:#000; --bezel:#2b2e33; --bezel2:#1d1f23; --txt:#e8e8e8; --dim:#8a8f98;
@@ -138,9 +138,11 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #standby,#boot,#off{position:absolute;inset:0;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:30}
 #standby.on,#boot.on,#off.on{display:flex}
 #standby .t{font-size:44px;font-weight:600;color:#9fb3c8}
-#boot .t{font-size:30px;color:#cfd9e6;letter-spacing:2px}
+#boot .t{font-size:24px;color:#cfd9e6;letter-spacing:1px}
+#bootLog{margin-top:18px;width:420px;min-height:230px;font-size:15px;line-height:1.6;color:#9fb3c8}
+#bootLog b{color:#3fcf6a;font-weight:600;float:right}
 #boot .bar{width:360px;height:8px;background:#222;margin-top:24px;border-radius:4px;overflow:hidden}
-#boot .bar i{display:block;height:100%;width:0;background:#2f6db5;transition:width 2.2s linear}
+#boot .bar i{display:block;height:100%;width:0;background:#2f6db5;transition:width 3.5s linear}
 #off .t{font-size:22px;color:#8a95a3;margin-bottom:22px}
 #off button{font-size:22px;padding:14px 34px;background:#1d3a5c;color:#fff;border:2px solid #4c86c9;border-radius:6px;cursor:pointer;font-family:inherit}
 #dim{position:absolute;inset:0;background:#000;pointer-events:none;opacity:0;z-index:25}
@@ -286,16 +288,15 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
    <div id="toast"></div>
    <div id="standby"><div class="t">Standby</div><div class="note" style="font-size:16px;margin:12px 0 24px">Monitoring and alarms are suspended.</div>
      <button class="btn" style="font-size:20px;padding:12px 26px" id="resumeBtn">Resume Monitoring</button></div>
-   <div id="boot"><div class="t">CARESCAPE B450 SIMULATOR</div><div class="note" style="font-size:14px;margin-top:10px">Self test&hellip;</div><div class="bar"><i id="bootBar"></i></div></div>
+   <div id="boot"><div class="t">Starting&hellip;</div><div id="bootLog"></div><div class="bar"><i id="bootBar"></i></div></div>
    <div id="off" class="on"><div class="t">Monitor is off</div><button id="powerOn">&#9211;&nbsp; Power On</button>
      <div style="margin-top:18px;font-size:15px;color:#9fb3c8">Monitor:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
        <option value="tv">House M.D. monitor (screen + sounds)</option><option value="real">CARESCAPE B450 (real monitor)</option></select></div>
-     <div class="note" style="margin-top:26px;font-size:13px;text-align:center;max-width:620px">Training simulator only &mdash; not a medical device. Not affiliated with or endorsed by GE HealthCare.<br>
-     Space = Pause Audio &nbsp;&middot;&nbsp; N = Start NIBP &nbsp;&middot;&nbsp; I = Instructor panel &nbsp;&middot;&nbsp; F11 = Full screen</div></div>
+</div>
    <div id="dim"></div>
   </div>
   <div id="bezelBottom">
-    <span class="brand">CARESCAPE&nbsp; B450 &nbsp;<span style="font-weight:400;color:#7d848c">simulator</span></span>
+    <span class="brand"></span>
     <span id="hLeds"><i title="Silence alarms" data-hk="sil"></i><i title="NBP go / stop" data-hk="nbp"></i><i title="Record" data-hk="rec"></i><i title="Freeze waveforms" data-hk="frz"></i><i title="Display brightness" data-hk="dim"></i><b id="hPwrLed" title="Power: green = AC, amber = battery"></b></span>
     <span class="leds"><span class="led"><i id="ledAc" class="on"></i>AC</span><span class="led"><i id="ledBat"></i>Battery</span>
     <button id="pwrBtn" title="Power / Standby">&#9211;</button></span>
@@ -1269,8 +1270,9 @@ function applyGeometry() {
   $('#device').classList.toggle('housedev', h);
   if (h) refreshHouseHeader();
   st('#frozen', {top: (WAVE_TOP + 6) + 'px'});
-  $('#bezelBottom .brand').innerHTML = h ? 'House M.D. set monitor &nbsp;<span style="font-weight:400;color:#7d848c">Dash-style simulator</span>'
-    : 'CARESCAPE&nbsp; B450 &nbsp;<span style="font-weight:400;color:#7d848c">simulator</span>';
+  // the bezel carries a model name only, like the real thing: none on the House set monitor (its badge is not readable
+  // on screen), the model on the CARESCAPE. The training-only notice lives in Monitor Setup -> About.
+  $('#bezelBottom .brand').innerHTML = h ? '' : 'CARESCAPE&nbsp; B450';
   buildMenuBar();
 }
 function layout() {
@@ -2281,6 +2283,11 @@ addEventListener('resize', fit);
 function powerOn() {
   ensureAudio();
   $('#off').classList.remove('on'); $('#boot').classList.add('on');
+  // a real monitor's power-on: self test, then each module checks in, then the profile loads (~3.8 s)
+  const log = $('#bootLog'); log.innerHTML = '';
+  const steps = ['Power-on self test', 'Display', 'Main processor', 'ECG / Resp', 'SpO2', 'NBP',
+    ...(S.artLine ? ['Invasive pressures'] : []), 'Alarm system', 'Loading profile: ' + (S.cat || 'Adult')];
+  steps.forEach((s, i) => setTimeout(() => { if ($('#boot').classList.contains('on')) log.innerHTML += s + (i < steps.length - 1 ? '<b>OK</b>' : '') + '<br>'; }, 250 + i * 360));
   requestAnimationFrame(() => $('#bootBar').style.width = '100%');
   setTimeout(() => {
     $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
@@ -2289,7 +2296,7 @@ function powerOn() {
     NB.state = 'idle'; NB.last = null; NB.err = null; NB.nextAuto = S.nibpAuto ? 3 : null;   // first reading right after power-on
     if (isHouse()) { SEN.cvp = SEN.co2 = SEN.temp = 'none'; SEN.art = S.artLine ? 'ok' : 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
     layout();
-  }, 2600);
+  }, 3800);
 }
 function powerOff() {
   powered = false; standby = false; $('#standby').classList.remove('on');
