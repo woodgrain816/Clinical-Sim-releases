@@ -36,6 +36,10 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
 /* a short light bar centred on top, like the alarm light on a real monitor housing (not the whole edge) */
 #device.nobezel #alarmLight,#device.nobezel.housedev #alarmLight{display:block;left:calc(50% - 180px)!important;top:1px;width:360px;height:10px;
   border-radius:5px;background:#121418;box-shadow:inset 0 1px 2px #000}
+/* the light bar is for the Windows / TV version only: on a phone or tablet it is left out and the screen moves back up */
+#device.phone #alarmLight,#device.phone.nobezel.housedev #alarmLight{display:none!important}
+#device.nobezel.phone{height:800px}
+#device.nobezel.phone #screen{top:0}
 #device.nobezel #alarmLight.red{background:#ff2020;box-shadow:0 0 18px 4px rgba(255,30,30,.55)}
 #device.nobezel #alarmLight.yellow{background:#ffd000;box-shadow:0 0 18px 4px rgba(255,210,0,.5)}
 #device.nobezel #alarmLight.cyan{background:#18d8ff;box-shadow:0 0 14px 3px rgba(0,216,255,.45)}
@@ -2363,10 +2367,11 @@ function frame(now) {
 /* ---------------- fit / resize ---------------- */
 function fit() {
   const d = $('#device');
-  d.className = (S.bezel ? 'bezel' : 'nobezel') + (isHouse() ? ' housedev' : '');
+  const phone = /Android|iPhone|iPad|Mobile|; wv/.test(navigator.userAgent);
+  d.className = (S.bezel ? 'bezel' : 'nobezel') + (isHouse() ? ' housedev' : '') + (phone ? ' phone' : '');
   // the screen takes the window's shape (between 4:3 and ultra-wide), so the monitor fills the whole window
   // a window taller than wide (a phone held upright) shows the normal 16:10 monitor, centered
-  const H = S.bezel ? 892 : 812, ar = innerWidth / Math.max(1, innerHeight);   // 812 = 800 screen + 12 alarm-light strip
+  const H = S.bezel ? 892 : phone ? 800 : 812, ar = innerWidth / Math.max(1, innerHeight);   // 812 = 800 screen + 12 alarm-light strip
   const sw = ar < 1 ? 1280 : Math.round(Math.min(2200, Math.max(1066, S.bezel ? H * ar - 60 : 800 * ar)));
   const W = S.bezel ? sw + 60 : sw;
   scale = Math.min(innerWidth / W, innerHeight / H);
