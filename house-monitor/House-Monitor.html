@@ -931,7 +931,10 @@ function evalAlarms() {
   else if (SEN.spo2 === 'ok') {
     // when the pulse is lost while an SpO2 alarm is already sounding, No Pulse takes over at once (no silent gap)
     const spo2Sounding = alarms.spo2Lo || alarms.spo2Hi || alarms.spo2art || alarms.spo2nop || alarms.spo2desat;
-    if (M.spo2 == null && (t > 10 || spo2Sounding)) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2', delay: spo2Sounding ? 0 : 2});
+    // asystole means no pulse at the finger either: SpO2 No Pulse comes on with it (in the show the pulse-ox tone
+    // starts at the same instant as the flatline), instead of waiting for the reading to drop out
+    if (cur.asys && t > 4) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2'});
+    else if (M.spo2 == null && (t > 10 || spo2Sounding)) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2', delay: spo2Sounding ? 0 : 2});
     // the SpO2 alarms hand over to each other with no gap (Artifact -> Low -> No Pulse and back)
     if (R.artifact) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
     limCheck('spo2', M.spo2, 'SpO2', 'spo2', spo2Sounding ? 0 : 1.5);
@@ -1094,6 +1097,7 @@ function ensureAudio() {
     WAVES.ox = mk([[1, 1], [2, .025], [3, .014]]);
     // House three-beep tone: soft odd-harmonic buzz (3rd -10 dB, 5th -25 dB, 7th -35 dB), measured
     WAVES.b3 = mk([[1, 1], [3, .31], [5, .053], [7, .018]]);
+    WAVES.hbeat = mk([[1, 1], [2, .25]]);   // House heartbeat tone (2nd harmonic about -12 dB, measured)
     WAVES.fast = mk([[1, 1], [2, .004], [3, .04], [4, .004]]);   // 3rd overtone only (-28 dB), as in the clean V-tach clip
     const fr = new Float32Array(4), fi = new Float32Array(4); fi[1] = 1; fi[3] = 0.28;
     WAVES.flat = AC.createPeriodicWave(fr, fi);
@@ -1240,7 +1244,8 @@ function audioTick() {
   // ...and the seizure scene: only the pulse-ox tone and the fast beeping, never the yellow "beep beep"
   if (S.toneSet === 'classic' && R.scene === 'seizure' && name === 'medium') name = null;
   if (name !== audioName) {
-    audioName = name; nextBurst = AC.currentTime + 0.05; nextLayer = AC.currentTime + 0.4;
+    audioName = name; nextBurst = AC.currentTime + (name === 'ber' ? 1.0 : 0.05); nextLayer = AC.currentTime + 0.4;
+    // (in the show the "beR beR beR" comes in 1.0 s after the flatline and the pulse-ox tone, measured twice)
     // fast beeping starting while the pulse-ox runs falls into step with it
     if (name === 'high' && oxOn && set.syncOff) { nextBurst = nextOx + set.syncOff; while (nextBurst - set[name].repeat > AC.currentTime + 0.03) nextBurst -= set[name].repeat; }
   }
@@ -1265,7 +1270,12 @@ function qrsBeep(b) {
   // the heartbeat tone keeps going under every alarm, as on a real monitor (it stops only when the beats stop)
   // pitch follows SpO2 (lower saturation = lower pitch)
   const s = M.spo2 != null ? M.spo2 : 100;
-  if (S.toneSet === 'classic') return tone(960, AC.currentTime + 0.005, 0.08, qrsGain, false); // legacy fixed-pitch beep
+  if (S.toneSet === 'classic') {
+    // the show's seizure scene has no heartbeat tone under its alarms (the user asked for this; keep it)
+    if (R.scene === 'seizure') return;
+    // House set monitor heartbeat tone, measured from the lung-bleed scene: 1932 Hz, ~0.2 s, a faint 2nd harmonic
+    return tone(1932, AC.currentTime + 0.005, 0.2, qrsGain, 'hbeat', 0.45);
+  }
   const f = 880 * Math.pow(2, (clamp(s, 60, 100) - 100) / 24);
   tone(f, AC.currentTime + 0.005, 0.06, qrsGain, false);
 }
