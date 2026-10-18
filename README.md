@@ -26,7 +26,7 @@ After that the app checks this page for updates every time it opens and asks bef
 - `ClinicalSim-PC.zip` — the Windows app
 - `update.json` + `clinicalsim-<version>.html` — the update channel the app reads (checked against a SHA-256)
 
-## B450 monitor simulator (Windows)
-A separate, standalone CARESCAPE B450-style bedside monitor simulator: waveforms, alarm area and alarm light, the B450 main-menu keys, NIBP, trends, alarm history, and an instructor panel to drive the patient.
+## House Monitor (Windows)
+A standalone bedside monitor modeled on the House M.D. set monitor (with a CARESCAPE B450 screen style too): waveforms, the show's alarm sounds, NIBP, trends, alarm history, and an instructor panel (in its own window on a PC) to drive the patient. Fills any screen; on a phone held upright it switches to a portrait layout.
 
-Download **[B450-Simulator-PC.zip](B450-Simulator-PC.zip)**, extract it, and double-click **Start B450 Simulator.bat**. It opens in its own window using Microsoft Edge, which is built into Windows. Source: [`b450-sim/`](b450-sim/). Not affiliated with GE HealthCare; for training and hobby use only.
+Download **[House-Monitor-PC.zip](House-Monitor-PC.zip)**, extract it, and double-click **Start House Monitor.bat** (run **Create Desktop Shortcut.bat** once for a desktop icon). It opens in its own window using Microsoft Edge, which is built into Windows. Source: [`house-monitor/`](house-monitor/). Not affiliated with GE HealthCare; for training and hobby use only.

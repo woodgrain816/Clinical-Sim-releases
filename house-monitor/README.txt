@@ -1,17 +1,19 @@
-B450 MONITOR SIMULATOR (Windows)
-================================
+HOUSE MONITOR (Windows)
+=======================
 
-Start:   double-click  "Start B450 Simulator.bat"
-         (or "Start B450 Simulator (Full Screen).bat" - press Alt+F4 to close)
-         Click "Power On" on the screen; sound starts with it.
-         Before powering on, pick the monitor: "CARESCAPE B450" (real
-         monitor screen and alarm tones) or "House M.D. monitor" (the set
-         monitor's screen and sounds). Change it later in Alarms Setup ->
-         Audio or Monitor Setup -> Screen Setup.
+Start:   double-click  "Start House Monitor.bat"
+         (or "Start House Monitor (Full Screen).bat" - press Alt+F4 to close)
+         Run "Create Desktop Shortcut.bat" once to get a "House Monitor"
+         shortcut with the monitor icon on your desktop.
+         The screen starts black: click the dim power button (or press
+         Enter) to switch the monitor on; sound starts with it.
+         The screen style (House M.D. set monitor or CARESCAPE B450) is in
+         Monitor Setup -> Screen Setup.
 
 If Windows asks, choose "More info" -> "Run anyway". The launcher only opens
-B450-Simulator.html in a Microsoft Edge app window. You can also double-click
-B450-Simulator.html to open it in any browser. Works fully offline.
+House-Monitor.html in a Microsoft Edge app window. You can also double-click
+House-Monitor.html to open it in any browser (on a phone too: held upright it
+switches to a tall portrait layout). Works fully offline.
 
 Keys:    Space = Pause Audio    N = NIBP start/stop    F = Freeze
          Z = Zero all           I = Instructor panel   Esc = close menu
