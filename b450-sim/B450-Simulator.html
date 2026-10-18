@@ -1012,6 +1012,8 @@ const ENV = {
   fast: envCurve([[0, 0], [.06, 1], [.93, 1], [1, 0]]),
 };
 function tone(freq, at, dur, gainNode, w, level = 0.5, attack, env) {
+  // never schedule into the past: the browser clamps past times to "now", which makes the fade-in and fade-out overlap
+  at = Math.max(at, AC.currentTime + 0.005);
   const o = AC.createOscillator(), g = AC.createGain();
   if (w === true) o.setPeriodicWave(wave); else if (w && WAVES[w]) o.setPeriodicWave(WAVES[w]); else o.type = 'sine';
   o.frequency.value = freq;
@@ -1101,6 +1103,7 @@ function audioTick() {
     if (set.syncOff && audioName === 'high') { nextOx = nextBurst - set.syncOff; while (nextOx < AC.currentTime + 0.03) nextOx += set.ox.repeat; }
   }
   oxOn = ox;
+  if (ox && nextOx < AC.currentTime - 0.05) nextOx = AC.currentTime + 0.05;
   if (ox && AC.currentTime + 0.15 >= nextOx) { playPattern(set.ox, nextOx); nextOx += set.ox.repeat; }
   const p = topPriority(set.ox ? list.filter(a => !OX_IDS.has(a.id)) : list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
@@ -1114,6 +1117,11 @@ function audioTick() {
   audioPri = p;
   if (!name) return;
   const pat = set[name];
+  // if the audio clock ran ahead (tab throttled, context suspended), restart the pattern now instead of
+  // trying to catch up with beeps in the past
+  const late = AC.currentTime - 0.05;
+  if (nextBurst < late) nextBurst = AC.currentTime + 0.05;
+  if (nextLayer < late) nextLayer = AC.currentTime + 0.05;
   if (AC.currentTime + 0.15 >= nextBurst) { playPattern(pat, nextBurst); nextBurst += pat.repeat; }
   if (pat.layer && AC.currentTime + 0.15 >= nextLayer) { const lp = set[pat.layer]; playPattern(lp, nextLayer); nextLayer += lp.repeat; }
 }
@@ -2129,6 +2137,7 @@ function shock() {
 /* ---------------- main loop ---------------- */
 let lastFrame = performance.now(), lastSlow = 0, lastAlarmEval = 0, lastBeepIdx = 0;
 function frame(now) {
+  requestAnimationFrame(frame);   // queued first, so an error later in this frame cannot freeze the screen
   const dt = Math.min(0.1, (now - lastFrame) / 1000); lastFrame = now;
   if (powered) {
     simT += dt;
@@ -2148,9 +2157,8 @@ function frame(now) {
     if (now - lastSlow > 250) { lastSlow = now; updateParams(); updateTop(); }
     if (simT - lastTrend >= 30 && simT > 5) { lastTrend = simT; addTrend(false); }
     updateAlarmLight(now);
-    audioTick();
+    try { audioTick(); } catch (e) { console.error(e); }   // a sound problem must never stop the monitor
   }
-  requestAnimationFrame(frame);
 }
 
 /* ---------------- fit / resize ---------------- */
