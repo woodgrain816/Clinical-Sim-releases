@@ -1093,8 +1093,8 @@ function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'g
 // B450 buzzer spectrum (strong 3rd/5th/7th harmonics) instead; otherwise they sit under the 1 kHz flatline and sound dull.
 // 500 + 510 Hz (10 Hz beat): the dip falls 50 ms into the beep and the "R" swells back slowly, as measured from the
 // asystole scene against its own 1000 Hz flatline (so the clip's speed is known to be right); 511 Hz put the dip at 46 ms
-// BER_K: timing stretch on top of the measured 0.2 s / 1.12 s - the user hears the clip's three-beep a touch slower (4 %)
-const BER_K = 1.04;
+// BER_K: timing stretch on the measured 0.2 s / 1.12 s (two House clips agree: 0.199-0.201 s / 1.113-1.124 s); 1 = exact
+const BER_K = 1;
 function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2 * BER_K, 500, .105 * BER_K, 'ge500', BER_LV, 0, 'b3'], [i * .2 * BER_K, 510, .105 * BER_K, 'ge512', BER_LV, 0, 'b3']); return out; }
 const BER_LV = .5, FLAT_LV = .43;   // RMS-matched to the old measured mix against the flatline and pulse-ox tone
 function hBeep(t) { return [[t, 662, .08, 'h662', .55], [t, 595, .08, 'h595', .55]]; }
