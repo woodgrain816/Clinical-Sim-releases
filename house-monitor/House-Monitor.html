@@ -287,6 +287,7 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #instr .seg{display:flex;flex-wrap:wrap;gap:4px;flex:1}
 #instr .seg .sb{padding:4px 7px;text-align:center}
 #instr .seg .sb.sel{background:#2f6db5;border-color:#7fb0ff}
+#instr .presets button.sel{background:#2f6db5;border-color:#7fb0ff}
 #instr .hint{color:#7f9ab8;font-size:11.5px;line-height:1.4}
 </style>
 </head>
@@ -771,7 +772,8 @@ function sampleMeasures() {
   if (SEN.art === 'ok') { artBuf.push([t, artAt(t)]); }
   if (SEN.cvp === 'ok') { cvpBuf.push([t, cvpAt(t)]); }
   if (SEN.co2 === 'ok') { co2Buf.push([t, co2At(t)]); }
-  for (const B of [artBuf, cvpBuf]) while (B.length && B[0][0] < t - 2.5) B.shift();
+  while (artBuf.length && artBuf[0][0] < t - 10) artBuf.shift();
+  while (cvpBuf.length && cvpBuf[0][0] < t - 2.5) cvpBuf.shift();
   while (co2Buf.length && co2Buf[0][0] < t - 20) co2Buf.shift();
 }
 let hrResetT = -1;
@@ -781,9 +783,10 @@ let hrResetT = -1;
 // traceBusy() is the share of quarter-seconds since the last QRS's T wave in which the trace swings (null = too short
 // to tell); fibWave() is the VF call, and only a trace with no activity at all (not even P waves) is flat.
 let fibCache = {t: -1, v: false};
-function fibWave(t, lastQ) { const b = traceBusy(t, lastQ); return t >= shockT && t < shockT + 4 ? !!alarms.vfib : b != null && b >= 0.8; }
-function traceBusy(t, lastQ) {
-  if (fibCache.t === t && fibCache.q === lastQ) return fibCache.v;
+function fibWave(t, lastQ) { const b = traceBusy(t, lastQ, true); return t >= shockT && t < shockT + 4 ? !!alarms.vfib : b != null && b >= 0.8; }
+// (the VF call looks at a full second at least: over a shorter stretch two P waves can fill every quarter-second)
+function traceBusy(t, lastQ, long) {
+  if (fibCache.t === t && fibCache.q === lastQ && fibCache.long === !!long) return fibCache.v;
   let v;
   {
     const from = Math.max(t - 2, lastQ + 0.6);
@@ -792,9 +795,9 @@ function traceBusy(t, lastQ) {
     // (heart block) leave flat stretches between them, so they are not VF
     else { let busy = 0, n = 0;
       for (let w = t; w - 0.25 >= from; w -= 0.25) { let mx = -99, mn = 99; for (let s = w; s > w - 0.25; s -= 0.01) { const e = ecgAt(s, 'II'); if (e > mx) mx = e; if (e < mn) mn = e; } n++; if (mx - mn > 0.05) busy++; }
-      v = n >= 2 ? busy / n : null; }
+      v = n >= (long ? 4 : 2) ? busy / n : null; }
   }
-  fibCache = {t: t, q: lastQ, v: v}; return v;
+  fibCache = {t: t, q: lastQ, long: !!long, v: v}; return v;
 }
 // rhythm calls from the counted beats: R-R irregularity of consecutive narrow beats (mean successive difference / mean
 // R-R) and whether those beats have P waves in front of them. Irregularly irregular with no P waves = A Fib; irregular
@@ -827,7 +830,9 @@ function computeMeasures(dt) {
   // too few new beats: keep falling with the wait for the next one (a real rate never jumps to 0 between beats)
   else if (q.length < 2 || t - q[q.length - 1].t > 6) M.hr = t - lastAllQ < 6 && M.hr > 0 ? Math.min(M.hr, Math.round(60 / Math.max(0.3, t - lastAllQ))) : 0;
   else {
-    const n = Math.min(5, q.length - 1); let s = 0;
+    // averaged over the last 8 R-R intervals, as monitors do, so an irregular rhythm (A Fib) shows a steady rate
+    // instead of jumping 20/min from beat to beat
+    const n = Math.min(8, q.length - 1); let s = 0;
     for (let i = q.length - n; i < q.length; i++) s += q[i].t - q[i - 1].t;
     let hr = 60 / (s / n);
     const since = t - q[q.length - 1].t;
@@ -850,9 +855,26 @@ function computeMeasures(dt) {
   // ART
   if (SEN.art === 'ok' && artZeroed && artBuf.length > 20 && t > zeroingUntil + 3) {
     // the shock's motion artifact is not blood pressure: leave it out of the numbers (they hold their last value through it)
-    let mx = -1e9, mn = 1e9, sum = 0, n = 0;
-    for (const [ts, v] of artBuf) { if (ts >= shockT && ts < shockT + 1.3) continue; mx = Math.max(mx, v); mn = Math.min(mn, v); sum += v; n++; }
-    if (n > 20) { M.artS = Math.round(mx); M.artD = Math.round(mn); M.artM = Math.round(sum / n); }
+    // beat by beat, as the monitor does: each pulse's peak, trough and mean over its own cycle, averaged over the last
+    // 8 beats (or 10 s). A plain few-second window holds only one or two beats at a slow rate, and its numbers jumped with
+    // where the window happened to cut the cycle (CHB alarms flicking on and off)
+    const pb = beats.filter(b => b.k !== 'P' && b.perf > 0.1 && b.t > t - 10 && b.t <= t);
+    const cyc = [];
+    for (let i = pb.length - 1; i > 0 && cyc.length < 8; i--) {
+      const a0 = pb[i - 1].t + 0.12, a1 = pb[i].t + 0.12; if (a1 > t) continue;
+      if (a1 > shockT && a0 < shockT + 1.3) continue;
+      let mx = -1e9, mn = 1e9, sum = 0, n = 0;
+      for (const [ts, v] of artBuf) if (ts >= a0 && ts < a1) { mx = Math.max(mx, v); mn = Math.min(mn, v); sum += v; n++; }
+      if (n > 5) cyc.push([mx, mn, sum / n]);
+    }
+    if (cyc.length && t - pb[pb.length - 1].t < 2.5) { const av = k => cyc.reduce((s, c) => s + c[k], 0) / cyc.length;
+      M.artS = Math.round(av(0)); M.artD = Math.round(av(1)); M.artM = Math.round(av(2)); }
+    else {
+      // no pulses (arrest): the numbers are simply the flat line's level over the last 2.5 s
+      let mx = -1e9, mn = 1e9, sum = 0, n = 0;
+      for (const [ts, v] of artBuf) { if (ts < t - 2.5 || (ts >= shockT && ts < shockT + 1.3)) continue; mx = Math.max(mx, v); mn = Math.min(mn, v); sum += v; n++; }
+      if (n > 20) { M.artS = Math.round(mx); M.artD = Math.round(mn); M.artM = Math.round(sum / n); }
+    }
   } else M.artS = M.artD = M.artM = null;
   if (SEN.cvp === 'ok' && cvpZeroed && cvpBuf.length > 20 && t > zeroingUntil + 3) {
     let sum = 0; for (const [, v] of cvpBuf) sum += v; M.cvp = Math.round(sum / cvpBuf.length);
@@ -971,7 +993,7 @@ function evalAlarms() {
     // and calling that asystole would be a false alarm)
     // every alarm comes from what the monitor itself measures, never from which rhythm the instructor picked:
     // V Tach = 6+ consecutive wide beats at >= 100/min (detectArrhythmia, ~2 s at 175/min); Asystole = no QRS for 3 s
-    if (t - lastQ > 1.5 && t > 4 && fibWave(t, lastQ)) want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', latch: S.arr.vfib.latch, bt: true});
+    if (t - lastQ > 1.5 && t > 4 && fibWave(t, lastQ)) want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', delay: 1, latch: S.arr.vfib.latch, bt: true});
     // ...but the House set monitor calls it as soon as a beat is clearly overdue (1.5 x the last R-R, 1.2-3 s), so the
     // flatline comes in about a second after the last beat as in the show, instead of after 3-5 s of silence
     else if (t - lastQ > asysAfter && t > 4 && !fibWave(t, lastQ)) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
@@ -1050,6 +1072,15 @@ function evalAlarms() {
   // --- System ---
   if (!SEN.ac && battery < 20) want('batlow', battery < 8 ? 'high' : 'medium', battery < 8 ? 'Battery Critically Low' : 'Battery Low', {param: null});
 
+  // a limit or rate alarm that is sounding clears only once its number has stayed back in range for 3 s, so a value
+  // riding on a limit (A Fib's rate, a pressure that swings beat to beat) is one steady alarm, not a string of blips
+  for (const id in alarms) {
+    const a = alarms[id];
+    if (cur[id]) { a.goneT = null; continue; }
+    if (a.latched || !/(Hi|Lo|tachy|brady|desat|^afib|^irreg)$/.test(id) || /^nibp/.test(id)) continue;
+    if (a.goneT == null) a.goneT = t;
+    if (t - a.goneT < 3) cur[id] = {pri: a.pri, msg: a.msg, param: a.param, held: true};
+  }
   // arrhythmia hierarchy, as on a real monitor: the most serious rhythm alarm hides the lesser ones
   const RHYTHM = ['vtach', 'vt2', 'accv', 'vbrady', 'pause', 'ront', 'couplet', 'bigem', 'trigem', 'pvc', 'tachy', 'brady', 'xtachy', 'xbrady', 'afib', 'irreg'];
   if (cur.vfib || cur.asys) { for (const id of RHYTHM) delete cur[id]; if (cur.vfib) delete cur.asys; }
@@ -1074,7 +1105,7 @@ function evalAlarms() {
     if (!a) {
       alarms[id] = {id: id, pri: c.pri, msg: c.msg, param: c.param, since: t, latch: !!c.latch, bt: !!c.bt, ackable: !!c.ackable, latched: false};
       logAlarm(c.pri, c.msg);
-    } else { a.msg = c.msg; a.latched = false; if (PRI[c.pri] > PRI[a.pri]) a.pri = c.pri; }
+    } else { a.msg = c.msg; a.latched = false; if (PRI[c.pri] > PRI[a.pri]) a.pri = c.pri; if (!c.held) a.goneT = null; }
   }
   for (const id in alarms) if (!cur[id]) {
     const a = alarms[id];
@@ -2269,6 +2300,10 @@ function buildInstructor() {
   let h = `<h2>Instructor <span><button class="sb" id="iWin" title="Move this panel to its own window (e.g. on a second screen)">Separate window</button> <button class="sb" id="instrClose">Close &#10005;</button></span></h2>
    <div class="hint">Controls the simulated patient. Changes ramp over the transition time (like a real patient), so alarms trigger naturally.</div>
    <h3>Scenarios</h3><div class="presets">${Object.keys(PRESETS).map(k => `<button data-preset="${k}">${k}</button>`).join('')}</div>
+   <h3>Deteriorations</h3><div class="hint">The patient slides from one state into the next on its own; every alarm comes from the numbers crossing their limits. A scenario or a shock to a new rhythm stops it.</div>
+   <div class="presets">${Object.keys(COURSES).map(k => `<button data-course="${k}">${k}</button>`).join('')}</div>
+   <div class="ir"><label>Speed</label><div class="seg">${[1, 2, 4].map(s => `<button class="sb" data-cspeed="${s}">${s}x</button>`).join('')}<button class="sb" id="crsStop">Stop</button></div></div>
+   <div class="hint" id="crsState">Not running</div>
    <h3>Rhythm</h3>
    <div class="ir"><label>Rhythm</label><select id="iRhythm">${Object.entries(RHYTHMS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
    <div class="ir"><label>Ectopy</label><select id="iEct">${Object.entries(ECTOPY).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
@@ -2303,6 +2338,14 @@ function buildInstructor() {
   $('#iWin').onclick = () => { if (instrWin && !instrWin.closed) instrWin.close(); else openInstrWindow(); };
   setInstrMode();
   I.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(PRESETS[b.dataset.preset]));
+  I.querySelectorAll('[data-course]').forEach(b => b.onclick = () => courseStart(b.dataset.course));
+  I.querySelectorAll('[data-cspeed]').forEach(b => b.onclick = () => {
+    const s = +b.dataset.cspeed;
+    // changing speed mid-course keeps the point reached: rebase the start so the elapsed course time is unchanged
+    if (CRS.name) CRS.t0 = simT - (simT - CRS.t0) * CRS.speed / s;
+    CRS.speed = s; courseShow(); });
+  $('#crsStop').onclick = courseStop;
+  courseShow();
   $('#iRhythm').onchange = e => { R.scene = null; setRhythm(e.target.value); };
   $('#iEct').onchange = e => { R.ectopy = e.target.value; };
   $('#iPulseless').onclick = () => { R.pulseless = !R.pulseless; syncInstr(); };
@@ -2369,6 +2412,7 @@ function setRhythm(r, keepHr) {
   syncInstr();
 }
 function applyPreset(p) {
+  CRS.name = null; courseShow();
   R.ectopy = p.ectopy; if ('vtPulse' in p) R.vtPulse = p.vtPulse; R.pulseless = false; R.artifact = !!p.artifact;
   R.scene = p === PRESETS['Seizure'] ? 'seizure' : null;
   setRhythm(p.rhythm, true);
@@ -2395,7 +2439,121 @@ function shock(toOverride) {
   const to = toOverride != null ? toOverride : ($('#iShockTo') ? $('#iShockTo').value : '');
   // clear any in-flight beats so the shock is followed by a brief pause
   beats = beats.filter(b => b.t <= simT); schedT = simT + 1.6; lastQRS = simT; hrResetT = simT;
+  if (to) { CRS.name = null; courseShow(); }
   if (to) setTimeout(() => { if (to === 'nsr') applyPreset(PRESETS.ROSC); else setRhythm(to); }, 1500);
+}
+
+/* ---------------- deteriorations ---------------- */
+// timed patient courses that slide from one state into the next. Each step can change the rhythm and ramps the vitals
+// to its values over the time until the next step, so the numbers drift continuously and every alarm comes on by
+// itself when a number crosses its limit. at = seconds from the start (at 1x speed); now = values set at once.
+const COURSES = {
+  // class I -> IV haemorrhage: the pulse climbs first while the pressure holds (diastolic even rises, so the pulse
+  // pressure narrows), then the pressure falls, CVP and EtCO2 fall with the cardiac output, and the heart finally
+  // keeps beating with no output (PEA), slows and stops
+  'Bleeding out → PEA → asystole': [
+    {at: 0, say: 'Bleeding, compensating', ramp: 5, rhythm: 'nsr', ectopy: 'none', v: {hr: 92, spo2: 98, sys: 122, dia: 80, cvp: 6, rr: 18, etco2: 36, temp: 36.8, st: 0}},
+    {at: 60, say: 'Class II: tachycardic, narrow pulse pressure', rhythm: 'stach', v: {hr: 112, sys: 116, dia: 86, rr: 22, etco2: 34, cvp: 4}},
+    {at: 150, say: 'Class III: blood pressure falling', v: {hr: 128, sys: 98, dia: 72, rr: 26, etco2: 30, cvp: 3, spo2: 97}},
+    {at: 240, say: 'Class III: hypotensive', v: {hr: 142, sys: 82, dia: 58, rr: 30, etco2: 26, cvp: 2, spo2: 95, temp: 36.4}},
+    {at: 330, say: 'Class IV: severe shock', v: {hr: 152, sys: 66, dia: 44, rr: 34, etco2: 21, cvp: 1, spo2: 93}},
+    {at: 400, say: 'Peri-arrest', v: {hr: 146, sys: 52, dia: 34, rr: 8, etco2: 16, cvp: 0}},
+    {at: 450, say: 'PEA arrest (no pulse)', rhythm: 'pea', v: {hr: 96, rr: 0, etco2: 10}},
+    {at: 540, say: 'PEA, slowing', v: {hr: 48, etco2: 8}},
+    {at: 600, say: 'Agonal idioventricular, no pulse', rhythm: 'idio', pulseless: true, v: {hr: 24}},
+    {at: 660, say: 'Asystole', rhythm: 'asys'}],
+  // acute anterior MI: ST elevation grows, the ventricle gets irritable (PVCs -> couplets -> runs -> R on T), a
+  // sustained VT with a falling pressure, then it loses its pulse and degenerates into VF, coarse then fine
+  'Heart attack → VT → VF': [
+    {at: 0, say: 'Chest pain', ramp: 5, rhythm: 'nsr', ectopy: 'none', v: {hr: 86, spo2: 97, sys: 142, dia: 88, cvp: 7, rr: 18, etco2: 36, temp: 37.0, st: 0}},
+    {at: 30, say: 'ST elevation developing', ectopy: 'pvc', v: {hr: 96, st: 1.5}},
+    {at: 120, say: 'Frequent PVCs', ectopy: 'freq', v: {hr: 104, st: 3, sys: 130, dia: 82, spo2: 95, rr: 22}},
+    {at: 210, say: 'Couplets', ectopy: 'couplet', v: {hr: 110, sys: 116, dia: 74, cvp: 10}},
+    {at: 270, say: 'Runs of VT', ectopy: 'nsvt', v: {sys: 106, dia: 68, cvp: 12, rr: 24, spo2: 94}},
+    {at: 330, say: 'R on T', ectopy: 'ront'},
+    {at: 360, say: 'Sustained VT with a pulse', rhythm: 'vt', vtPulse: true, ectopy: 'none', now: {hr: 176}, ramp: 20, v: {sys: 84, dia: 56, spo2: 92}},
+    {at: 420, say: 'VT, pressure failing', v: {hr: 188, sys: 66, dia: 44, rr: 28}},
+    {at: 460, say: 'Pulseless VT', vtPulse: false, v: {hr: 196, rr: 0, etco2: 14}},
+    {at: 480, say: 'VF (coarse)', rhythm: 'vf', coarse: true, v: {etco2: 10}},
+    {at: 620, say: 'VF (fine)', coarse: false, v: {etco2: 8}}],
+  // hypoxic arrest (airway / respiratory failure): fast breathing and tachycardia while fighting, then the breathing
+  // tires and slows, CO2 climbs, and the hypoxic heart slows (sinus -> junctional -> idioventricular) until it stops
+  'Respiratory failure → bradycardic arrest': [
+    {at: 0, say: 'Short of breath', ramp: 5, rhythm: 'nsr', ectopy: 'none', v: {hr: 98, spo2: 94, sys: 142, dia: 88, cvp: 8, rr: 26, etco2: 44, temp: 37.2, st: 0}},
+    {at: 60, say: 'Working hard to breathe', rhythm: 'stach', v: {hr: 118, spo2: 89, rr: 34, etco2: 50, sys: 158, dia: 94}},
+    {at: 150, say: 'Tiring, breathing slowing', v: {hr: 126, spo2: 82, rr: 18, etco2: 62}},
+    {at: 240, say: 'Hypoventilating', v: {hr: 104, spo2: 72, rr: 9, etco2: 76, sys: 146, dia: 88}},
+    {at: 300, say: 'Hypoxic, heart slowing', ectopy: 'pvc', v: {hr: 76, spo2: 62, rr: 5, sys: 118, dia: 72}},
+    {at: 360, say: 'Hypoxic bradycardia', rhythm: 'sbrady', v: {hr: 48, spo2: 54, rr: 3, sys: 90, dia: 54}},
+    {at: 420, say: 'Junctional escape', rhythm: 'junct', ectopy: 'none', v: {hr: 36, spo2: 47, rr: 2, sys: 66, dia: 38}},
+    {at: 480, say: 'Idioventricular, barely perfusing', rhythm: 'idio', v: {hr: 28, rr: 0, sys: 46, dia: 28, etco2: 20}},
+    {at: 520, say: 'PEA (no pulse)', pulseless: true, v: {hr: 20, etco2: 10}},
+    {at: 580, say: 'Asystole', rhythm: 'asys'}],
+  // tamponade: fluid around the heart; the venous pressure climbs, the pulse pressure narrows, tachycardia, then the
+  // heart can no longer fill and it beats with no output (PEA)
+  'Cardiac tamponade → PEA': [
+    {at: 0, say: 'After chest trauma / surgery', ramp: 5, rhythm: 'stach', ectopy: 'none', v: {hr: 108, spo2: 96, sys: 114, dia: 76, cvp: 12, rr: 22, etco2: 34, temp: 36.9, st: 0}},
+    {at: 90, say: 'CVP rising, pulse pressure narrowing', v: {hr: 122, sys: 100, dia: 76, cvp: 17}},
+    {at: 180, say: 'Hypotensive', v: {hr: 136, sys: 86, dia: 70, cvp: 21, rr: 28, etco2: 30}},
+    {at: 270, say: 'Severe shock', v: {hr: 146, sys: 70, dia: 58, cvp: 24, spo2: 93, etco2: 24}},
+    {at: 340, say: 'Peri-arrest', v: {hr: 150, sys: 56, dia: 48, cvp: 26, rr: 8, etco2: 18}},
+    {at: 390, say: 'PEA arrest (no pulse)', rhythm: 'pea', v: {hr: 124, rr: 0, etco2: 10}},
+    {at: 480, say: 'PEA, slowing', v: {hr: 76}}],
+  // conduction failing step by step: 1st degree -> Wenckebach -> Mobitz II -> complete block with a slowing
+  // ventricular escape, until the escape fails and the ventricles stop
+  'Heart block → asystole': [
+    {at: 0, say: '1st degree AV block', ramp: 5, rhythm: 'avb1', ectopy: 'none', v: {hr: 64, spo2: 97, sys: 120, dia: 74, cvp: 7, rr: 16, etco2: 37, temp: 36.8, st: 0}},
+    {at: 60, say: '2nd degree, Mobitz I', rhythm: 'wenck', v: {hr: 58}},
+    {at: 150, say: '2nd degree, Mobitz II', rhythm: 'mob2', v: {hr: 46, sys: 106, dia: 64}},
+    {at: 240, say: 'Complete heart block', rhythm: 'avb3', v: {hr: 36, sys: 90, dia: 48, cvp: 10}},
+    {at: 330, say: 'Escape rhythm slowing', v: {hr: 28, sys: 74, dia: 40, spo2: 94, rr: 20}},
+    {at: 400, say: 'Escape failing', v: {hr: 20, sys: 58, dia: 32}},
+    {at: 450, say: 'Asystole', rhythm: 'asys'}],
+  // septic shock: fever and a bounding tachycardia; the pressure (diastolic first) falls despite it, new AF appears,
+  // the patient becomes profoundly hypotensive and arrests in PEA
+  'Septic shock → PEA': [
+    {at: 0, say: 'Infection, febrile', ramp: 5, rhythm: 'stach', ectopy: 'none', v: {hr: 104, spo2: 96, sys: 118, dia: 64, cvp: 6, rr: 22, etco2: 34, temp: 38.6, st: 0}},
+    {at: 90, say: 'Sepsis: vasodilated', v: {hr: 122, sys: 98, dia: 50, rr: 26, temp: 39.4, cvp: 4, etco2: 30}},
+    {at: 180, say: 'Septic shock, new A Fib', rhythm: 'afib', v: {hr: 142, sys: 84, dia: 42, spo2: 93, rr: 30, cvp: 3}},
+    {at: 300, say: 'Refractory hypotension', v: {hr: 150, sys: 66, dia: 34, spo2: 90, etco2: 24, temp: 39.8}},
+    {at: 400, say: 'Peri-arrest', rhythm: 'stach', v: {hr: 138, sys: 50, dia: 28, rr: 8, etco2: 16}},
+    {at: 450, say: 'PEA arrest (no pulse)', rhythm: 'pea', v: {hr: 104, rr: 0, etco2: 10}},
+    {at: 560, say: 'PEA, slowing', v: {hr: 56}}],
+};
+const CRS = {name: null, t0: 0, i: 0, speed: 1, say: ''};
+function courseStart(name, speed) {
+  const st = COURSES[name]; if (!st) return;
+  if (speed) CRS.speed = speed;
+  CRS.name = name; CRS.t0 = simT; CRS.i = 0; CRS.say = '';
+  R.scene = null; R.pulseless = false; R.artifact = false; R.vtPulse = true; R.vfCoarse = true;
+  for (const id of ['vtach', 'pvc', 'couplet', 'bigem', 'trigem', 'ront', 'vt2', 'accv', 'vbrady', 'pause']) delete events[id];
+  courseTick(); courseShow();
+}
+function courseStop() { CRS.name = null; courseShow(); }
+function courseTick() {
+  if (!CRS.name) return;
+  const st = COURSES[CRS.name], el = (simT - CRS.t0) * CRS.speed;
+  while (CRS.i < st.length && st[CRS.i].at <= el) {
+    const s = st[CRS.i], next = st[CRS.i + 1];
+    const ramp = (s.ramp != null ? s.ramp : next ? next.at - s.at : 30) / CRS.speed;
+    if (s.ectopy) R.ectopy = s.ectopy;
+    if ('vtPulse' in s) R.vtPulse = s.vtPulse;
+    if ('pulseless' in s) R.pulseless = s.pulseless;
+    if ('coarse' in s) R.vfCoarse = s.coarse;
+    if (s.now) for (const k in s.now) setTarget(k, s.now[k], 0);
+    if (s.rhythm && s.rhythm !== R.rhythm) setRhythm(s.rhythm, true);
+    if (s.v) for (const k in s.v) setTarget(k, s.v[k], ramp);
+    CRS.say = s.say || CRS.say; CRS.i++;
+  }
+}
+function fmtMS(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function courseShow() {
+  const e = $('#crsState'); if (!e) return;
+  document.querySelectorAll('[data-course]').forEach(b => b.classList.toggle('sel', b.dataset.course === CRS.name));
+  document.querySelectorAll('[data-cspeed]').forEach(b => b.classList.toggle('sel', +b.dataset.cspeed === CRS.speed));
+  if (!CRS.name) { e.textContent = 'Not running'; return; }
+  const st = COURSES[CRS.name], end = st[st.length - 1].at / CRS.speed, el = simT - CRS.t0;
+  e.textContent = (el >= end ? 'Finished - ' : fmtMS(el) + ' / ' + fmtMS(end) + ' - ') + CRS.say;
 }
 
 /* ---------------- main loop ---------------- */
@@ -2418,7 +2576,8 @@ function frame(now) {
     if (!standby) { drawWaves(); nibpUpdate(dt); }
     if (!SEN.ac) battery = Math.max(0, battery - dt * 0.05); else battery = Math.min(100, battery + dt * 0.2);
     if (now - lastAlarmEval > 250) { lastAlarmEval = now; computeMeasures(0.25); evalAlarms(); }
-    if (now - lastSlow > 250) { lastSlow = now; updateParams(); updateTop(); }
+    courseTick();
+    if (now - lastSlow > 250) { lastSlow = now; updateParams(); updateTop(); courseShow(); }
     if (simT - lastTrend >= 30 && simT > 5) { lastTrend = simT; addTrend(false); }
     updateAlarmLight(now);
     try { audioTick(); } catch (e) { console.error(e); }   // a sound problem must never stop the monitor
@@ -2520,6 +2679,7 @@ function opCommand(c) {
     case 'preset': if (PRESETS[c.name]) { const keep = rampDur; if (c.ramp != null) rampDur = +c.ramp; applyPreset(PRESETS[c.name]); rampDur = keep; } break;
     case 'state':  opApplyState(c); break;
     case 'shock':  shock(c.to || ''); break;
+    case 'course': if (c.name && COURSES[c.name]) courseStart(c.name, +c.speed || 0); else courseStop(); break;
     case 'nibp':   if (NB.state === 'idle') nibpStart(); break;
     case 'silence': pauseAudio(); break;
     case 'power':  if (c.on && !powered) powerOn(); else if (!c.on && powered) powerOff(); break;
@@ -2538,7 +2698,8 @@ function opReport(now) {
     alarms: Object.values(alarms).filter(a => a.pri !== 'info').map(a => ({pri: a.pri, msg: a.msg, latched: !!a.latched})),
     sound: {pattern: audioName, ox: oxOn, flat: !!flatOsc, paused: simT < pauseUntil},
     sensors: Object.assign({}, SEN), monitor: S.toneSet === 'classic' && S.tvFlatline ? 'tv' : 'real',
-    presets: Object.keys(PRESETS), rhythms: RHYTHMS, ectopies: ECTOPY,
+    presets: Object.keys(PRESETS), courses: Object.keys(COURSES), course: CRS.name ? {name: CRS.name, speed: CRS.speed, at: +((simT - CRS.t0) * CRS.speed).toFixed(0), say: CRS.say} : null,
+    rhythms: RHYTHMS, ectopies: ECTOPY,
     screen: navigator.userAgent.includes('Android') ? 'Android' : 'PC'
   };
   try { fetch(OP.base.replace(/\/$/, '') + '/status', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: JSON.stringify(st)}).catch(() => {}); } catch (e) {}
