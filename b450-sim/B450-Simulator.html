@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>B450 Monitor Simulator</title>
+<title>Patient Monitor</title>
 <style>
 :root{
   --bg:#000; --bezel:#2b2e33; --bezel2:#1d1f23; --txt:#e8e8e8; --dim:#8a8f98;
@@ -37,6 +37,11 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
 .led i.bat{background:#ffb000;box-shadow:0 0 6px #ffb000}
 #pwrBtn{width:30px;height:30px;border-radius:50%;border:2px solid #555;background:#1a1c1f;color:#3cff5a;
   font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* like the real power key: lit green while the monitor runs, dark when it is off */
+#pwrBtn:not(.on){color:#2c3a2e;border-color:#3a3d42}
+/* off, with the bezel showing, the screen is simply black: switch on with the bezel power key, as on the real
+   monitor. Without the bezel there is no key, so the dim on-screen button stays */
+#device.bezel #off #powerOn{display:none}
 
 /* ---------- top bar ---------- */
 #top{position:absolute;left:0;top:0;width:1280px;height:48px;background:#0d1520;border-bottom:1px solid #2a3442;
@@ -138,11 +143,19 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #standby,#boot,#off{position:absolute;inset:0;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:30}
 #standby.on,#boot.on,#off.on{display:flex}
 #standby .t{font-size:44px;font-weight:600;color:#9fb3c8}
-#boot .t{font-size:30px;color:#cfd9e6;letter-spacing:2px}
+#boot .t{font-size:24px;color:#cfd9e6;letter-spacing:1px}
+#bootLog{margin-top:18px;width:420px;min-height:230px;font-size:15px;line-height:1.6;color:#9fb3c8}
+#bootLog b{color:#3fcf6a;font-weight:600;float:right}
 #boot .bar{width:360px;height:8px;background:#222;margin-top:24px;border-radius:4px;overflow:hidden}
-#boot .bar i{display:block;height:100%;width:0;background:#2f6db5;transition:width 2.2s linear}
-#off .t{font-size:22px;color:#8a95a3;margin-bottom:22px}
-#off button{font-size:22px;padding:14px 34px;background:#1d3a5c;color:#fff;border:2px solid #4c86c9;border-radius:6px;cursor:pointer;font-family:inherit}
+#boot .bar i{display:block;height:100%;width:0;background:#2f6db5;transition:width 3.5s linear}
+/* prop: a dark screen with only a dim power button; the monitor picker is in Monitor Setup */
+#off button{width:76px;height:76px;border-radius:50%;font-size:34px;line-height:1;padding:0;background:#0b0d10;color:#3a4450;border:2px solid #232a33;cursor:pointer;font-family:inherit}
+#off button:hover,#off button:active{color:#6b7a8a;border-color:#3a4552}
+/* prop: power-on is a black screen for a moment, then the monitor - no start-up text */
+#boot>*{display:none!important}
+/* the instructor button fades out when not in use so it never shows in a shot; any touch / mouse move brings it back */
+#instrBtn{transition:opacity .6s}
+#instrBtn.idle{opacity:0;pointer-events:none}
 #dim{position:absolute;inset:0;background:#000;pointer-events:none;opacity:0;z-index:25}
 #frozen{position:absolute;left:10px;top:54px;background:#2f6db5;color:#fff;font-weight:700;padding:3px 10px;font-size:15px;display:none;z-index:5}
 #toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:#26303c;border:1px solid #4a5a70;color:#fff;
@@ -204,9 +217,11 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 .house .hlim{position:absolute;font-size:14px;font-weight:700;line-height:1.25;text-align:right;width:44px}
 .house .hv{position:absolute;line-height:1;text-align:right;white-space:nowrap}
 .house .hmid{font-size:38px;font-weight:700}
-.house .flash-high .hv{color:#ff2b2b!important;animation:hblink 1s steps(1) infinite}
-.house .flash-medium .hv{color:#ff2b2b!important}
-@keyframes hblink{50%{visibility:hidden}}
+/* as in the show's arrest scene: every alarming number (HR, SpO2, NBP...) turns red and they all blink together,
+   on 0.467 s / off 0.467 s (28 + 28 frames at 60 fps in the clip). One shared clock keeps them in step. */
+.house .flash-high .hv,.house .flash-medium .hv{color:#ff2b2b!important}
+.house.hblinkoff .flash-high .hv,.house.hblinkoff .flash-medium .hv,.house.hblinkoff .flash-high .big,.house.hblinkoff .flash-medium .big{visibility:hidden}
+@keyframes hblink{0%{visibility:visible}54%{visibility:hidden}100%{visibility:hidden}}
 .house .hv.nbred{color:#ff2b2b!important}
 /* the set monitor's own NBP strip is absolutely placed; the House layout with extra channels (ART, CVP...) uses flex boxes */
 .house #bottomRow.hc{display:block;border-top:none}
@@ -240,6 +255,7 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #instr{position:fixed;right:0;top:0;bottom:0;width:380px;background:#121820;border-left:1px solid #34465c;z-index:60;
   transform:translateX(100%);transition:transform .2s;overflow-y:auto;padding:12px 14px 30px;font-size:13px}
 #instr.open{transform:none}
+#instr.win{position:static;width:auto;min-height:100vh;box-sizing:border-box;border-left:none;transform:none;transition:none}
 #instr h2{font-size:16px;margin:2px 0 8px;display:flex;justify-content:space-between;align-items:center}
 #instr h3{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#7f9ab8;margin:16px 0 6px;border-bottom:1px solid #2a3a4d;padding-bottom:3px}
 #instr .ir{display:flex;align-items:center;gap:8px;margin:5px 0}
@@ -284,16 +300,15 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
    <div id="toast"></div>
    <div id="standby"><div class="t">Standby</div><div class="note" style="font-size:16px;margin:12px 0 24px">Monitoring and alarms are suspended.</div>
      <button class="btn" style="font-size:20px;padding:12px 26px" id="resumeBtn">Resume Monitoring</button></div>
-   <div id="boot"><div class="t">CARESCAPE B450 SIMULATOR</div><div class="note" style="font-size:14px;margin-top:10px">Self test&hellip;</div><div class="bar"><i id="bootBar"></i></div></div>
-   <div id="off" class="on"><div class="t">Monitor is off</div><button id="powerOn">&#9211;&nbsp; Power On</button>
-     <div style="margin-top:18px;font-size:15px;color:#9fb3c8">Monitor:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
+   <div id="boot"><div class="t">Starting&hellip;</div><div id="bootLog"></div><div class="bar"><i id="bootBar"></i></div></div>
+   <div id="off" class="on"><button id="powerOn" title="Power on" aria-label="Power on">&#9211;</button>
+     <div style="display:none">Monitor:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
        <option value="tv">House M.D. monitor (screen + sounds)</option><option value="real">CARESCAPE B450 (real monitor)</option></select></div>
-     <div class="note" style="margin-top:26px;font-size:13px;text-align:center;max-width:620px">Training simulator only &mdash; not a medical device. Not affiliated with or endorsed by GE HealthCare.<br>
-     Space = Pause Audio &nbsp;&middot;&nbsp; N = Start NIBP &nbsp;&middot;&nbsp; I = Instructor panel &nbsp;&middot;&nbsp; F11 = Full screen</div></div>
+</div>
    <div id="dim"></div>
   </div>
   <div id="bezelBottom">
-    <span class="brand">CARESCAPE&nbsp; B450 &nbsp;<span style="font-weight:400;color:#7d848c">simulator</span></span>
+    <span class="brand"></span>
     <span id="hLeds"><i title="Silence alarms" data-hk="sil"></i><i title="NBP go / stop" data-hk="nbp"></i><i title="Record" data-hk="rec"></i><i title="Freeze waveforms" data-hk="frz"></i><i title="Display brightness" data-hk="dim"></i><b id="hPwrLed" title="Power: green = AC, amber = battery"></b></span>
     <span class="leds"><span class="led"><i id="ledAc" class="on"></i>AC</span><span class="led"><i id="ledBat"></i>Battery</span>
     <button id="pwrBtn" title="Power / Standby">&#9211;</button></span>
@@ -310,7 +325,31 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
    Single-file, offline. Training / entertainment only.
    ===================================================================== */
 const VERSION = '1.0';
-const $ = s => document.querySelector(s);
+// the instructor panel can live in its own window (instrWin); lookups fall through to it
+let instrWin = null;
+const $ = s => document.querySelector(s) || (instrWin && !instrWin.closed ? instrWin.document.querySelector(s) : null);
+function openInstrWindow() {
+  if (instrWin && !instrWin.closed) { instrWin.focus(); return; }
+  const w = window.open('', 'b450instr', 'width=430,height=' + Math.min(980, screen.availHeight - 40));
+  if (!w) { toast('Allow pop-ups to open the instructor window'); return; }
+  instrWin = w;
+  const d = w.document; d.title = 'Instructor';
+  d.head.innerHTML = '<meta charset="utf-8">' + [...document.querySelectorAll('style')].map(x => x.outerHTML).join('');
+  d.body.style.cssText = 'margin:0;background:#121820;color:#e8e8e8;font-family:"Segoe UI",Tahoma,Arial,sans-serif';
+  const I = document.getElementById('instr');
+  I.classList.add('open', 'win'); d.body.appendChild(d.adoptNode(I));
+  // keys pressed in the instructor window work as on the monitor
+  d.addEventListener('keydown', e => { if (!/INPUT|SELECT/.test(e.target.tagName)) document.dispatchEvent(new KeyboardEvent('keydown', {key: e.key, code: e.code, bubbles: true})); });
+  w.addEventListener('pagehide', () => {
+    const J = w.document.getElementById('instr'); if (J) { J.classList.remove('win', 'open'); document.body.appendChild(document.adoptNode(J)); }
+    instrWin = null; setInstrMode();
+  });
+  setInstrMode();
+}
+function toggleInstr() { if (instrWin && !instrWin.closed) instrWin.focus(); else $('#instr').classList.toggle('open'); }
+function setInstrMode() {
+  const b = $('#iWin'); if (b) b.textContent = instrWin ? 'Back to monitor' : 'Separate window';
+}
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const gauss = (x, mu, sd) => Math.exp(-0.5 * ((x - mu) / sd) ** 2);
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -518,7 +557,8 @@ const LEADS = {
 };
 function beatECG(b, tau, L) {
   let v = 0;
-  if (b.hasP) v += 0.14 * L.p * gauss(tau, -b.pr + 0.05, 0.022);
+  // P wave ~0.2 mV, ~100 ms (it was 0.14 mV / ~50 ms: too small and narrow to see march through a heart block)
+  if (b.hasP) v += 0.2 * L.p * gauss(tau, -b.pr + 0.05, 0.027);
   if (b.k === 'P') return v;
   if (b.k === 'N') {
     const qt = b.qt || clamp(0.38 * Math.sqrt(b.rr), 0.26, 0.44);
@@ -528,12 +568,11 @@ function beatECG(b, tau, L) {
     return v;
   }
   if (b.k === 'E') {
-    // ventricular escape in CHB: ~160 ms, bundle-branch-like - small r, broad notched S (negative in II with the usual
-    // left axis), then a big discordant upright T, late because the QT is long
+    // ventricular escape in CHB, the classic "wide and bizarre" lead II picture: a broad notched upright QRS (~160 ms,
+    // ~1.5 mV, 7-8x the P wave) with a deep discordant T, late because the QT is long at this rate
     const qt = b.qt || 0.54;
-    // amplitude ~1.1 mV (ventricular escapes are large, 5-10x the P wave), slurred broad S
-    v += L.w * (0.22 * gauss(tau, 0.02, 0.012) - 0.95 * gauss(tau, 0.072, 0.028) - 0.6 * gauss(tau, 0.13, 0.026));
-    v += 0.5 * L.w * gauss(tau, qt - 0.14, 0.08);
+    v += L.w * (1.05 * gauss(tau, 0.05, 0.03) + 0.62 * gauss(tau, 0.112, 0.027) - 0.14 * gauss(tau, 0.165, 0.02));
+    v -= 0.45 * L.w * gauss(tau, qt - 0.14, 0.085);
     return v;
   }
   // wide complexes: V (PVC / VT / idioventricular), Vp (paced)
@@ -834,10 +873,14 @@ function evalAlarms() {
     const A = S.arr;
     const q = beats.filter(b => b.k !== 'P' && b.t <= t);
     const lastQ = q.length ? q[q.length - 1].t : -99;
-    // a set V-tach rhythm alarms after ~1 s instead of waiting for 6 counted beats
-    if (R.rhythm === 'vt' && t - hrResetT > 1 && t > 4) events.vtach = t + 6;
+    const lastRR = q.length > 1 ? lastQ - q[q.length - 2].t : 1;
+    const asysAfter = (S.toneSet === 'classic' && S.tvFlatline) ? clamp(1.5 * lastRR, 1.2, 3) : 3;
+    // every alarm comes from what the monitor itself measures, never from which rhythm the instructor picked:
+    // V Tach = 6+ consecutive wide beats at >= 100/min (detectArrhythmia, ~2 s at 175/min); Asystole = no QRS for 3 s
     if (R.rhythm === 'vf') want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', delay: 0.5, latch: S.arr.vfib.latch, bt: true});
-    else if (t - lastQ > (R.rhythm === 'asys' ? 0.8 : 3) && t > 4) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
+    // ...but the House set monitor calls it as soon as a beat is clearly overdue (1.5 x the last R-R, 1.2-3 s), so the
+    // flatline comes in about a second after the last beat as in the show, instead of after 3-5 s of silence
+    else if (t - lastQ > asysAfter && t > 4) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
     // run analysis on newly detected beats
     detectArrhythmia(q);
     for (const id in events) {
@@ -1089,7 +1132,11 @@ function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'g
 // ~45 ms into the 105 ms beep, which is the "be-R". Three beeps 0.2 s apart, every 1.12 s (measured).
 // Timbre: the clip's version is muffled by the TV soundtrack (overtones above ~1 kHz lost), so the beeps use the real
 // B450 buzzer spectrum (strong 3rd/5th/7th harmonics) instead; otherwise they sit under the 1 kHz flatline and sound dull.
-function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 500, .105, 'ge500', BER_LV, 0, 'b3'], [i * .2, 511, .105, 'ge512', BER_LV, 0, 'b3']); return out; }
+// 500 + 510 Hz (10 Hz beat): the dip falls 50 ms into the beep and the "R" swells back slowly, as measured from the
+// asystole scene against its own 1000 Hz flatline (so the clip's speed is known to be right); 511 Hz put the dip at 46 ms
+// BER_K: timing stretch on the measured 0.2 s / 1.12 s (two House clips agree: 0.199-0.201 s / 1.113-1.124 s); 1 = exact
+const BER_K = 1;
+function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2 * BER_K, 500, .105 * BER_K, 'ge500', BER_LV, 0, 'b3'], [i * .2 * BER_K, 510, .105 * BER_K, 'ge512', BER_LV, 0, 'b3']); return out; }
 const BER_LV = .5, FLAT_LV = .43;   // RMS-matched to the old measured mix against the flatline and pulse-ox tone
 function hBeep(t) { return [[t, 662, .08, 'h662', .55], [t, 595, .08, 'h595', .55]]; }
 function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
@@ -1115,7 +1162,7 @@ const TONESETS = {
     // pulse-oximeter alarms (seizure and arrest scenes): pure 3489 Hz, 220 ms, every 0.334 s, as loud as the fast beeping
     ox:     {notes: [[0, 3488.5, .236, 'ox', .5, 0, 'ox']], repeat: 0.344},
     // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 500 + 511 Hz)
-    ber:    {notes: berNotes(), repeat: 1.12},
+    ber:    {notes: berNotes(), repeat: 1.12 * BER_K},
   },
 };
 function playPattern(pat, t0) { for (const [off, f, d, w, lv, att, env] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv, att, env); }
@@ -1142,7 +1189,13 @@ function audioTick() {
   // pulse-ox tone plays only while an SpO2 alarm is the most serious one. The arrest scene is the exception: the
   // flatline with the faint pulse-ox under it, as in the show
   const oxTop = topPriority(list.filter(a => OX_IDS.has(a.id))), otherTop = topPriority(list.filter(a => !OX_IDS.has(a.id)));
-  const ox = !!set.ox && oxTop > 0 && (flat || (oxTop < 3 && oxTop >= otherTop));
+  // the pulse-ox tone stays on while an SpO2 alarm is at least as serious as any other (no cut-out when SpO2 Low turns
+  // into the red SpO2 Desat); a red SpO2 alarm adds the fast beeping under it - the two-tone of the seizure and
+  // overdose scenes. A red alarm from anything else (V Tach...) with a lesser SpO2 alarm is the fast beeping alone.
+  // (the seizure scene is that two-tone from the first SpO2 alarm on, so its red Extreme Tachy never cuts the tone)
+  // a red SpO2 alarm (Desat) is the fast beeping alone, like any other red alarm; only the seizure and arrest scenes
+  // keep the pulse-ox tone under it, as heard in those clips
+  const ox = !!set.ox && oxTop > 0 && (flat || R.scene === 'seizure' || (oxTop < 3 && oxTop >= otherTop));
   if (ox && !oxOn) {
     nextOx = AC.currentTime + 0.05;
     // join the running fast beeping in step: the next fast beep lands syncOff into the pulse-ox beep
@@ -1151,7 +1204,7 @@ function audioTick() {
   oxOn = ox;
   if (ox && nextOx < AC.currentTime - 0.05) nextOx = AC.currentTime + 0.05;
   if (ox && AC.currentTime + 0.15 >= nextOx) { playPattern(set.ox, nextOx); nextOx += set.ox.repeat; }
-  const p = set.ox ? (ox && !flat ? 0 : Math.max(otherTop, oxTop === 3 ? 3 : 0)) : topPriority(list);
+  const p = set.ox ? (ox && !flat ? (oxTop === 3 || otherTop === 3 ? 3 : 0) : Math.max(otherTop, oxTop === 3 ? 3 : 0)) : topPriority(list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
   if (flat) name = 'ber';
@@ -1180,10 +1233,7 @@ function audioTick() {
 let lastBeepT = 0;
 function qrsBeep(b) {
   if (!AC || !S.volQrs || standby || !powered) return;
-  // House mode: the show has no heartbeat tone under its alarms, so it stays silent while an alarm sounds
-  if (isHouse() && (audioName || flatOsc || oxOn)) return;
-  // the show's seizure scene has no per-beat tone under the alarms: only the pulse-ox tone and the fast beeping
-  if (S.toneSet === 'classic' && R.scene === 'seizure') return;
+  // the heartbeat tone keeps going under every alarm, as on a real monitor (it stops only when the beats stop)
   // pitch follows SpO2 (lower saturation = lower pitch)
   const s = M.spo2 != null ? M.spo2 : 100;
   if (S.toneSet === 'classic') return tone(960, AC.currentTime + 0.005, 0.08, qrsGain, false); // legacy fixed-pitch beep
@@ -1258,8 +1308,9 @@ function applyGeometry() {
   $('#device').classList.toggle('housedev', h);
   if (h) refreshHouseHeader();
   st('#frozen', {top: (WAVE_TOP + 6) + 'px'});
-  $('#bezelBottom .brand').innerHTML = h ? 'House M.D. set monitor &nbsp;<span style="font-weight:400;color:#7d848c">Dash-style simulator</span>'
-    : 'CARESCAPE&nbsp; B450 &nbsp;<span style="font-weight:400;color:#7d848c">simulator</span>';
+  // the bezel carries a model name only, like the real thing: none on the House set monitor (its badge is not readable
+  // on screen), the model on the CARESCAPE. The training-only notice lives in Monitor Setup -> About.
+  $('#bezelBottom .brand').innerHTML = h ? '' : 'CARESCAPE&nbsp; B450';
   buildMenuBar();
 }
 function layout() {
@@ -1504,7 +1555,7 @@ function buildParamsHouse() {
     <div class="hl hbell" title="Pulse tone on/off" style="left:178px;top:156px;font-weight:700"><svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:-3px;margin-right:6px"><path d="M8 2a4 4 0 0 0-4 4v4l-2 2h12l-2-2V6a4 4 0 0 0-4-4z" fill="#e9edf2"/><circle cx="8" cy="14" r="1.6" fill="#e9edf2"/></svg>Pulse</div>
     <div class="hv hmid" style="right:16px;top:148px" data-v="pr"></div>`);
   const br = $('#bottomRow'); br.innerHTML = ''; br.classList.add('hc');
-  const nb = place(el('div', 'pw'), {left: '0px', top: '0px', width: SW + 'px', height: '258px', color: C.nibp, border: 'none'});
+  const nb = place(el('div', 'pw hnbp'), {left: '0px', top: '0px', width: SW + 'px', height: '258px', color: C.nibp, border: 'none'});
   nb.style.setProperty('--pc', C.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 258};
   nb.innerHTML = `<div class="hl" style="left:8px;top:40px">NBP</div><div class="hl" style="left:96px;top:40px">Cuff <span data-v="hCuff"></span></div>
     <div class="hl" style="left:8px;top:58px;font-size:13px">Sys</div><div class="hlim" style="left:4px;top:74px;text-align:left" data-lim="nibp"></div>
@@ -1548,7 +1599,7 @@ function buildParamsHouseGeneric() {
       ${big('etco2', rmap.co2.h)}<div class="hsub" style="left:10px;bottom:8px">Fi<b data-v="fico2"></b></div><div class="hsub" style="left:120px;bottom:8px">Resp<b data-v="rr"></b></div>`);
   if (rmap.resp) mk('resp', rmap.resp, C.resp, `<div class="lbl">Resp</div><div class="lim" style="left:10px;top:26px" data-lim="rr"></div>${big('rr', rmap.resp.h)}`);
   const br = $('#bottomRow'); br.innerHTML = ''; br.classList.remove('hc');
-  const nb = el('div', 'bpw'); nb.style.flex = '2.4'; nb.style.color = C.nibp; nb.style.setProperty('--pc', C.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 204};
+  const nb = el('div', 'bpw hnbp'); nb.style.flex = '2.4'; nb.style.color = C.nibp; nb.style.setProperty('--pc', C.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 204};
   nb.innerHTML = `<div class="lbl">NBP &nbsp; Cuff</div><div class="lim" style="left:10px;top:26px" data-lim="nibp"></div>
     <div class="hsub" style="left:300px;top:8px" data-v="nibpMode"></div>
     <div class="big" style="left:90px;top:56px;font-size:100px"><span data-v="nibpSD"></span> <span data-v="nibpM"></span></div>
@@ -1686,6 +1737,8 @@ function updateTop() {
   $('#hPwrLed').className = SEN.ac ? '' : 'bat';
 }
 function updateAlarmLight(now) {
+  // House screen: all alarming numbers blink together on one clock (on 470 ms / off 400 ms, from the show)
+  $('#screen').classList.toggle('hblinkoff', isHouse() && (now % 933) >= 467);   // 28 on / 28 off frames at 60 fps
   const L = $('#alarmLight');
   let p = 0; for (const id in alarms) { const a = alarms[id]; if (!a.latched || true) p = Math.max(p, PRI[a.pri]); }
   let cls = '';
@@ -2069,6 +2122,9 @@ function applyBrightness() { $('#dim').style.opacity = String((100 - S.brightnes
 /* ---------------- instructor panel ---------------- */
 const PRESETS = {
   'Healthy adult':        {rhythm:'nsr', ectopy:'none', hr:75, spo2:98, sys:120, dia:78, cvp:6, rr:14, etco2:37, temp:37.0, st:0},
+  // plain sinus rate changes: every P conducted, normal QRS, only the rate is off
+  'Sinus tachycardia':    {rhythm:'stach', ectopy:'none', hr:124, spo2:97, sys:132, dia:82, cvp:6, rr:20, etco2:35, temp:37.4, st:0},   // pain / anxiety / fever
+  'Sinus bradycardia':    {rhythm:'sbrady', ectopy:'none', hr:46, spo2:98, sys:112, dia:70, cvp:6, rr:12, etco2:38, temp:36.7, st:0},   // beta-blocker / vagal
   'Sepsis':               {rhythm:'stach', ectopy:'none', hr:128, spo2:93, sys:86, dia:44, cvp:3, rr:28, etco2:28, temp:39.4, st:0},
   'Hemorrhagic shock':    {rhythm:'stach', ectopy:'none', hr:142, spo2:95, sys:72, dia:48, cvp:1, rr:30, etco2:26, temp:36.1, st:0},
   'STEMI + PVCs':         {rhythm:'nsr', ectopy:'freq', hr:96, spo2:95, sys:146, dia:92, cvp:9, rr:20, etco2:34, temp:37.0, st:3},
@@ -2097,7 +2153,7 @@ const SLIDERS = [['hr','Heart rate',0,250,1,''],['spo2','SpO2',40,100,1,'%'],['s
   ['cvp','CVP',0,30,1,''],['rr','Resp rate',0,60,1,''],['etco2','EtCO2',0,100,1,''],['temp','Temp °C',30,43,0.1,''],['st','ST (mm)',-5,5,0.5,'']];
 function buildInstructor() {
   const I = $('#instr');
-  let h = `<h2>Instructor <button class="sb" id="instrClose">Close &#10005;</button></h2>
+  let h = `<h2>Instructor <span><button class="sb" id="iWin" title="Move this panel to its own window (e.g. on a second screen)">Separate window</button> <button class="sb" id="instrClose">Close &#10005;</button></span></h2>
    <div class="hint">Controls the simulated patient. Changes ramp over the transition time (like a real patient), so alarms trigger naturally.</div>
    <h3>Scenarios</h3><div class="presets">${Object.keys(PRESETS).map(k => `<button data-preset="${k}">${k}</button>`).join('')}</div>
    <h3>Rhythm</h3>
@@ -2122,16 +2178,24 @@ function buildInstructor() {
    <div class="ir"><label>Temp</label><div class="seg" data-sen="temp">${seg([['ok','On'],['none','Off']])}</div></div>
    <div class="ir"><label>Artifact</label><div class="seg"><button class="sb" id="iArt">Patient movement</button></div></div>
    <div class="ir"><label>Power</label><div class="seg"><button class="sb" id="iAC">Unplug AC (battery)</button></div></div>
+   <h3>Operator station</h3>
+   <div class="ir"><label>Address</label><input id="iOpAddr" placeholder="PC address, e.g. 192.168.1.20:8460" style="flex:1"><button class="sb" id="iOpGo">Connect</button></div>
+   <div class="hint" id="opState">Not set</div>
    <h3>Keyboard</h3><div class="hint">Space: Pause Audio · N: NIBP start/stop · F: Freeze · Z: Zero all · I: this panel · Esc: close menu · F11: full screen</div>`;
   I.innerHTML = h;
-  $('#instrClose').onclick = () => I.classList.remove('open');
+  $('#iOpAddr').value = S.opAddr || '';
+  $('#iOpGo').onclick = () => { S.opAddr = $('#iOpAddr').value.trim(); save(); opConnect(opBaseFromSettings()); };
+  opShowState();
+  $('#instrClose').onclick = () => { if (instrWin && !instrWin.closed) instrWin.close(); else I.classList.remove('open'); };
+  $('#iWin').onclick = () => { if (instrWin && !instrWin.closed) instrWin.close(); else openInstrWindow(); };
+  setInstrMode();
   I.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(PRESETS[b.dataset.preset]));
   $('#iRhythm').onchange = e => { R.scene = null; setRhythm(e.target.value); };
   $('#iEct').onchange = e => { R.ectopy = e.target.value; };
   $('#iPulseless').onclick = () => { R.pulseless = !R.pulseless; syncInstr(); };
   $('#iVtPulse').onclick = () => { R.vtPulse = !R.vtPulse; syncInstr(); };
   $('#iCoarse').onclick = () => { R.vfCoarse = !R.vfCoarse; syncInstr(); };
-  $('#iShock').onclick = shock;
+  $('#iShock').onclick = () => shock();
   $('#iArt').onclick = () => { R.artifact = !R.artifact; syncInstr(); };
   $('#iDamp').onclick = () => { artDamped = !artDamped; syncInstr(); };
   $('#iAC').onclick = () => { SEN.ac = !SEN.ac; syncInstr(); };
@@ -2213,9 +2277,9 @@ function applyPreset(p) {
   if (powered && SEN.nibp === 'ok' && SEN.art !== 'ok') applyPreset.nbT = setTimeout(() => { if (powered && NB.state === 'idle') nibpStart(); }, (rampDur + 1) * 1000);
   syncInstr();
 }
-function shock() {
+function shock(toOverride) {
   shockT = simT + 0.05;
-  const to = $('#iShockTo').value;
+  const to = toOverride != null ? toOverride : ($('#iShockTo') ? $('#iShockTo').value : '');
   // clear any in-flight beats so the shock is followed by a brief pause
   beats = beats.filter(b => b.t <= simT); schedT = simT + 1.6; lastQRS = simT; hrResetT = simT;
   if (to) setTimeout(() => { if (to === 'nsr') applyPreset(PRESETS.ROSC); else setRhythm(to); }, 1500);
@@ -2270,8 +2334,10 @@ addEventListener('resize', fit);
 /* ---------------- power / boot ---------------- */
 function powerOn() {
   ensureAudio();
-  $('#off').classList.remove('on'); $('#boot').classList.add('on');
-  requestAnimationFrame(() => $('#bootBar').style.width = '100%');
+  $('#off').classList.remove('on'); $('#boot').classList.add('on'); $('#pwrBtn').classList.add('on');
+  // a real monitor's power-on: self test, then each module checks in, then the profile loads (~3.8 s)
+  const log = $('#bootLog'); log.innerHTML = '';
+  // prop: the screen stays black for about a second, then the monitor comes up (no start-up text)
   setTimeout(() => {
     $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
     schedT = 0.6; lastQRS = 0; breathT = 0.4; beats = []; breaths = []; alarms = {}; pending = {}; events = {}; hrResetT = -1;
@@ -2279,18 +2345,99 @@ function powerOn() {
     NB.state = 'idle'; NB.last = null; NB.err = null; NB.nextAuto = S.nibpAuto ? 3 : null;   // first reading right after power-on
     if (isHouse()) { SEN.cvp = SEN.co2 = SEN.temp = 'none'; SEN.art = S.artLine ? 'ok' : 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
     layout();
-  }, 2600);
+  }, 1200);
 }
 function powerOff() {
   powered = false; standby = false; $('#standby').classList.remove('on');
-  $('#off').classList.add('on'); $('#bootBar').style.width = '0';
+  $('#off').classList.add('on'); $('#bootBar').style.width = '0'; $('#pwrBtn').classList.remove('on');
   $('#alarmLight').className = ''; closeMenu();
 }
 $('#powerOn').onclick = powerOn;
+/* ---------------- operator station link ----------------
+   The Windows operator station (D:\projects\b450-operator) drives this monitor over the home network: commands
+   arrive on an event stream, and twice a second the monitor reports what it is showing so the operator sees the
+   same numbers, alarms and sound. Address: ?op=host:port, Instructor panel -> Operator station, or automatic when
+   this page is served by the operator station itself. */
+const OP = {base: null, es: null, ok: false, id: null, sent: 0};
+try { OP.id = localStorage.getItem('b450sim.monId'); if (!OP.id) { OP.id = 'm' + Math.random().toString(36).slice(2, 8); localStorage.setItem('b450sim.monId', OP.id); } } catch (e) { OP.id = 'm' + Math.random().toString(36).slice(2, 8); }
+function opBaseFromSettings() {
+  const q = new URLSearchParams(location.search).get('op');
+  if (q) return /^https?:/.test(q) ? q : 'http://' + q;
+  if (/^https?:/.test(location.protocol) && location.port === '8460') return location.origin;   // served by the station
+  return S.opAddr ? (/^https?:/.test(S.opAddr) ? S.opAddr : 'http://' + S.opAddr) : null;
+}
+function opConnect(base) {
+  if (OP.es) { OP.es.close(); OP.es = null; }
+  OP.ok = false; OP.base = base || null; opShowState();
+  if (!OP.base || typeof EventSource === 'undefined') return;
+  const es = new EventSource(OP.base.replace(/\/$/, '') + '/events?id=' + encodeURIComponent(OP.id));
+  OP.es = es;
+  es.onopen = () => { OP.ok = true; opShowState(); opReport(true); };
+  es.onerror = () => { OP.ok = false; opShowState(); };   // EventSource keeps retrying on its own
+  es.onmessage = ev => { try { opCommand(JSON.parse(ev.data)); } catch (e) { console.error('operator command', e); } };
+}
+function opShowState() { const e = $('#opState'); if (e) e.textContent = !OP.base ? 'Not set' : OP.ok ? 'Connected to ' + OP.base : 'Connecting to ' + OP.base + '…'; }
+// one step of a scenario, from the operator's live controls or a timed / AI-written timeline
+function opApplyState(c) {
+  const ramp = c.ramp != null ? Math.max(0, +c.ramp) : rampDur;
+  if (c.rhythm && RHYTHMS[c.rhythm] && c.rhythm !== R.rhythm) { R.scene = null; setRhythm(c.rhythm, c.vitals && c.vitals.hr != null); }
+  if (c.ectopy && ECTOPY[c.ectopy]) R.ectopy = c.ectopy;
+  for (const f of ['pulseless', 'vtPulse', 'vfCoarse', 'artifact']) if (typeof c[f] === 'boolean') R[f] = c[f];
+  if (c.scene !== undefined) R.scene = c.scene || null;
+  const instant = ['vf', 'asys', 'vt', 'pea'].includes(R.rhythm);
+  if (c.vitals) for (const k of ['hr', 'spo2', 'sys', 'dia', 'cvp', 'rr', 'etco2', 'temp', 'st']) {
+    const v = +c.vitals[k]; if (c.vitals[k] == null || !isFinite(v)) continue;
+    setTarget(k, v, (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : ramp);
+  }
+  if (c.sensors) {
+    let relayout = false;
+    for (const k in c.sensors) if (k in SEN && k !== 'ac') {
+      const prev = SEN[k]; SEN[k] = c.sensors[k];
+      if (k === 'art') { S.artLine = SEN.art === 'ok'; if (prev !== 'ok' && SEN.art === 'ok') { artZeroed = true; zeroingUntil = simT + 2; } }
+      if ((prev === 'none') !== (SEN[k] === 'none') || k === 'ecg' || k === 'spo2' || k === 'co2') relayout = true;
+    }
+    if (relayout) layout();
+  }
+  syncInstr();
+}
+function opCommand(c) {
+  switch (c.type) {
+    case 'preset': if (PRESETS[c.name]) { const keep = rampDur; if (c.ramp != null) rampDur = +c.ramp; applyPreset(PRESETS[c.name]); rampDur = keep; } break;
+    case 'state':  opApplyState(c); break;
+    case 'shock':  shock(c.to || ''); break;
+    case 'nibp':   if (NB.state === 'idle') nibpStart(); break;
+    case 'silence': pauseAudio(); break;
+    case 'power':  if (c.on && !powered) powerOn(); else if (!c.on && powered) powerOff(); break;
+    case 'monitor': if (c.style === 'tv' || c.style === 'real') { setSoundStyle(c.style); syncSoundPick(); } break;
+    case 'ping': break;
+  }
+  opReport(true);
+}
+function opReport(now) {
+  if (!OP.base || !OP.ok) return;
+  const t = performance.now(); if (!now && t - OP.sent < 450) return; OP.sent = t;
+  const st = {
+    id: OP.id, powered, standby, rhythm: R.rhythm, ectopy: R.ectopy, scene: R.scene || null, simT: +simT.toFixed(1),
+    M: {hr: M.hr, spo2: M.spo2, pr: M.pr, artS: M.artS, artD: M.artD, artM: M.artM, cvp: M.cvp, rr: M.rr, etco2: M.etco2, t1: M.t1},
+    target: Object.assign({}, P), nibp: NB.last ? {s: NB.last.s, d: NB.last.d, m: NB.last.m} : null, nibpState: NB.state,
+    alarms: Object.values(alarms).filter(a => a.pri !== 'info').map(a => ({pri: a.pri, msg: a.msg, latched: !!a.latched})),
+    sound: {pattern: audioName, ox: oxOn, flat: !!flatOsc, paused: simT < pauseUntil},
+    sensors: Object.assign({}, SEN), monitor: S.toneSet === 'classic' && S.tvFlatline ? 'tv' : 'real',
+    presets: Object.keys(PRESETS), rhythms: RHYTHMS, ectopies: ECTOPY,
+    screen: navigator.userAgent.includes('Android') ? 'Android' : 'PC'
+  };
+  try { fetch(OP.base.replace(/\/$/, '') + '/status', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: JSON.stringify(st)}).catch(() => {}); } catch (e) {}
+}
+setInterval(() => opReport(false), 500);
+setTimeout(() => opConnect(opBaseFromSettings()), 300);
+
+// the floating Instructor button hides after 4 s without input (prop shots); any touch / mouse / key brings it back
+{ let idleT = 0; const wake = () => { const b = $('#instrBtn'); if (!b) return; b.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => b.classList.add('idle'), 4000); };
+  ['pointerdown', 'pointermove', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, wake, {passive: true, capture: true})); wake(); }
 $('#soundPick').onchange = e => setSoundStyle(e.target.value); syncSoundPick();
 $('#pwrBtn').onclick = () => powered ? openConfirm('Turn the monitor off?', 'Monitoring will stop.', powerOff) : powerOn();
 $('#resumeBtn').onclick = () => setStandby(false);
-$('#instrBtn').onclick = () => $('#instr').classList.toggle('open');
+$('#instrBtn').onclick = toggleInstr;
 $('#alarmArea').onclick = () => openAlarmsSetup(3);
 $('#hMsg').onclick = () => openAlarmsSetup(3);
 document.querySelectorAll('#hLeds i').forEach(k => k.onclick = () => {
@@ -2306,7 +2453,7 @@ addEventListener('keydown', e => {
   else if (k === 'n') { ensureAudio(); nibpStart(); }
   else if (k === 'f' && powered) toggleFreeze();
   else if (k === 'z' && powered) zeroAll();
-  else if (k === 'i') $('#instr').classList.toggle('open');
+  else if (k === 'i') toggleInstr();
   else if (k === 'escape') closeMenu();
   else if (k === 'enter' && !powered && $('#off').classList.contains('on')) powerOn();
 });
