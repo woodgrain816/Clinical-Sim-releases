@@ -953,7 +953,7 @@ function ensureAudio() {
     WAVES.ox = mk([[1, 1], [2, .025], [3, .014]]);
     // House three-beep tone: soft odd-harmonic buzz (3rd -10 dB, 5th -25 dB, 7th -35 dB), measured
     WAVES.b3 = mk([[1, 1], [3, .31], [5, .053], [7, .018]]);
-    WAVES.fast = mk([[1, 1], [2, .042], [3, .035], [4, .011]]);
+    WAVES.fast = mk([[1, 1], [2, .004], [3, .04], [4, .004]]);   // 3rd overtone only (-28 dB), as in the clean V-tach clip
     const fr = new Float32Array(4), fi = new Float32Array(4); fi[1] = 1; fi[3] = 0.28;
     WAVES.flat = AC.createPeriodicWave(fr, fi);
     applyVolumes();
@@ -981,7 +981,7 @@ function envCurve(pts, n = 256) {
 const ENV = {
   ox:   envCurve([[0, 0], [.025, 1], [.5, .97], [.97, .94], [1, 0]]),
   b3:   envCurve([[0, 0], [.05, 1], [.92, .95], [1, 0]]),
-  fast: envCurve([[0, 0], [.06, 1], [.93, 1], [1, 0]]),
+  fast: envCurve([[0, 0], [.06, .72], [.12, .86], [.45, .88], [.62, 1], [.8, 1], [.88, .75], [.95, .32], [1, 0]]),   // quick start, swells to a late peak, soft tail (measured)
 };
 function tone(freq, at, dur, gainNode, w, level = 0.5, attack, env) {
   const o = AC.createOscillator(), g = AC.createGain();
@@ -1033,10 +1033,10 @@ const TONESETS = {
   classic: {
     // red: the fast beeping with the "beep beep" pair on top, as in the House M.D. V-tach scene
     // fast beep and pulse-ox are locked 2:1 on a shared 0.344 s cycle so the two-tone stays in sync
-    high:   {notes: [[0, 2511.6, .08, 'fast', .55, 0, 'fast']], repeat: 0.172, layer: 'pair'},
+    high:   {notes: [[0, 2511.6, .084, 'fast', .55, 0, 'fast']], repeat: 0.172, layer: 'pair'},
     pair:   {notes: [...hBeep(0), ...hBeep(.132)], repeat: 0.9},
     medium: {notes: [...hBeep(0), ...hBeep(.132)], repeat: 0.9},
-    low:    {notes: [[0, 2511.6, .08, 'fast', .55, 0, 'fast']], repeat: 15},
+    low:    {notes: [[0, 2511.6, .084, 'fast', .55, 0, 'fast']], repeat: 15},
     syncOff: 0.078,   // a fast beep lands 78 ms into each pulse-ox beep; the next one falls in the gap after it
     // pulse-oximeter alarms (seizure and arrest scenes): pure 3489 Hz, 220 ms, every 0.334 s, as loud as the fast beeping
     ox:     {notes: [[0, 3488.5, .236, 'ox', .5, 0, 'ox']], repeat: 0.344},
@@ -1090,6 +1090,8 @@ function audioTick() {
 let lastBeepT = 0;
 function qrsBeep(b) {
   if (!AC || !S.volQrs || standby || !powered) return;
+  // House mode: the show has no heartbeat tone under its alarms, so it stays silent while an alarm sounds
+  if (isHouse() && (audioName || flatOsc || oxOn)) return;
   // pitch follows SpO2 (lower saturation = lower pitch)
   const s = M.spo2 != null ? M.spo2 : 100;
   if (S.toneSet === 'classic') return tone(960, AC.currentTime + 0.005, 0.08, qrsGain, false); // legacy fixed-pitch beep
