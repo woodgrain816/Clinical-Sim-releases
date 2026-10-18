@@ -204,10 +204,10 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 .house .hlim{position:absolute;font-size:14px;font-weight:700;line-height:1.25;text-align:right;width:44px}
 .house .hv{position:absolute;line-height:1;text-align:right;white-space:nowrap}
 .house .hmid{font-size:38px;font-weight:700}
-/* as in the show's arrest scene: alarming HR / SpO2 numbers turn red and stay solid; the alarming NBP reading blinks,
-   on ~0.47 s / off ~0.40 s (measured frame by frame from the clip) */
+/* as in the show's arrest scene: every alarming number (HR, SpO2, NBP...) turns red and they all blink together,
+   on ~0.47 s / off ~0.40 s (measured frame by frame from the clip). One shared clock keeps them in step. */
 .house .flash-high .hv,.house .flash-medium .hv{color:#ff2b2b!important}
-.house .hnbp.flash-high .hv,.house .hnbp.flash-medium .hv,.house .hnbp.flash-high .big,.house .hnbp.flash-medium .big{animation:hblink .87s steps(1) infinite}
+.house.hblinkoff .flash-high .hv,.house.hblinkoff .flash-medium .hv,.house.hblinkoff .flash-high .big,.house.hblinkoff .flash-medium .big{visibility:hidden}
 @keyframes hblink{0%{visibility:visible}54%{visibility:hidden}100%{visibility:hidden}}
 .house .hv.nbred{color:#ff2b2b!important}
 /* the set monitor's own NBP strip is absolutely placed; the House layout with extra channels (ART, CVP...) uses flex boxes */
@@ -1691,6 +1691,8 @@ function updateTop() {
   $('#hPwrLed').className = SEN.ac ? '' : 'bat';
 }
 function updateAlarmLight(now) {
+  // House screen: all alarming numbers blink together on one clock (on 470 ms / off 400 ms, from the show)
+  $('#screen').classList.toggle('hblinkoff', isHouse() && (now % 870) >= 470);
   const L = $('#alarmLight');
   let p = 0; for (const id in alarms) { const a = alarms[id]; if (!a.latched || true) p = Math.max(p, PRI[a.pri]); }
   let cls = '';
