@@ -238,7 +238,8 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 .house .flash-high .hv,.house .flash-medium .hv{color:#ff2b2b!important}
 .house.hblinkoff .flash-high .hv,.house.hblinkoff .flash-medium .hv,.house.hblinkoff .flash-high .big,.house.hblinkoff .flash-medium .big{visibility:hidden}
 @keyframes hblink{0%{visibility:visible}54%{visibility:hidden}100%{visibility:hidden}}
-.house .hv.nbred{color:#ff2b2b!important}
+.house .hv.nbred,.house .big.nbred{color:#ff2b2b!important}
+.house.hblinkoff .hv.nbred,.house.hblinkoff .big.nbred{visibility:hidden}   /* blinks with the alarming numbers */
 /* the set monitor's own NBP strip is absolutely placed; the House layout with extra channels (ART, CVP...) uses flex boxes */
 .house #bottomRow.hc{display:block;border-top:none}
 .house #bottomRow.hc>div{position:absolute}
@@ -852,6 +853,8 @@ function nibpUpdate(dt) {
   } else if (NB.state === 'defl') {
     if (simT - NB.stepT > 0.85) { NB.stepT = simT; NB.cuff -= rnd(6, 8.5); }
     if (simT - NB.t0 > 120) return nibpFail('NIBP Measurement Failed');
+    // no pulse at all (arrest): no oscillations anywhere, so the measurement fails a few seconds into deflation
+    if (simT - NB.stepT < 0.05 && simT - NB.t0 > 8 && !beats.some(b => b.perf > 0.1 && b.t > simT - 6)) return nibpFail('NIBP Measurement Failed');
     if (NB.cuff < Math.max(15, P.dia - 15)) {
       const pulses = beats.filter(b => b.perf > 0.1 && b.t > simT - 10).length;
       if (pulses < 4 || P.sys < 40) return nibpFail('NIBP Measurement Failed');
@@ -972,6 +975,9 @@ function evalAlarms() {
     limCheck('nibpS', NB.last.s, 'NIBP Sys', 'nibp', 0); limCheck('nibpD', NB.last.d, 'NIBP Dia', 'nibp', 0); limCheck('nibpM', NB.last.m, 'NIBP Mean', 'nibp', 0);
     for (const k of ['nibpSHi','nibpSLo','nibpDHi','nibpDLo','nibpMHi','nibpMLo']) if (cur[k]) cur[k].ackable = true;
   }
+  // the House monitor takes a cuff reading as soon as an arrest alarm starts (like a "start NBP on alarm" setting);
+  // with no pulse it fails, and the screen shows a red, blinking 0/0 (0) as in the show
+  if (isHouse() && (cur.asys || cur.vfib) && !alarms.asys && !alarms.vfib && NB.state === 'idle' && SEN.nibp === 'ok') nibpStart();
   if (NB.err && t - NB.err.t < 60 && !NB.err.ack) want('nibperr', 'low', NB.err.msg, {param: 'nibp', ackable: true});
   // --- Respiration / CO2 ---
   // the House screen shows no respiration, so it raises no RR/apnea alarms: an alarm always points at a number on screen
@@ -1701,14 +1707,14 @@ function updateParams() {
     const segs = Math.ceil(battery / 20);
     setV('hbatt', [0, 1, 2, 3, 4].map(i => `<u style="opacity:${i < segs ? 1 : 0.15};background:${battery < 20 ? '#ff4040' : ''}"></u>`).join(''));
     const bell = document.querySelector('.house .hbell svg path'); if (bell) bell.setAttribute('fill', S.volQrs ? '#e9edf2' : '#59616d');
-    if (houseClassic()) {
+    if (isHouse()) {
       if (NB.state !== 'idle') { setV('nibpSD', String(Math.round(NB.cuff))); setV('nibpM', ''); }   // cuff pressure while measuring
       // like the set monitor, no pulse reads 0 rather than dashes
       if (SEN.spo2 === 'ok' && M.spo2 == null && simT > 8) { setV('spo2', '0'); setV('pr', '0'); }
       // a failed NBP reading (no pulse) shows as a red 0/0 (0), as on the set
       const nbFail = NB.err && !NB.last_ok_after_err && (!NB.last || NB.last.time.getTime() < NB.err.at);
       if (nbFail && NB.state === 'idle') { setV('nibpSD', '0/0'); setV('nibpM', '(0)'); }
-      const nbv = PW.nibp && PW.nibp.el.querySelector('.hv'); if (nbv) nbv.classList.toggle('nbred', !!nbFail);
+      const nbv = PW.nibp && PW.nibp.el.querySelector('.hv, .big'); if (nbv) nbv.classList.toggle('nbred', !!nbFail);
     }
     const ms = sortedAlarms().filter(a => !a.latched).slice(0, 2).map(a => a.msg).join(' / ');
     const hm = $('#hMsg'); if (hm.textContent !== ms) hm.textContent = ms;
