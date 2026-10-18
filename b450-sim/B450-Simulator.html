@@ -37,6 +37,11 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
 .led i.bat{background:#ffb000;box-shadow:0 0 6px #ffb000}
 #pwrBtn{width:30px;height:30px;border-radius:50%;border:2px solid #555;background:#1a1c1f;color:#3cff5a;
   font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* like the real power key: lit green while the monitor runs, dark when it is off */
+#pwrBtn:not(.on){color:#2c3a2e;border-color:#3a3d42}
+/* off, with the bezel showing, the screen is simply black: switch on with the bezel power key, as on the real
+   monitor. Without the bezel there is no key, so the dim on-screen button stays */
+#device.bezel #off #powerOn{display:none}
 
 /* ---------- top bar ---------- */
 #top{position:absolute;left:0;top:0;width:1280px;height:48px;background:#0d1520;border-bottom:1px solid #2a3442;
@@ -2288,7 +2293,7 @@ addEventListener('resize', fit);
 /* ---------------- power / boot ---------------- */
 function powerOn() {
   ensureAudio();
-  $('#off').classList.remove('on'); $('#boot').classList.add('on');
+  $('#off').classList.remove('on'); $('#boot').classList.add('on'); $('#pwrBtn').classList.add('on');
   // a real monitor's power-on: self test, then each module checks in, then the profile loads (~3.8 s)
   const log = $('#bootLog'); log.innerHTML = '';
   // prop: the screen stays black for about a second, then the monitor comes up (no start-up text)
@@ -2303,7 +2308,7 @@ function powerOn() {
 }
 function powerOff() {
   powered = false; standby = false; $('#standby').classList.remove('on');
-  $('#off').classList.add('on'); $('#bootBar').style.width = '0';
+  $('#off').classList.add('on'); $('#bootBar').style.width = '0'; $('#pwrBtn').classList.remove('on');
   $('#alarmLight').className = ''; closeMenu();
 }
 $('#powerOn').onclick = powerOn;
