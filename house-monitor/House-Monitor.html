@@ -775,14 +775,57 @@ function sampleMeasures() {
   while (co2Buf.length && co2Buf[0][0] < t - 20) co2Buf.shift();
 }
 let hrResetT = -1;
+// VF is called the way a monitor calls it, from the trace alone: no QRS it can count, but a fibrillatory ECG well above
+// the flat baseline (over 0.05 mV peak-to-peak in nearly every quarter-second, measured after the last QRS's T wave); a flat trace with no QRS is
+// asystole. While the shock has the amplifier pinned the trace cannot be read, so the last call holds.
+// traceBusy() is the share of quarter-seconds since the last QRS's T wave in which the trace swings (null = too short
+// to tell); fibWave() is the VF call, and only a trace with no activity at all (not even P waves) is flat.
+let fibCache = {t: -1, v: false};
+function fibWave(t, lastQ) { const b = traceBusy(t, lastQ); return t >= shockT && t < shockT + 4 ? !!alarms.vfib : b != null && b >= 0.8; }
+function traceBusy(t, lastQ) {
+  if (fibCache.t === t && fibCache.q === lastQ) return fibCache.v;
+  let v;
+  {
+    const from = Math.max(t - 2, lastQ + 0.6);
+    if (t - from < 0.5) v = null;
+    // fibrillation never rests on the baseline: nearly every quarter-second must swing; lone P waves in a long pause
+    // (heart block) leave flat stretches between them, so they are not VF
+    else { let busy = 0, n = 0;
+      for (let w = t; w - 0.25 >= from; w -= 0.25) { let mx = -99, mn = 99; for (let s = w; s > w - 0.25; s -= 0.01) { const e = ecgAt(s, 'II'); if (e > mx) mx = e; if (e < mn) mn = e; } n++; if (mx - mn > 0.05) busy++; }
+      v = n >= 2 ? busy / n : null; }
+  }
+  fibCache = {t: t, q: lastQ, v: v}; return v;
+}
+// rhythm calls from the counted beats: R-R irregularity of consecutive narrow beats (mean successive difference / mean
+// R-R) and whether those beats have P waves in front of them. Irregularly irregular with no P waves = A Fib; irregular
+// with P waves (dropped beats) = Irregular. Intervals next to a PVC are left out, as the monitor's own analysis does.
+function rrPattern(q) {
+  const rr = [], ps = [];
+  for (let i = q.length - 1; i > 0 && rr.length < 10; i--) {
+    const a = q[i - 1], b = q[i];
+    if (a.k !== 'N' || b.k !== 'N' || a.t < hrResetT) continue;
+    rr.push(b.t - a.t); ps.push(b.hasP);
+  }
+  if (rr.length < 8) return null;
+  const mean = rr.reduce((s, x) => s + x, 0) / rr.length;
+  let d = 0, big = 0; for (let i = 1; i < rr.length; i++) { const x = Math.abs(rr[i] - rr[i - 1]); d += x; if (x > 0.1 * mean) big++; }
+  // one step change of rate is one big jump among steady beats, not an irregular rhythm: most jumps must be big
+  return {irr: big / (rr.length - 1) >= 0.4 ? d / (rr.length - 1) / mean : 0, pWaves: ps.filter(Boolean).length / ps.length};
+}
 function computeMeasures(dt) {
   const t = simT;
   // HR from detected QRS
   const q = beats.filter(b => b.k !== 'P' && b.t <= t && b.t >= hrResetT);
+  const allQ = beats.filter(b => b.k !== 'P' && b.t <= t), lastAllQ = allQ.length ? allQ[allQ.length - 1].t : -99;
   if (SEN.ecg === 'leadsoff' || SEN.ecg === 'none') M.hr = null;
-  else if (R.rhythm !== 'vf' && R.rhythm !== 'asys' && q.length < 3 && t - hrResetT < 4) { /* new rhythm: hold the last value */ }
-  else if (R.rhythm === 'vf') M.hr = null;
-  else if (q.length < 2 || t - q[q.length - 1].t > 6) M.hr = q.length ? 0 : 0;
+  // VF called from the trace: no countable QRS, so the monitor has no rate to show; asystole called: 0
+  else if (alarms.vfib && !alarms.vfib.latched) M.hr = null;
+  else if (alarms.asys && !alarms.asys.latched) M.hr = 0;
+  // new rhythm, too few new beats to average: hold the last value, falling as the wait for the next beat grows (the
+  // monitor's rolling average sees the gap), and never mixing old and new beats into a falsely short interval
+  else if (q.length < 3 && t - hrResetT < 4) { const gap = t - lastAllQ; if (M.hr > 0 && gap > 1.5 * 60 / M.hr) M.hr = Math.round(60 / gap); }
+  // too few new beats: keep falling with the wait for the next one (a real rate never jumps to 0 between beats)
+  else if (q.length < 2 || t - q[q.length - 1].t > 6) M.hr = t - lastAllQ < 6 && M.hr > 0 ? Math.min(M.hr, Math.round(60 / Math.max(0.3, t - lastAllQ))) : 0;
   else {
     const n = Math.min(5, q.length - 1); let s = 0;
     for (let i = q.length - n; i < q.length; i++) s += q[i].t - q[i - 1].t;
@@ -882,7 +925,7 @@ let alarms = {};          // id -> {id, pri, msg, since, param, latch, latched, 
 let pending = {};         // id -> first time condition seen (for delays)
 let events = {};          // arrhythmia event id -> until time
 let pauseUntil = 0, pauseStart = -1, alarmHist = [];
-let arrSuspended = false;
+let arrSuspended = false, wideRun = false;
 
 function fmtLimMsg(name, v, dir, lim) { return name + ' ' + (dir > 0 ? 'High ' + v + ' > ' + lim : 'Low ' + v + ' < ' + lim); }
 function evalAlarms() {
@@ -895,7 +938,7 @@ function evalAlarms() {
     if (t - pending[id] < d) return;
     cur[id] = Object.assign({pri: pri, msg: msg}, o);
   };
-  wantedThisTick.clear();
+  wantedThisTick.clear(); wideRun = false;
   if (standby || !powered) { alarms = {}; pending = {}; return; }
   const lim = S.lim;
   // hysteresis: an active limit alarm clears only once the value is back inside the limit by a small margin, so a value
@@ -918,28 +961,40 @@ function evalAlarms() {
     const A = S.arr;
     const q = beats.filter(b => b.k !== 'P' && b.t <= t);
     const lastQ = q.length ? q[q.length - 1].t : -99;
-    const lastRR = q.length > 1 ? lastQ - q[q.length - 2].t : 1;
-    const asysAfter = (S.toneSet === 'classic' && S.tvFlatline) ? clamp(1.5 * lastRR, 1.2, 3) : 3;
+    let lastRR = q.length > 1 ? lastQ - q[q.length - 2].t : 1;
+    // the longest of the last few R-R intervals: a rhythm that already drops beats (heart block) is judged by its pauses
+    for (let i = Math.max(1, q.length - 8); i < q.length; i++) lastRR = Math.max(lastRR, q[i].t - q[i - 1].t);
+    // the fast call needs a dead-flat trace: with P waves still marching (heart block) the monitor waits the full 3 s
+    const tb = traceBusy(t, lastQ);
+    const asysAfter = (S.toneSet === 'classic' && S.tvFlatline && tb != null && tb < 0.15) ? clamp(1.5 * lastRR, 2.0, 3) : 3;
+    // (2 s at the least: a sudden drop to an escape rhythm of 30-40/min leaves a 1.5-2 s gap before its first beat,
+    // and calling that asystole would be a false alarm)
     // every alarm comes from what the monitor itself measures, never from which rhythm the instructor picked:
     // V Tach = 6+ consecutive wide beats at >= 100/min (detectArrhythmia, ~2 s at 175/min); Asystole = no QRS for 3 s
-    if (R.rhythm === 'vf') want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', delay: 0.5, latch: S.arr.vfib.latch, bt: true});
+    if (t - lastQ > 1.5 && t > 4 && fibWave(t, lastQ)) want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', latch: S.arr.vfib.latch, bt: true});
     // ...but the House set monitor calls it as soon as a beat is clearly overdue (1.5 x the last R-R, 1.2-3 s), so the
     // flatline comes in about a second after the last beat as in the show, instead of after 3-5 s of silence
-    else if (t - lastQ > asysAfter && t > 4) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
+    else if (t - lastQ > asysAfter && t > 4 && !fibWave(t, lastQ)) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
     // run analysis on newly detected beats
     detectArrhythmia(q);
     for (const id in events) {
       if (events[id] > t) { const a = A[id]; if (a) want(id, a.pri, ARR_NAME[id], {param: 'hr', latch: a.latch, bt: id === 'vtach'}); }
       else delete events[id];
     }
-    if (R.rhythm === 'afib') want('afib', A.afib.pri, 'A Fib', {param: 'hr', delay: 5});
-    if (R.rhythm === 'wenck' || R.rhythm === 'mob2') want('irreg', A.irreg.pri, 'Irregular', {param: 'hr', delay: 5});
+    const rp = rrPattern(q);
+    if (rp && rp.irr > 0.12 && rp.pWaves < 0.3) want('afib', A.afib.pri, 'A Fib', {param: 'hr', delay: 3});
+    else if (rp && rp.irr > 0.12) want('irreg', A.irreg.pri, 'Irregular', {param: 'hr', delay: 3});
+    // a run of wide beats in progress (3+ in a row) is analysed as V Tach, not as a fast rate
+    wideRun = q.length >= 3 && q.slice(-3).every(b => b.k === 'V');
     // rate alarms (Tachy/Brady use HR limits)
-    if (M.hr != null && lim.hr.on && R.rhythm !== 'vf' && !cur.asys) {
-      if (M.hr >= S.xtachy) want('xtachy', A.xtachy.pri, 'Extreme Tachy ' + M.hr, {param: 'hr', delay: 1.5, latch: A.xtachy.latch});
-      else if (M.hr > lim.hr.hi && !events.vtach) want('tachy', A.tachy.pri, 'Tachy ' + M.hr + ' > ' + lim.hr.hi, {param: 'hr', delay: 1.5});
-      if (M.hr > 0 && M.hr <= S.xbrady) want('xbrady', A.xbrady.pri, 'Extreme Brady ' + M.hr, {param: 'hr', delay: 1.5, latch: A.xbrady.latch});
-      else if (M.hr > 0 && M.hr < lim.hr.lo) want('brady', A.brady.pri, 'Brady ' + M.hr + ' < ' + lim.hr.lo, {param: 'hr', delay: 1.5});
+    if (M.hr != null && lim.hr.on && !cur.vfib && !cur.asys) {
+      // 2/min hysteresis like the limit alarms, and a rate alarm already sounding hands over to its neighbour (Brady <->
+      // Extreme Brady) with no delay, so a rate hovering at a threshold never switches the alarm off and on
+      const on = id => alarms[id] && !alarms[id].latched, hiOn = on('tachy') || on('xtachy'), loOn = on('brady') || on('xbrady');
+      if (M.hr >= S.xtachy || (on('xtachy') && M.hr > S.xtachy - 2)) want('xtachy', A.xtachy.pri, 'Extreme Tachy ' + M.hr, {param: 'hr', delay: hiOn ? 0 : 1.5, latch: A.xtachy.latch});
+      else if ((M.hr > lim.hr.hi || (hiOn && M.hr > lim.hr.hi - 2)) && !events.vtach) want('tachy', A.tachy.pri, 'Tachy ' + M.hr + ' > ' + lim.hr.hi, {param: 'hr', delay: hiOn ? 0 : 1.5});
+      if (M.hr > 0 && (M.hr <= S.xbrady || (on('xbrady') && M.hr < S.xbrady + 2))) want('xbrady', A.xbrady.pri, 'Extreme Brady ' + M.hr, {param: 'hr', delay: loOn ? 0 : 1.5, latch: A.xbrady.latch});
+      else if (M.hr > 0 && (M.hr < lim.hr.lo || (loOn && M.hr < lim.hr.lo + 2))) want('brady', A.brady.pri, 'Brady ' + M.hr + ' < ' + lim.hr.lo, {param: 'hr', delay: loOn ? 0 : 1.5});
     }
   } else { lastDetIdx = -1; }
   // --- SpO2 ---
@@ -998,7 +1053,7 @@ function evalAlarms() {
   // arrhythmia hierarchy, as on a real monitor: the most serious rhythm alarm hides the lesser ones
   const RHYTHM = ['vtach', 'vt2', 'accv', 'vbrady', 'pause', 'ront', 'couplet', 'bigem', 'trigem', 'pvc', 'tachy', 'brady', 'xtachy', 'xbrady', 'afib', 'irreg'];
   if (cur.vfib || cur.asys) { for (const id of RHYTHM) delete cur[id]; if (cur.vfib) delete cur.asys; }
-  else if (cur.vtach || R.rhythm === 'vt') { for (const id of ['vt2', 'accv', 'couplet', 'pvc', 'bigem', 'trigem', 'ront', 'tachy', 'xtachy']) delete cur[id]; }
+  else if (cur.vtach || wideRun) { for (const id of ['vt2', 'accv', 'couplet', 'pvc', 'bigem', 'trigem', 'ront', 'tachy', 'xtachy']) delete cur[id]; }
   else if (cur.vt2) { for (const id of ['couplet', 'pvc']) delete cur[id]; }
   if (cur.xtachy) delete cur.tachy;
   if (cur.xbrady) delete cur.brady;
@@ -1039,7 +1094,7 @@ function detectArrhythmia(q) {
     if (b.t < hrResetT) continue;
     const i = q.indexOf(b); if (i < 1) continue;
     const prev = q[i - 1], rr = b.t - prev.t;
-    if (rr > 3.0 && rr < 4 && R.rhythm !== 'asys') events.pause = t + 8;
+    if (rr > 3.0 && rr < 4) events.pause = t + 8;
     if (b.k !== 'V') continue;
     let k = 0, j = i; while (j >= 0 && q[j].k === 'V') { k++; j--; }
     const runRate = k > 1 ? 60 / ((b.t - q[i - k + 1].t) / (k - 1)) : 0;
@@ -1758,7 +1813,7 @@ function updateParams() {
     if (id === 'art' && !artZeroed) m = 'Not Zeroed';
     if (id === 'cvp' && !cvpZeroed) m = 'Not Zeroed';
     if (id === 'co2' && SEN.co2 === 'occl') m = 'Occlusion';
-    if ((id === 'ecg1') && R.rhythm !== 'vf' && SEN.ecg === 'ok' && alarms.asys) m = '';
+    if ((id === 'ecg1') && !alarms.vfib && SEN.ecg === 'ok' && alarms.asys) m = '';
     if (e.textContent !== m) e.textContent = m;
   });
 }
