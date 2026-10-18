@@ -2151,8 +2151,14 @@ function buildInstructor() {
    <div class="ir"><label>Temp</label><div class="seg" data-sen="temp">${seg([['ok','On'],['none','Off']])}</div></div>
    <div class="ir"><label>Artifact</label><div class="seg"><button class="sb" id="iArt">Patient movement</button></div></div>
    <div class="ir"><label>Power</label><div class="seg"><button class="sb" id="iAC">Unplug AC (battery)</button></div></div>
+   <h3>Operator station</h3>
+   <div class="ir"><label>Address</label><input id="iOpAddr" placeholder="PC address, e.g. 192.168.1.20:8460" style="flex:1"><button class="sb" id="iOpGo">Connect</button></div>
+   <div class="hint" id="opState">Not set</div>
    <h3>Keyboard</h3><div class="hint">Space: Pause Audio · N: NIBP start/stop · F: Freeze · Z: Zero all · I: this panel · Esc: close menu · F11: full screen</div>`;
   I.innerHTML = h;
+  $('#iOpAddr').value = S.opAddr || '';
+  $('#iOpGo').onclick = () => { S.opAddr = $('#iOpAddr').value.trim(); save(); opConnect(opBaseFromSettings()); };
+  opShowState();
   $('#instrClose').onclick = () => I.classList.remove('open');
   I.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(PRESETS[b.dataset.preset]));
   $('#iRhythm').onchange = e => { R.scene = null; setRhythm(e.target.value); };
@@ -2160,7 +2166,7 @@ function buildInstructor() {
   $('#iPulseless').onclick = () => { R.pulseless = !R.pulseless; syncInstr(); };
   $('#iVtPulse').onclick = () => { R.vtPulse = !R.vtPulse; syncInstr(); };
   $('#iCoarse').onclick = () => { R.vfCoarse = !R.vfCoarse; syncInstr(); };
-  $('#iShock').onclick = shock;
+  $('#iShock').onclick = () => shock();
   $('#iArt').onclick = () => { R.artifact = !R.artifact; syncInstr(); };
   $('#iDamp').onclick = () => { artDamped = !artDamped; syncInstr(); };
   $('#iAC').onclick = () => { SEN.ac = !SEN.ac; syncInstr(); };
@@ -2242,9 +2248,9 @@ function applyPreset(p) {
   if (powered && SEN.nibp === 'ok' && SEN.art !== 'ok') applyPreset.nbT = setTimeout(() => { if (powered && NB.state === 'idle') nibpStart(); }, (rampDur + 1) * 1000);
   syncInstr();
 }
-function shock() {
+function shock(toOverride) {
   shockT = simT + 0.05;
-  const to = $('#iShockTo').value;
+  const to = toOverride != null ? toOverride : ($('#iShockTo') ? $('#iShockTo').value : '');
   // clear any in-flight beats so the shock is followed by a brief pause
   beats = beats.filter(b => b.t <= simT); schedT = simT + 1.6; lastQRS = simT; hrResetT = simT;
   if (to) setTimeout(() => { if (to === 'nsr') applyPreset(PRESETS.ROSC); else setRhythm(to); }, 1500);
@@ -2312,6 +2318,84 @@ function powerOff() {
   $('#alarmLight').className = ''; closeMenu();
 }
 $('#powerOn').onclick = powerOn;
+/* ---------------- operator station link ----------------
+   The Windows operator station (D:\projects\b450-operator) drives this monitor over the home network: commands
+   arrive on an event stream, and twice a second the monitor reports what it is showing so the operator sees the
+   same numbers, alarms and sound. Address: ?op=host:port, Instructor panel -> Operator station, or automatic when
+   this page is served by the operator station itself. */
+const OP = {base: null, es: null, ok: false, id: null, sent: 0};
+try { OP.id = localStorage.getItem('b450sim.monId'); if (!OP.id) { OP.id = 'm' + Math.random().toString(36).slice(2, 8); localStorage.setItem('b450sim.monId', OP.id); } } catch (e) { OP.id = 'm' + Math.random().toString(36).slice(2, 8); }
+function opBaseFromSettings() {
+  const q = new URLSearchParams(location.search).get('op');
+  if (q) return /^https?:/.test(q) ? q : 'http://' + q;
+  if (/^https?:/.test(location.protocol) && location.port === '8460') return location.origin;   // served by the station
+  return S.opAddr ? (/^https?:/.test(S.opAddr) ? S.opAddr : 'http://' + S.opAddr) : null;
+}
+function opConnect(base) {
+  if (OP.es) { OP.es.close(); OP.es = null; }
+  OP.ok = false; OP.base = base || null; opShowState();
+  if (!OP.base || typeof EventSource === 'undefined') return;
+  const es = new EventSource(OP.base.replace(/\/$/, '') + '/events?id=' + encodeURIComponent(OP.id));
+  OP.es = es;
+  es.onopen = () => { OP.ok = true; opShowState(); opReport(true); };
+  es.onerror = () => { OP.ok = false; opShowState(); };   // EventSource keeps retrying on its own
+  es.onmessage = ev => { try { opCommand(JSON.parse(ev.data)); } catch (e) { console.error('operator command', e); } };
+}
+function opShowState() { const e = $('#opState'); if (e) e.textContent = !OP.base ? 'Not set' : OP.ok ? 'Connected to ' + OP.base : 'Connecting to ' + OP.base + '…'; }
+// one step of a scenario, from the operator's live controls or a timed / AI-written timeline
+function opApplyState(c) {
+  const ramp = c.ramp != null ? Math.max(0, +c.ramp) : rampDur;
+  if (c.rhythm && RHYTHMS[c.rhythm] && c.rhythm !== R.rhythm) { R.scene = null; setRhythm(c.rhythm, c.vitals && c.vitals.hr != null); }
+  if (c.ectopy && ECTOPY[c.ectopy]) R.ectopy = c.ectopy;
+  for (const f of ['pulseless', 'vtPulse', 'vfCoarse', 'artifact']) if (typeof c[f] === 'boolean') R[f] = c[f];
+  if (c.scene !== undefined) R.scene = c.scene || null;
+  const instant = ['vf', 'asys', 'vt', 'pea'].includes(R.rhythm);
+  if (c.vitals) for (const k of ['hr', 'spo2', 'sys', 'dia', 'cvp', 'rr', 'etco2', 'temp', 'st']) {
+    const v = +c.vitals[k]; if (c.vitals[k] == null || !isFinite(v)) continue;
+    setTarget(k, v, (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : ramp);
+  }
+  if (c.sensors) {
+    let relayout = false;
+    for (const k in c.sensors) if (k in SEN && k !== 'ac') {
+      const prev = SEN[k]; SEN[k] = c.sensors[k];
+      if (k === 'art') { S.artLine = SEN.art === 'ok'; if (prev !== 'ok' && SEN.art === 'ok') { artZeroed = true; zeroingUntil = simT + 2; } }
+      if ((prev === 'none') !== (SEN[k] === 'none') || k === 'ecg' || k === 'spo2' || k === 'co2') relayout = true;
+    }
+    if (relayout) layout();
+  }
+  syncInstr();
+}
+function opCommand(c) {
+  switch (c.type) {
+    case 'preset': if (PRESETS[c.name]) { const keep = rampDur; if (c.ramp != null) rampDur = +c.ramp; applyPreset(PRESETS[c.name]); rampDur = keep; } break;
+    case 'state':  opApplyState(c); break;
+    case 'shock':  shock(c.to || ''); break;
+    case 'nibp':   if (NB.state === 'idle') nibpStart(); break;
+    case 'silence': pauseAudio(); break;
+    case 'power':  if (c.on && !powered) powerOn(); else if (!c.on && powered) powerOff(); break;
+    case 'monitor': if (c.style === 'tv' || c.style === 'real') { setSoundStyle(c.style); syncSoundPick(); } break;
+    case 'ping': break;
+  }
+  opReport(true);
+}
+function opReport(now) {
+  if (!OP.base || !OP.ok) return;
+  const t = performance.now(); if (!now && t - OP.sent < 450) return; OP.sent = t;
+  const st = {
+    id: OP.id, powered, standby, rhythm: R.rhythm, ectopy: R.ectopy, scene: R.scene || null, simT: +simT.toFixed(1),
+    M: {hr: M.hr, spo2: M.spo2, pr: M.pr, artS: M.artS, artD: M.artD, artM: M.artM, cvp: M.cvp, rr: M.rr, etco2: M.etco2, t1: M.t1},
+    target: Object.assign({}, P), nibp: NB.last ? {s: NB.last.s, d: NB.last.d, m: NB.last.m} : null, nibpState: NB.state,
+    alarms: Object.values(alarms).filter(a => a.pri !== 'info').map(a => ({pri: a.pri, msg: a.msg, latched: !!a.latched})),
+    sound: {pattern: audioName, ox: oxOn, flat: !!flatOsc, paused: simT < pauseUntil},
+    sensors: Object.assign({}, SEN), monitor: S.toneSet === 'classic' && S.tvFlatline ? 'tv' : 'real',
+    presets: Object.keys(PRESETS), rhythms: RHYTHMS, ectopies: ECTOPY,
+    screen: navigator.userAgent.includes('Android') ? 'Android' : 'PC'
+  };
+  try { fetch(OP.base.replace(/\/$/, '') + '/status', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: JSON.stringify(st)}).catch(() => {}); } catch (e) {}
+}
+setInterval(() => opReport(false), 500);
+setTimeout(() => opConnect(opBaseFromSettings()), 300);
+
 // the floating Instructor button hides after 4 s without input (prop shots); any touch / mouse / key brings it back
 { let idleT = 0; const wake = () => { const b = $('#instrBtn'); if (!b) return; b.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => b.classList.add('idle'), 4000); };
   ['pointerdown', 'pointermove', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, wake, {passive: true, capture: true})); wake(); }
