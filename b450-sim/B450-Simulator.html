@@ -812,10 +812,15 @@ function evalAlarms() {
   wantedThisTick.clear();
   if (standby || !powered) { alarms = {}; pending = {}; return; }
   const lim = S.lim;
+  // hysteresis: an active limit alarm clears only once the value is back inside the limit by a small margin, so a value
+  // hovering at the limit does not switch the alarm on and off every second
+  const HYST = {spo2: 1, hr: 2, rr: 1, etco2: 1, fico2: 1, t1: 0.1, cvp: 1};
   const limCheck = (key, val, name, param, delay) => {
     const L = lim[key]; if (!L || !L.on || val == null) return;
-    if (val > L.hi) want(key + 'Hi', L.pri, fmtLimMsg(name, val, 1, L.hi), {param: param, delay: delay});
-    else if (val < L.lo) want(key + 'Lo', L.pri, fmtLimMsg(name, val, -1, L.lo), {param: param, delay: delay});
+    const h = HYST[key] != null ? HYST[key] : 2;
+    const hiOn = alarms[key + 'Hi'] && !alarms[key + 'Hi'].latched, loOn = alarms[key + 'Lo'] && !alarms[key + 'Lo'].latched;
+    if (val > L.hi || (hiOn && val > L.hi - h)) want(key + 'Hi', L.pri, fmtLimMsg(name, val, 1, L.hi), {param: param, delay: hiOn ? 0 : delay});
+    else if (val < L.lo || (loOn && val < L.lo + h)) want(key + 'Lo', L.pri, fmtLimMsg(name, val, -1, L.lo), {param: param, delay: loOn ? 0 : delay});
   };
   // --- ECG / arrhythmia ---
   const ecgOk = SEN.ecg === 'ok' || SEN.ecg === 'vlead';
@@ -853,8 +858,9 @@ function evalAlarms() {
     // when the pulse is lost while an SpO2 alarm is already sounding, No Pulse takes over at once (no silent gap)
     const spo2Sounding = alarms.spo2Lo || alarms.spo2Hi || alarms.spo2art || alarms.spo2nop;
     if (M.spo2 == null && (t > 10 || spo2Sounding)) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2', delay: spo2Sounding ? 0 : 2});
-    if (R.artifact) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: 1.5});
-    limCheck('spo2', M.spo2, 'SpO2', 'spo2', 1.5);
+    // the SpO2 alarms hand over to each other with no gap (Artifact -> Low -> No Pulse and back)
+    if (R.artifact) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
+    limCheck('spo2', M.spo2, 'SpO2', 'spo2', spo2Sounding ? 0 : 1.5);
   }
   // --- ART / CVP ---
   if (SEN.art === 'ok') {
@@ -1133,6 +1139,8 @@ function audioTick() {
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
   if (flat) name = 'ber';
+  // ...and the seizure scene: only the pulse-ox tone and the fast beeping, never the yellow "beep beep"
+  if (S.toneSet === 'classic' && R.scene === 'seizure' && name === 'medium') name = null;
   if (name !== audioName) {
     audioName = name; nextBurst = AC.currentTime + 0.05; nextLayer = AC.currentTime + 0.4;
     // fast beeping starting while the pulse-ox runs falls into step with it
@@ -2056,7 +2064,9 @@ const PRESETS = {
   'ROSC':                 {rhythm:'stach', ectopy:'pvc', hr:112, spo2:94, sys:96, dia:58, cvp:10, rr:12, etco2:42, temp:36.6, st:1.5},
   // generalized seizure: marked sinus tachycardia (Extreme Tachy, red) + desaturation -> in House mode the fast beeping
   // with the pulse-ox tone over it, and no "beep beep", as in the show's seizure scene
-  'Seizure':              {rhythm:'stach', ectopy:'none', hr:166, spo2:84, sys:168, dia:98, cvp:9, rr:32, etco2:52, temp:37.8, st:0, artifact:true},
+  'Seizure':              {rhythm:'stach', ectopy:'none', hr:166, spo2:84, sys:168, dia:98, cvp:9, rr:32, etco2:52, temp:37.8, st:0, artifact:true,
+                           // abrupt onset: tachycardic within seconds, desaturating over ~6 s; the pressure climbs over ~15 s
+                           onset: {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 6}},
   'Hyperthermia':         {rhythm:'stach', ectopy:'none', hr:118, spo2:96, sys:132, dia:80, cvp:7, rr:24, etco2:32, temp:40.2, st:0},
 };
 const SLIDERS = [['hr','Heart rate',0,250,1,''],['spo2','SpO2',40,100,1,'%'],['sys','Systolic',0,260,1,''],['dia','Diastolic',0,160,1,''],
@@ -2092,7 +2102,7 @@ function buildInstructor() {
   I.innerHTML = h;
   $('#instrClose').onclick = () => I.classList.remove('open');
   I.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(PRESETS[b.dataset.preset]));
-  $('#iRhythm').onchange = e => { setRhythm(e.target.value); };
+  $('#iRhythm').onchange = e => { R.scene = null; setRhythm(e.target.value); };
   $('#iEct').onchange = e => { R.ectopy = e.target.value; };
   $('#iPulseless').onclick = () => { R.pulseless = !R.pulseless; syncInstr(); };
   $('#iVtPulse').onclick = () => { R.vtPulse = !R.vtPulse; syncInstr(); };
@@ -2159,9 +2169,15 @@ function setRhythm(r, keepHr) {
 }
 function applyPreset(p) {
   R.ectopy = p.ectopy; if ('vtPulse' in p) R.vtPulse = p.vtPulse; R.pulseless = false; R.artifact = !!p.artifact;
+  R.scene = p === PRESETS['Seizure'] ? 'seizure' : null;
   setRhythm(p.rhythm, true);
   const instant = ['vf', 'asys', 'vt', 'pea'].includes(p.rhythm);
-  for (const k of ['hr','spo2','sys','dia','cvp','rr','etco2','temp','st']) setTarget(k, p[k], (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : rampDur);
+  // some states come on suddenly whatever the transition time: p.onset caps the ramp (seconds) for the listed vitals
+  for (const k of ['hr','spo2','sys','dia','cvp','rr','etco2','temp','st']) {
+    let d = (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : rampDur;
+    if (p.onset && p.onset[k] != null) d = Math.min(d, p.onset[k]);
+    setTarget(k, p[k], d);
+  }
   // a new scenario is a new patient state: the last cuff reading belongs to the old one, so silence its alarm and
   // re-cycle the cuff once the vitals have settled (as a nurse would)
   if (NB.last) NB.last.ack = true;
