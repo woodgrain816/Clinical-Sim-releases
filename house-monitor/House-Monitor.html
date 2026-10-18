@@ -1270,11 +1270,6 @@ function addTrend(nibpOnly) {
 let WAVE_W = 860, WAVE_H = 560, WAVE_TOP = 48;
 // screen width in layout pixels: the height stays 800 and the width follows the window's shape, so the monitor fills it
 let SW = 1280;
-// portrait (a phone held upright): the House screen is 800 wide and as tall as the window allows; waveforms run the
-// full width with HR | SpO2 under them, then the NBP strip and the keys
-let SH = 800, PORTRAIT = false;
-let PORT_PH = 300;
-const portraitOK = () => isHouse() && !S.bezel && SEN.ecg !== 'none' && SEN.spo2 !== 'none' && SEN.art !== 'ok' && SEN.cvp !== 'ok' && SEN.co2 === 'none';
 const sx = x => Math.round(x * SW / 1280);   // a position laid out for the 1280-wide screen, spread to the current width
 const PXMM = 4.9;
 const cv = $('#waveCv'), ctx = cv.getContext('2d');
@@ -1322,14 +1317,10 @@ function applyGeometry() {
   $('#screen').classList.toggle('house', h);
   WAVE_TOP = h ? 34 : 48; WAVE_W = SW - (h ? 360 : 420); WAVE_H = h ? 440 : 560;
   const st = (sel, css) => Object.assign($(sel).style, css);
-  const port = PORTRAIT && h;
-  if (port) { const free = SH - WAVE_TOP - 258 - 68; WAVE_W = SW; WAVE_H = Math.round(Math.min(620, Math.max(440, free * 0.52))); PORT_PH = free - WAVE_H; }
   st('#top', {height: WAVE_TOP + 'px'});
   st('#waveCv', {top: WAVE_TOP + 'px'});
-  if (port) st('#params', {left: '0px', top: (WAVE_TOP + WAVE_H) + 'px', width: SW + 'px', height: PORT_PH + 'px'});
-  else st('#params', {left: WAVE_W + 'px', top: WAVE_TOP + 'px', width: (SW - WAVE_W) + 'px', height: WAVE_H + 'px'});
-  st('#bottomRow', {top: (WAVE_TOP + WAVE_H + (port ? PORT_PH : 0)) + 'px', height: (h ? 258 : 130) + 'px'});
-  st('#menubar', {top: port ? (SH - 68) + 'px' : ''});
+  st('#params', {left: WAVE_W + 'px', top: WAVE_TOP + 'px', width: (SW - WAVE_W) + 'px', height: WAVE_H + 'px'});
+  st('#bottomRow', {top: (WAVE_TOP + WAVE_H) + 'px', height: (h ? 258 : 130) + 'px'});
   st('#hMsg', {top: (WAVE_TOP + 14) + 'px', left: sx(640) + 'px'});
   $('#device').classList.toggle('housedev', h);
   if (h) refreshHouseHeader();
@@ -1340,7 +1331,6 @@ function applyGeometry() {
   buildMenuBar();
 }
 function layout() {
-  if (PORTRAIT !== (innerWidth / Math.max(1, innerHeight) < 0.9 && portraitOK())) return fit();
   applyGeometry();
   rows = [];
   const ecgOn = SEN.ecg !== 'none';
@@ -1354,7 +1344,6 @@ function layout() {
   let y = 0;
   for (const r of rows) { r.h = Math.floor(WAVE_H * r.w / tw); r.y = y; y += r.h; }
   if (houseClassic()) { rows[0].y = 4; rows[0].h = 222; rows[1].y = 252; rows[1].h = 170; }   // ECG II and Pleth as on the set
-  if (houseClassic() && PORTRAIT) { const k = WAVE_H / 440; rows[0].y = Math.round(4 * k); rows[0].h = Math.round(222 * k); rows[1].y = Math.round(252 * k); rows[1].h = Math.round(170 * k); }
   chans = rows.map(r => ({row: r, x: 0, t: simT, last: null, speed: (r.id === 'co2' || r.id === 'resp' ? S.sweep / 4 : S.sweep) * PXMM}));
   buildParams(); resizeCanvas(); buildWaveLabels();
 }
@@ -1568,10 +1557,9 @@ function buildParams() {
 function buildParamsHouse() {
   if (!houseClassic()) return buildParamsHouseGeneric();
   const box = $('#params'); box.innerHTML = ''; PW = {};
-  const C = HOUSE_COLORS, port = PORTRAIT, W = port ? SW : SW - WAVE_W;
+  const C = HOUSE_COLORS, W = SW - WAVE_W;
   const mk = (id, top, h, color, html) => {
-    const left = 0; if (port) { const hh = Math.floor(PORT_PH / 2); top = id === 'spo2' ? hh : 0; h = hh; }
-    const w = place(el('div', 'pw'), {left: left + 'px', top: top + 'px', width: W + 'px', height: h + 'px', color: color});
+    const w = place(el('div', 'pw'), {left: '0px', top: top + 'px', width: W + 'px', height: h + 'px', color: color});
     w.style.setProperty('--pc', color); w.innerHTML = html; w.onclick = () => openAlarmsSetup();
     box.appendChild(w); PW[id] = {el: w, h: h}; return w;
   };
@@ -2346,20 +2334,17 @@ function fit() {
   const d = $('#device');
   d.className = (S.bezel ? 'bezel' : 'nobezel') + (isHouse() ? ' housedev' : '');
   // the screen takes the window's shape (between 4:3 and ultra-wide), so the monitor fills the whole window
-  const ar = innerWidth / Math.max(1, innerHeight);
-  const port = ar < 0.9 && portraitOK();
-  const sh = port ? Math.round(Math.min(2000, Math.max(1100, 800 / ar))) : 800;
-  const H = S.bezel ? 892 : sh;
-  const sw = port ? 800 : Math.round(Math.min(2200, Math.max(1066, S.bezel ? H * ar - 60 : H * ar)));
+  // a window taller than wide (a phone held upright) shows the normal 16:10 monitor, centered
+  const H = S.bezel ? 892 : 800, ar = innerWidth / Math.max(1, innerHeight);
+  const sw = ar < 1 ? 1280 : Math.round(Math.min(2200, Math.max(1066, S.bezel ? H * ar - 60 : H * ar)));
   const W = S.bezel ? sw + 60 : sw;
-  d.style.height = H + 'px'; $('#screen').style.height = sh + 'px';
   scale = Math.min(innerWidth / W, innerHeight / H);
   d.style.transform = `scale(${scale})`;
   d.style.left = Math.round((innerWidth - W * scale) / 2) + 'px'; d.style.top = Math.round((innerHeight - H * scale) / 2) + 'px';
   d.style.width = W + 'px';
   $('#alarmLight').style.left = Math.round((W - 400) / 2) + 'px';
   for (const sel of ['#screen', '#top', '#bottomRow', '#menubar']) $(sel).style.width = sw + 'px';
-  if (sw !== SW || sh !== SH || port !== PORTRAIT) { SW = sw; SH = sh; PORTRAIT = port; if (typeof layout === 'function' && rows) layout(); }
+  if (sw !== SW) { SW = sw; if (typeof layout === 'function' && rows) layout(); }
   resizeCanvas();
 }
 addEventListener('resize', fit);

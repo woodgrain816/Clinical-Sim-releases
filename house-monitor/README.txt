@@ -12,8 +12,8 @@ Start:   double-click  "Start House Monitor.bat"
 
 If Windows asks, choose "More info" -> "Run anyway". The launcher only opens
 House-Monitor.html in a Microsoft Edge app window. You can also double-click
-House-Monitor.html to open it in any browser (on a phone too: held upright it
-switches to a tall portrait layout). Works fully offline.
+House-Monitor.html to open it in any browser (on a phone too). Works fully
+offline.
 
 Keys:    Space = Pause Audio    N = NIBP start/stop    F = Freeze
          Z = Zero all           I = Instructor panel   Esc = close menu
