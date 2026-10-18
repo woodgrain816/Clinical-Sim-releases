@@ -143,8 +143,14 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #bootLog b{color:#3fcf6a;font-weight:600;float:right}
 #boot .bar{width:360px;height:8px;background:#222;margin-top:24px;border-radius:4px;overflow:hidden}
 #boot .bar i{display:block;height:100%;width:0;background:#2f6db5;transition:width 3.5s linear}
-#off .t{font-size:22px;color:#8a95a3;margin-bottom:22px}
-#off button{font-size:22px;padding:14px 34px;background:#1d3a5c;color:#fff;border:2px solid #4c86c9;border-radius:6px;cursor:pointer;font-family:inherit}
+/* prop: a dark screen with only a dim power button; the monitor picker is in Monitor Setup */
+#off button{width:76px;height:76px;border-radius:50%;font-size:34px;line-height:1;padding:0;background:#0b0d10;color:#3a4450;border:2px solid #232a33;cursor:pointer;font-family:inherit}
+#off button:hover,#off button:active{color:#6b7a8a;border-color:#3a4552}
+/* prop: power-on is a black screen for a moment, then the monitor - no start-up text */
+#boot>*{display:none!important}
+/* the instructor button fades out when not in use so it never shows in a shot; any touch / mouse move brings it back */
+#instrBtn{transition:opacity .6s}
+#instrBtn.idle{opacity:0;pointer-events:none}
 #dim{position:absolute;inset:0;background:#000;pointer-events:none;opacity:0;z-index:25}
 #frozen{position:absolute;left:10px;top:54px;background:#2f6db5;color:#fff;font-weight:700;padding:3px 10px;font-size:15px;display:none;z-index:5}
 #toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:#26303c;border:1px solid #4a5a70;color:#fff;
@@ -289,8 +295,8 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
    <div id="standby"><div class="t">Standby</div><div class="note" style="font-size:16px;margin:12px 0 24px">Monitoring and alarms are suspended.</div>
      <button class="btn" style="font-size:20px;padding:12px 26px" id="resumeBtn">Resume Monitoring</button></div>
    <div id="boot"><div class="t">Starting&hellip;</div><div id="bootLog"></div><div class="bar"><i id="bootBar"></i></div></div>
-   <div id="off" class="on"><div class="t">Monitor is off</div><button id="powerOn">&#9211;&nbsp; Power On</button>
-     <div style="margin-top:18px;font-size:15px;color:#9fb3c8">Monitor:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
+   <div id="off" class="on"><button id="powerOn" title="Power on" aria-label="Power on">&#9211;</button>
+     <div style="display:none">Monitor:&nbsp; <select id="soundPick" class="sel" style="font-size:15px">
        <option value="tv">House M.D. monitor (screen + sounds)</option><option value="real">CARESCAPE B450 (real monitor)</option></select></div>
 </div>
    <div id="dim"></div>
@@ -2285,10 +2291,7 @@ function powerOn() {
   $('#off').classList.remove('on'); $('#boot').classList.add('on');
   // a real monitor's power-on: self test, then each module checks in, then the profile loads (~3.8 s)
   const log = $('#bootLog'); log.innerHTML = '';
-  const steps = ['Power-on self test', 'Display', 'Main processor', 'ECG / Resp', 'SpO2', 'NBP',
-    ...(S.artLine ? ['Invasive pressures'] : []), 'Alarm system', 'Loading profile: ' + (S.cat || 'Adult')];
-  steps.forEach((s, i) => setTimeout(() => { if ($('#boot').classList.contains('on')) log.innerHTML += s + (i < steps.length - 1 ? '<b>OK</b>' : '') + '<br>'; }, 250 + i * 360));
-  requestAnimationFrame(() => $('#bootBar').style.width = '100%');
+  // prop: the screen stays black for about a second, then the monitor comes up (no start-up text)
   setTimeout(() => {
     $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
     schedT = 0.6; lastQRS = 0; breathT = 0.4; beats = []; breaths = []; alarms = {}; pending = {}; events = {}; hrResetT = -1;
@@ -2296,7 +2299,7 @@ function powerOn() {
     NB.state = 'idle'; NB.last = null; NB.err = null; NB.nextAuto = S.nibpAuto ? 3 : null;   // first reading right after power-on
     if (isHouse()) { SEN.cvp = SEN.co2 = SEN.temp = 'none'; SEN.art = S.artLine ? 'ok' : 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
     layout();
-  }, 3800);
+  }, 1200);
 }
 function powerOff() {
   powered = false; standby = false; $('#standby').classList.remove('on');
@@ -2304,6 +2307,9 @@ function powerOff() {
   $('#alarmLight').className = ''; closeMenu();
 }
 $('#powerOn').onclick = powerOn;
+// the floating Instructor button hides after 4 s without input (prop shots); any touch / mouse / key brings it back
+{ let idleT = 0; const wake = () => { const b = $('#instrBtn'); if (!b) return; b.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => b.classList.add('idle'), 4000); };
+  ['pointerdown', 'pointermove', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, wake, {passive: true, capture: true})); wake(); }
 $('#soundPick').onchange = e => setSoundStyle(e.target.value); syncSoundPick();
 $('#pwrBtn').onclick = () => powered ? openConfirm('Turn the monitor off?', 'Monitoring will stop.', powerOff) : powerOn();
 $('#resumeBtn').onclick = () => setStandby(false);
