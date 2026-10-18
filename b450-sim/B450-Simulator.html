@@ -1015,8 +1015,10 @@ function tone(freq, at, dur, gainNode, w, level = 0.5, attack, env) {
 function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'ge500', .26]]; }
 // House three-beep: each beep is two equal tones, 500 and 511 Hz, starting in phase; their 11 Hz beat puts the dip
 // ~45 ms into the 105 ms beep, which is the "be-R". Three beeps 0.2 s apart, every 1.12 s (measured).
-function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 500, .105, 'b3', BER_LV, 0, 'b3'], [i * .2, 511, .105, 'b3', BER_LV, 0, 'b3']); return out; }
-const BER_LV = .57, FLAT_LV = .43;   // balanced against the pulse-ox tone as measured in the asystole clip
+// Timbre: the clip's version is muffled by the TV soundtrack (overtones above ~1 kHz lost), so the beeps use the real
+// B450 buzzer spectrum (strong 3rd/5th/7th harmonics) instead; otherwise they sit under the 1 kHz flatline and sound dull.
+function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 500, .105, 'ge500', BER_LV, 0, 'b3'], [i * .2, 511, .105, 'ge512', BER_LV, 0, 'b3']); return out; }
+const BER_LV = .5, FLAT_LV = .43;   // RMS-matched to the old measured mix against the flatline and pulse-ox tone
 function hBeep(t) { return [[t, 662, .08, 'h662', .55], [t, 595, .08, 'h595', .55]]; }
 function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
 const TONESETS = {
@@ -1040,7 +1042,7 @@ const TONESETS = {
     syncOff: 0.078,   // a fast beep lands 78 ms into each pulse-ox beep; the next one falls in the gap after it
     // pulse-oximeter alarms (seizure and arrest scenes): pure 3489 Hz, 220 ms, every 0.334 s, as loud as the fast beeping
     ox:     {notes: [[0, 3488.5, .236, 'ox', .5, 0, 'ox']], repeat: 0.344},
-    // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 505 + 522 Hz)
+    // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 500 + 511 Hz)
     ber:    {notes: berNotes(), repeat: 1.12},
   },
 };
