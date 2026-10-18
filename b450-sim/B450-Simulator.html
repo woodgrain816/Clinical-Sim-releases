@@ -205,7 +205,7 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 .house .hv{position:absolute;line-height:1;text-align:right;white-space:nowrap}
 .house .hmid{font-size:38px;font-weight:700}
 /* as in the show's arrest scene: every alarming number (HR, SpO2, NBP...) turns red and they all blink together,
-   on ~0.47 s / off ~0.40 s (measured frame by frame from the clip). One shared clock keeps them in step. */
+   on 0.467 s / off 0.467 s (28 + 28 frames at 60 fps in the clip). One shared clock keeps them in step. */
 .house .flash-high .hv,.house .flash-medium .hv{color:#ff2b2b!important}
 .house.hblinkoff .flash-high .hv,.house.hblinkoff .flash-medium .hv,.house.hblinkoff .flash-high .big,.house.hblinkoff .flash-medium .big{visibility:hidden}
 @keyframes hblink{0%{visibility:visible}54%{visibility:hidden}100%{visibility:hidden}}
@@ -1093,7 +1093,9 @@ function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'g
 // B450 buzzer spectrum (strong 3rd/5th/7th harmonics) instead; otherwise they sit under the 1 kHz flatline and sound dull.
 // 500 + 510 Hz (10 Hz beat): the dip falls 50 ms into the beep and the "R" swells back slowly, as measured from the
 // asystole scene against its own 1000 Hz flatline (so the clip's speed is known to be right); 511 Hz put the dip at 46 ms
-function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 500, .105, 'ge500', BER_LV, 0, 'b3'], [i * .2, 510, .105, 'ge512', BER_LV, 0, 'b3']); return out; }
+// BER_K: timing stretch on top of the measured 0.2 s / 1.12 s - the user hears the clip's three-beep a touch slower (4 %)
+const BER_K = 1.04;
+function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2 * BER_K, 500, .105 * BER_K, 'ge500', BER_LV, 0, 'b3'], [i * .2 * BER_K, 510, .105 * BER_K, 'ge512', BER_LV, 0, 'b3']); return out; }
 const BER_LV = .5, FLAT_LV = .43;   // RMS-matched to the old measured mix against the flatline and pulse-ox tone
 function hBeep(t) { return [[t, 662, .08, 'h662', .55], [t, 595, .08, 'h595', .55]]; }
 function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
@@ -1119,7 +1121,7 @@ const TONESETS = {
     // pulse-oximeter alarms (seizure and arrest scenes): pure 3489 Hz, 220 ms, every 0.334 s, as loud as the fast beeping
     ox:     {notes: [[0, 3488.5, .236, 'ox', .5, 0, 'ox']], repeat: 0.344},
     // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 500 + 511 Hz)
-    ber:    {notes: berNotes(), repeat: 1.12},
+    ber:    {notes: berNotes(), repeat: 1.12 * BER_K},
   },
 };
 function playPattern(pat, t0) { for (const [off, f, d, w, lv, att, env] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv, att, env); }
@@ -1692,7 +1694,7 @@ function updateTop() {
 }
 function updateAlarmLight(now) {
   // House screen: all alarming numbers blink together on one clock (on 470 ms / off 400 ms, from the show)
-  $('#screen').classList.toggle('hblinkoff', isHouse() && (now % 870) >= 470);
+  $('#screen').classList.toggle('hblinkoff', isHouse() && (now % 933) >= 467);   // 28 on / 28 off frames at 60 fps
   const L = $('#alarmLight');
   let p = 0; for (const id in alarms) { const a = alarms[id]; if (!a.latched || true) p = Math.max(p, PRI[a.pri]); }
   let cls = '';
