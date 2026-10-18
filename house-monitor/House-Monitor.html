@@ -30,11 +30,12 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
 #screen{position:absolute;left:30px;top:42px;width:1280px;height:800px;background:var(--bg);overflow:hidden;
   border-radius:3px;box-shadow:0 0 0 3px #0c0d0f}
 #device.nobezel #screen{left:0;top:12px;border-radius:0;box-shadow:none}
-/* no drawn housing (the TV is the frame), but the monitor keeps its alarm light: a strip across the top that flashes
+/* no drawn housing (the TV is the frame), but the monitor keeps its alarm light, centred on top: it flashes
    red (high, ~2 Hz), flashes yellow (medium, ~0.6 Hz) or glows cyan (low), dark when there is no alarm */
 #device.nobezel{height:812px}
-#device.nobezel #alarmLight,#device.nobezel.housedev #alarmLight{display:block;left:0!important;top:0;width:100%;height:12px;border-radius:0;
-  background:#0a0b0d;box-shadow:inset 0 -1px 0 #1a1d22}
+/* a short light bar centred on top, like the alarm light on a real monitor housing (not the whole edge) */
+#device.nobezel #alarmLight,#device.nobezel.housedev #alarmLight{display:block;left:calc(50% - 180px)!important;top:1px;width:360px;height:10px;
+  border-radius:5px;background:#121418;box-shadow:inset 0 1px 2px #000}
 #device.nobezel #alarmLight.red{background:#ff2020;box-shadow:0 0 18px 4px rgba(255,30,30,.55)}
 #device.nobezel #alarmLight.yellow{background:#ffd000;box-shadow:0 0 18px 4px rgba(255,210,0,.5)}
 #device.nobezel #alarmLight.cyan{background:#18d8ff;box-shadow:0 0 14px 3px rgba(0,216,255,.45)}
