@@ -23,13 +23,21 @@ html,body{margin:0;height:100%;background:#0b0c0e;color:var(--txt);overflow:hidd
 #device.nobezel{width:1280px;height:800px}
 #alarmLight{position:absolute;left:470px;top:9px;width:400px;height:22px;border-radius:11px;background:#111;
   box-shadow:inset 0 2px 4px #000;transition:background .05s}
-#device.nobezel #alarmLight,#device.nobezel #bezelBottom{display:none}
+#device.nobezel #bezelBottom{display:none}
 #alarmLight.red{background:#ff2020;box-shadow:0 0 22px 6px rgba(255,30,30,.7)}
 #alarmLight.yellow{background:#ffd000;box-shadow:0 0 22px 6px rgba(255,210,0,.6)}
 #alarmLight.cyan{background:#18d8ff;box-shadow:0 0 18px 4px rgba(0,216,255,.5)}
 #screen{position:absolute;left:30px;top:42px;width:1280px;height:800px;background:var(--bg);overflow:hidden;
   border-radius:3px;box-shadow:0 0 0 3px #0c0d0f}
-#device.nobezel #screen{left:0;top:0;border-radius:0;box-shadow:none}
+#device.nobezel #screen{left:0;top:12px;border-radius:0;box-shadow:none}
+/* no drawn housing (the TV is the frame), but the monitor keeps its alarm light: a strip across the top that flashes
+   red (high, ~2 Hz), flashes yellow (medium, ~0.6 Hz) or glows cyan (low), dark when there is no alarm */
+#device.nobezel{height:812px}
+#device.nobezel #alarmLight,#device.nobezel.housedev #alarmLight{display:block;left:0!important;top:0;width:100%;height:12px;border-radius:0;
+  background:#0a0b0d;box-shadow:inset 0 -1px 0 #1a1d22}
+#device.nobezel #alarmLight.red{background:#ff2020;box-shadow:0 0 18px 4px rgba(255,30,30,.55)}
+#device.nobezel #alarmLight.yellow{background:#ffd000;box-shadow:0 0 18px 4px rgba(255,210,0,.5)}
+#device.nobezel #alarmLight.cyan{background:#18d8ff;box-shadow:0 0 14px 3px rgba(0,216,255,.45)}
 #bezelBottom{position:absolute;left:30px;right:30px;top:848px;height:40px;display:flex;align-items:center;
   justify-content:space-between;color:#9aa0a8;font-size:13px;letter-spacing:.5px}
 #bezelBottom .brand{font-weight:600;color:#c5c9cf}
@@ -2357,8 +2365,8 @@ function fit() {
   d.className = (S.bezel ? 'bezel' : 'nobezel') + (isHouse() ? ' housedev' : '');
   // the screen takes the window's shape (between 4:3 and ultra-wide), so the monitor fills the whole window
   // a window taller than wide (a phone held upright) shows the normal 16:10 monitor, centered
-  const H = S.bezel ? 892 : 800, ar = innerWidth / Math.max(1, innerHeight);
-  const sw = ar < 1 ? 1280 : Math.round(Math.min(2200, Math.max(1066, S.bezel ? H * ar - 60 : H * ar)));
+  const H = S.bezel ? 892 : 812, ar = innerWidth / Math.max(1, innerHeight);   // 812 = 800 screen + 12 alarm-light strip
+  const sw = ar < 1 ? 1280 : Math.round(Math.min(2200, Math.max(1066, S.bezel ? H * ar - 60 : 800 * ar)));
   const W = S.bezel ? sw + 60 : sw;
   scale = Math.min(innerWidth / W, innerHeight / H);
   d.style.transform = `scale(${scale})`;
