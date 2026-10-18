@@ -989,7 +989,8 @@ function ensureAudio() {
 function applyVolumes() {
   if (!AC) return;
   alarmGain.gain.value = 0.02 + 0.075 * S.volAlarm;   // 1..10 (alarm audio cannot be turned off)
-  qrsGain.gain.value = S.volQrs ? 0.012 * S.volQrs : 0;
+  // beat tone: at the default (3) it sits ~10 dB under the alarms, clearly audible; at 10 it is about alarm level
+  qrsGain.gain.value = S.volQrs ? 0.05 * S.volQrs : 0;
 }
 const WAVES = {};
 // raised-cosine edges: no clicks or splatter at the start and end of each beep
