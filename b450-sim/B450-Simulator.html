@@ -208,8 +208,9 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 .house .flash-medium .hv{color:#ff2b2b!important}
 @keyframes hblink{50%{visibility:hidden}}
 .house .hv.nbred{color:#ff2b2b!important}
-.house #bottomRow{display:block;border-top:none}
-.house #bottomRow>div{position:absolute}
+/* the set monitor's own NBP strip is absolutely placed; the House layout with extra channels (ART, CVP...) uses flex boxes */
+.house #bottomRow.hc{display:block;border-top:none}
+.house #bottomRow.hc>div{position:absolute}
 .house .hbat{position:absolute;display:flex;gap:4px;align-items:center}
 .house .hbat i{width:12px;height:18px;border:1.5px solid #9aa3b2;border-radius:2px;font-style:normal;font-size:10px;color:#9aa3b2;text-align:center;line-height:16px}
 .house .hbat b{display:flex;gap:2px;padding:2px;border:2px solid #b8c0cc;border-radius:3px;position:relative}
@@ -423,9 +424,30 @@ function scheduleBeats(until) {
       lastQRS = schedT; schedT += ratio * 0.2; continue;
     }
     if (rh === 'avb3') {
-      // atrial P waves at ~80/min, independent ventricular escape (wide)
-      while (atrialT < schedT + rr) { addBeat({t: atrialT, k: 'P', hasP: true, pr: 0, rr: 0.75, perf: 0}); atrialT += 0.75 * rnd(0.97, 1.03); }
-      addBeat({t: schedT, k: 'E', hasP: false, rr: rr, perf: perfN}); lastQRS = schedT; schedT += rr; continue;
+      // Complete heart block (LITFL; Essential ECG; PMC6652288, PMC322298, PMC4837247):
+      // - sinus P waves march through at their own rate (set per episode, 70-95/min), never conducted, landing anywhere,
+      //   including inside the QRS, ST or T. P waves are added only up to this QRS so the beat list stays in time order.
+      // - ventriculophasic sinus arrhythmia (~55% of patients): a P-P interval with a QRS in its first 60% is 5-15% shorter
+      //   (more the earlier the QRS falls); a QRS late in the interval does nothing.
+      if (!R.chb) R.chb = {pp: 60 / rnd(70, 95), vp: Math.random() < 0.55};
+      while (atrialT < schedT) {
+        const sinceQ = atrialT - lastQRS;
+        // P from the QRS to the end of the T wave: the atria squeeze against closed AV valves -> cannon a wave on the CVP
+        addBeat({t: atrialT, k: 'P', hasP: true, pr: 0, rr: R.chb.pp, perf: 0, cannon: sinceQ >= 0 && sinceQ < 0.35});
+        let pp = R.chb.pp * rnd(0.99, 1.01);
+        const f = (schedT - atrialT) / pp;
+        if (R.chb.vp && f >= 0 && f < 0.6) pp *= 1 - (0.15 - 0.1 * f / 0.6);
+        atrialT += pp;
+      }
+      // the escape focus: junctional (narrow, 40-60/min, e.g. inferior MI) or ventricular (wide, 20-40/min, degenerative /
+      // anterior MI). Regular, but not metronomic: junctional ±2.5 %, ventricular ±4 %. QT long at these rates (~0.5 s).
+      const junct = hr >= 40;
+      const prevP = beats.filter(b => b.k === 'P' && b.t <= schedT).pop(), pq = prevP ? schedT - prevP.t : 9;
+      // stroke volume varies beat to beat with P timing (atrial kick ~25 % of SV): best with a P 120-200 ms before the
+      // QRS, a little less 80-300 ms, least when no P precedes it or the P is buried in the QRS
+      const kick = pq >= 0.12 && pq <= 0.2 ? 1.14 : pq >= 0.08 && pq <= 0.3 ? 1.06 : pq < 0.05 ? 0.88 : 0.92;
+      addBeat({t: schedT, k: junct ? 'N' : 'E', hasP: false, rr: rr, perf: perfN * kick, qt: junct ? 0.5 : 0.54});
+      lastQRS = schedT; schedT += rr * rnd(junct ? 0.975 : 0.96, junct ? 1.025 : 1.04); continue;
     }
     if (rh === 'wenck') {
       const pp = rr * 0.75; // 4:3 conduction
@@ -499,13 +521,22 @@ function beatECG(b, tau, L) {
   if (b.hasP) v += 0.14 * L.p * gauss(tau, -b.pr + 0.05, 0.022);
   if (b.k === 'P') return v;
   if (b.k === 'N') {
-    const qt = clamp(0.38 * Math.sqrt(b.rr), 0.26, 0.44);
+    const qt = b.qt || clamp(0.38 * Math.sqrt(b.rr), 0.26, 0.44);
     v += -0.08 * L.s * gauss(tau, 0.012, 0.009) + 1.15 * L.r * gauss(tau, 0.036, 0.011) - 0.3 * L.s * gauss(tau, 0.062, 0.011);
     if (P.st) { const a = clamp((tau - 0.07) / 0.03, 0, 1) * clamp((qt - 0.04 - tau) / 0.08, 0, 1); v += P.st * 0.1 * Math.sign(L.r || 1) * a; }
     v += 0.32 * L.t * gauss(tau, qt - 0.09, 0.045);
     return v;
   }
-  // wide complexes: V (PVC / VT / idioventricular), E (escape), Vp (paced)
+  if (b.k === 'E') {
+    // ventricular escape in CHB: ~160 ms, bundle-branch-like - small r, broad notched S (negative in II with the usual
+    // left axis), then a big discordant upright T, late because the QT is long
+    const qt = b.qt || 0.54;
+    // amplitude ~1.1 mV (ventricular escapes are large, 5-10x the P wave), slurred broad S
+    v += L.w * (0.22 * gauss(tau, 0.02, 0.012) - 0.95 * gauss(tau, 0.072, 0.028) - 0.6 * gauss(tau, 0.13, 0.026));
+    v += 0.5 * L.w * gauss(tau, qt - 0.14, 0.08);
+    return v;
+  }
+  // wide complexes: V (PVC / VT / idioventricular), Vp (paced)
   let off = 0;
   if (b.k === 'Vp') { if (tau >= 0 && tau < 0.006) v += 2.2; off = 0.02; }
   const sc = b.k === 'E' ? 0.75 : 1;
@@ -534,9 +565,17 @@ function ecgAt(t, lead) {
   }
   v += 0.02 * Math.sin(2 * Math.PI * 0.25 * t); // baseline wander
   if (R.artifact) v += 0.18 * Math.sin(2 * Math.PI * 1.7 * t) * Math.sin(2 * Math.PI * 0.3 * t) + (Math.random() - 0.5) * 0.25;
-  if (t >= shockT && t < shockT + 3) {   // defibrillation: off-scale spike, then the baseline drifts back
+  if (t >= shockT && t < shockT + 4) {
+    // defibrillation as the bedside monitor sees it: a ~10 ms biphasic pulse drives the ECG amplifier off-scale, the
+    // trace sits pinned at the channel edge, then sweeps back to baseline over ~1-2 s (monitors must recover within 5 s,
+    // IEC 60601-2-27) with a slight undershoot; muscle twitch adds a short burst of EMG fuzz
     const u = t - shockT;
-    v += u < 0.04 ? 6 : u < 0.08 ? -6 : 2.2 * Math.exp(-(u - 0.08) / 0.45) - 0.25 * Math.exp(-(u - 0.08) / 1.2);
+    if (u < 0.005) v += 12; else if (u < 0.011) v -= 12;
+    else {
+      const w = u - 0.011;
+      v += 7 * Math.exp(-w / 0.38) - 0.35 * Math.exp(-w / 1.4);
+      if (w < 0.45) v += (1 - w / 0.45) * 0.35 * (Math.sin(2 * Math.PI * 47 * t) * 0.6 + (Math.random() - 0.5));
+    }
   }
   return v;
 }
@@ -579,7 +618,15 @@ function artAt(t) {
   v += -2.5 * respPhase(t); // respiratory variation
   if (artDamped) { const m = P.dia + (P.sys - P.dia) / 3; v = m + (v - m) * 0.45; }
   if (R.artifact) v += 6 * Math.sin(2 * Math.PI * 1.3 * t);
+  v += 22 * shockJerk(t);   // the shock jerks the patient: the fluid line whips, then settles
   return v;
+}
+// whole-body muscle jerk from a defib shock, as motion artifact on mechanical / optical channels (ART, CVP, pleth):
+// a quick bump and a couple of damped wobbles over ~1 s, then nothing (it is movement, not circulation)
+function shockJerk(t) {
+  const u = t - shockT - 0.03;
+  if (u < 0 || u > 1.2) return 0;
+  return Math.exp(-u / 0.22) * Math.sin(2 * Math.PI * 3.2 * u + 0.4);
 }
 function plethShape(tau, dur) {
   if (tau < 0) return 0;
@@ -592,15 +639,17 @@ function plethAt(t) {
   if (SEN.spo2 !== 'ok') return 0;
   let v = pulseSum(t, 0.26, plethShape);
   if (R.artifact) v += 0.4 * Math.sin(2 * Math.PI * 1.1 * t) + (Math.random() - 0.5) * 0.15;
+  v += 0.45 * Math.max(0, shockJerk(t) + 0.3 * Math.exp(-Math.max(0, t - shockT) / 0.3) * (t > shockT));
   return v;
 }
 function cvpAt(t) {
   if (t < zeroingUntil) return 0;
-  let v = P.cvp - 1.2 * respPhase(t);
+  let v = P.cvp - 1.2 * respPhase(t) + 6 * shockJerk(t);
   for (let i = beats.length - 1; i >= 0; i--) {
     const b = beats[i], tau = t - b.t;
     if (tau < -0.2) continue; if (tau > 1) break;
-    if (b.hasP) v += 1.8 * gauss(tau, -b.pr + 0.14, 0.04);
+    // normal a wave ~2-4 mmHg; cannon a wave (atrium vs closed tricuspid) ~10-15 mmHg above baseline
+    if (b.hasP) v += (b.cannon ? 12 : 2.5) * gauss(tau, -b.pr + 0.14, b.cannon ? 0.05 : 0.04);
     if (b.k !== 'P') v += 0.8 * gauss(tau, 0.1, 0.03) + 1.4 * gauss(tau, 0.45, 0.06);
   }
   return v;
@@ -681,9 +730,10 @@ function computeMeasures(dt) {
   }
   // ART
   if (SEN.art === 'ok' && artZeroed && artBuf.length > 20 && t > zeroingUntil + 3) {
-    let mx = -1e9, mn = 1e9, sum = 0;
-    for (const [, v] of artBuf) { mx = Math.max(mx, v); mn = Math.min(mn, v); sum += v; }
-    M.artS = Math.round(mx); M.artD = Math.round(mn); M.artM = Math.round(sum / artBuf.length);
+    // the shock's motion artifact is not blood pressure: leave it out of the numbers (they hold their last value through it)
+    let mx = -1e9, mn = 1e9, sum = 0, n = 0;
+    for (const [ts, v] of artBuf) { if (ts >= shockT && ts < shockT + 1.3) continue; mx = Math.max(mx, v); mn = Math.min(mn, v); sum += v; n++; }
+    if (n > 20) { M.artS = Math.round(mx); M.artD = Math.round(mn); M.artM = Math.round(sum / n); }
   } else M.artS = M.artD = M.artM = null;
   if (SEN.cvp === 'ok' && cvpZeroed && cvpBuf.length > 20 && t > zeroingUntil + 3) {
     let sum = 0; for (const [, v] of cvpBuf) sum += v; M.cvp = Math.round(sum / cvpBuf.length);
@@ -763,10 +813,15 @@ function evalAlarms() {
   wantedThisTick.clear();
   if (standby || !powered) { alarms = {}; pending = {}; return; }
   const lim = S.lim;
+  // hysteresis: an active limit alarm clears only once the value is back inside the limit by a small margin, so a value
+  // hovering at the limit does not switch the alarm on and off every second
+  const HYST = {spo2: 1, hr: 2, rr: 1, etco2: 1, fico2: 1, t1: 0.1, cvp: 1};
   const limCheck = (key, val, name, param, delay) => {
     const L = lim[key]; if (!L || !L.on || val == null) return;
-    if (val > L.hi) want(key + 'Hi', L.pri, fmtLimMsg(name, val, 1, L.hi), {param: param, delay: delay});
-    else if (val < L.lo) want(key + 'Lo', L.pri, fmtLimMsg(name, val, -1, L.lo), {param: param, delay: delay});
+    const h = HYST[key] != null ? HYST[key] : 2;
+    const hiOn = alarms[key + 'Hi'] && !alarms[key + 'Hi'].latched, loOn = alarms[key + 'Lo'] && !alarms[key + 'Lo'].latched;
+    if (val > L.hi || (hiOn && val > L.hi - h)) want(key + 'Hi', L.pri, fmtLimMsg(name, val, 1, L.hi), {param: param, delay: hiOn ? 0 : delay});
+    else if (val < L.lo || (loOn && val < L.lo + h)) want(key + 'Lo', L.pri, fmtLimMsg(name, val, -1, L.lo), {param: param, delay: loOn ? 0 : delay});
   };
   // --- ECG / arrhythmia ---
   const ecgOk = SEN.ecg === 'ok' || SEN.ecg === 'vlead';
@@ -801,9 +856,15 @@ function evalAlarms() {
   // --- SpO2 ---
   if (SEN.spo2 === 'probeoff') want('spo2off', 'medium', 'SpO2 Probe Off', {param: 'spo2'});
   else if (SEN.spo2 === 'ok') {
-    if (M.spo2 == null && t > 10) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2', delay: 2});
-    if (R.artifact) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: 1.5});
-    limCheck('spo2', M.spo2, 'SpO2', 'spo2', 1.5);
+    // when the pulse is lost while an SpO2 alarm is already sounding, No Pulse takes over at once (no silent gap)
+    const spo2Sounding = alarms.spo2Lo || alarms.spo2Hi || alarms.spo2art || alarms.spo2nop || alarms.spo2desat;
+    if (M.spo2 == null && (t > 10 || spo2Sounding)) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2', delay: spo2Sounding ? 0 : 2});
+    // the SpO2 alarms hand over to each other with no gap (Artifact -> Low -> No Pulse and back)
+    if (R.artifact) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
+    limCheck('spo2', M.spo2, 'SpO2', 'spo2', spo2Sounding ? 0 : 1.5);
+    // severe desaturation is a red alarm of its own (below the desat limit, default 85 % adult / 80 % neonate)
+    const desat = S.desat || (S.cat === 'Neonate' ? 80 : 85);
+    if (S.lim.spo2.on && M.spo2 != null && M.spo2 < desat) want('spo2desat', 'high', 'SpO2 Desat ' + M.spo2 + ' < ' + desat, {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
   }
   // --- ART / CVP ---
   if (SEN.art === 'ok') {
@@ -847,7 +908,8 @@ function evalAlarms() {
     const ids = [g + 'SHi', g + 'SLo', g + 'MHi', g + 'MLo', g + 'DHi', g + 'DLo'], keep = ids.find(id => cur[id]);
     if (keep) for (const id of ids) if (id !== keep) delete cur[id];
   }
-  if (cur.spo2Lo || cur.spo2nop) delete cur.spo2art;
+  if (cur.spo2Lo || cur.spo2nop || cur.spo2desat) delete cur.spo2art;
+  if (cur.spo2desat) delete cur.spo2Lo;
   // forget delay timers for conditions that are no longer true
   for (const id in pending) if (!wantedThisTick.has(id)) delete pending[id];
   wantedThisTick.clear();
@@ -962,7 +1024,8 @@ function ensureAudio() {
 function applyVolumes() {
   if (!AC) return;
   alarmGain.gain.value = 0.02 + 0.075 * S.volAlarm;   // 1..10 (alarm audio cannot be turned off)
-  qrsGain.gain.value = S.volQrs ? 0.012 * S.volQrs : 0;
+  // beat tone: at the default (3) it sits ~10 dB under the alarms, clearly audible; at 10 it is about alarm level
+  qrsGain.gain.value = S.volQrs ? 0.05 * S.volQrs : 0;
 }
 const WAVES = {};
 // raised-cosine edges: no clicks or splatter at the start and end of each beep
@@ -984,6 +1047,8 @@ const ENV = {
   fast: envCurve([[0, 0], [.06, .72], [.12, .86], [.45, .88], [.62, 1], [.8, 1], [.88, .75], [.95, .32], [1, 0]]),   // quick start, swells to a late peak, soft tail (measured)
 };
 function tone(freq, at, dur, gainNode, w, level = 0.5, attack, env) {
+  // never schedule into the past: the browser clamps past times to "now", which makes the fade-in and fade-out overlap
+  at = Math.max(at, AC.currentTime + 0.005);
   const o = AC.createOscillator(), g = AC.createGain();
   if (w === true) o.setPeriodicWave(wave); else if (w && WAVES[w]) o.setPeriodicWave(WAVES[w]); else o.type = 'sine';
   o.frequency.value = freq;
@@ -1015,8 +1080,10 @@ function tone(freq, at, dur, gainNode, w, level = 0.5, attack, env) {
 function geBeep(t, d = .122) { return [[t, 512, d, 'ge512', .26], [t, 500, d, 'ge500', .26]]; }
 // House three-beep: each beep is two equal tones, 500 and 511 Hz, starting in phase; their 11 Hz beat puts the dip
 // ~45 ms into the 105 ms beep, which is the "be-R". Three beeps 0.2 s apart, every 1.12 s (measured).
-function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 500, .105, 'b3', BER_LV, 0, 'b3'], [i * .2, 511, .105, 'b3', BER_LV, 0, 'b3']); return out; }
-const BER_LV = .57, FLAT_LV = .43;   // balanced against the pulse-ox tone as measured in the asystole clip
+// Timbre: the clip's version is muffled by the TV soundtrack (overtones above ~1 kHz lost), so the beeps use the real
+// B450 buzzer spectrum (strong 3rd/5th/7th harmonics) instead; otherwise they sit under the 1 kHz flatline and sound dull.
+function berNotes() { const out = []; for (let i = 0; i < 3; i++) out.push([i * .2, 500, .105, 'ge500', BER_LV, 0, 'b3'], [i * .2, 511, .105, 'ge512', BER_LV, 0, 'b3']); return out; }
+const BER_LV = .5, FLAT_LV = .43;   // RMS-matched to the old measured mix against the flatline and pulse-ox tone
 function hBeep(t) { return [[t, 662, .08, 'h662', .55], [t, 595, .08, 'h595', .55]]; }
 function geGroup(n, t0 = 0) { const out = []; for (let i = 0; i < n; i++) out.push(...geBeep(t0 + i * .2)); return out; }
 const TONESETS = {
@@ -1040,13 +1107,13 @@ const TONESETS = {
     syncOff: 0.078,   // a fast beep lands 78 ms into each pulse-ox beep; the next one falls in the gap after it
     // pulse-oximeter alarms (seizure and arrest scenes): pure 3489 Hz, 220 ms, every 0.334 s, as loud as the fast beeping
     ox:     {notes: [[0, 3488.5, .236, 'ox', .5, 0, 'ox']], repeat: 0.344},
-    // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 505 + 522 Hz)
+    // asystole: "beR beR beR" under the flatline (three beeps 0.2 s apart every 1.12 s; each beep 500 + 511 Hz)
     ber:    {notes: berNotes(), repeat: 1.12},
   },
 };
 function playPattern(pat, t0) { for (const [off, f, d, w, lv, att, env] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv, att, env); }
 let audioPri = 0, audioName = null, nextBurst = 0, nextLayer = 0, nextOx = 0, oxOn = false, flatOsc = null;
-const OX_IDS = new Set(['spo2Lo', 'spo2Hi', 'spo2nop', 'spo2off', 'spo2art']);
+const OX_IDS = new Set(['spo2Lo', 'spo2Hi', 'spo2nop', 'spo2off', 'spo2art', 'spo2desat']);
 function setFlatline(on) {
   // TV-drama style continuous flatline tone (real monitors use the normal high-priority pattern instead)
   if (on && !flatOsc) {
@@ -1071,11 +1138,16 @@ function audioTick() {
     if (set.syncOff && audioName === 'high') { nextOx = nextBurst - set.syncOff; while (nextOx < AC.currentTime + 0.03) nextOx += set.ox.repeat; }
   }
   oxOn = ox;
+  if (ox && nextOx < AC.currentTime - 0.05) nextOx = AC.currentTime + 0.05;
   if (ox && AC.currentTime + 0.15 >= nextOx) { playPattern(set.ox, nextOx); nextOx += set.ox.repeat; }
   const p = topPriority(set.ox ? list.filter(a => !OX_IDS.has(a.id)) : list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
   if (flat) name = 'ber';
+  // ...and the seizure scene: only the pulse-ox tone and the fast beeping, never the yellow "beep beep"
+  if (S.toneSet === 'classic' && R.scene === 'seizure' && name === 'medium') name = null;
+  // severe desaturation (red) brings in the fast beeping under the pulse-ox tone: together they are the two-tone
+  if (set.ox && !flat && name !== 'high' && list.some(a => a.id === 'spo2desat')) name = 'high';
   if (name !== audioName) {
     audioName = name; nextBurst = AC.currentTime + 0.05; nextLayer = AC.currentTime + 0.4;
     // fast beeping starting while the pulse-ox runs falls into step with it
@@ -1084,14 +1156,25 @@ function audioTick() {
   audioPri = p;
   if (!name) return;
   const pat = set[name];
+  // if the audio clock ran ahead (tab throttled, context suspended), restart the pattern now instead of
+  // trying to catch up with beeps in the past
+  const late = AC.currentTime - 0.05;
+  if (nextBurst < late) nextBurst = AC.currentTime + 0.05;
+  if (nextLayer < late) nextLayer = AC.currentTime + 0.05;
   if (AC.currentTime + 0.15 >= nextBurst) { playPattern(pat, nextBurst); nextBurst += pat.repeat; }
-  if (pat.layer && AC.currentTime + 0.15 >= nextLayer) { const lp = set[pat.layer]; playPattern(lp, nextLayer); nextLayer += lp.repeat; }
+  // the "beep beep" over the fast beeping belongs to the V-tach / VF scene only; other red alarms (e.g. the seizure's
+  // Extreme Tachy) are the fast beeping alone
+  const lethalRhythm = list.some(a => a.id === 'vtach' || a.id === 'vfib');
+  if (pat.layer && !lethalRhythm) nextLayer = AC.currentTime + 0.05;
+  else if (pat.layer && AC.currentTime + 0.15 >= nextLayer) { const lp = set[pat.layer]; playPattern(lp, nextLayer); nextLayer += lp.repeat; }
 }
 let lastBeepT = 0;
 function qrsBeep(b) {
   if (!AC || !S.volQrs || standby || !powered) return;
   // House mode: the show has no heartbeat tone under its alarms, so it stays silent while an alarm sounds
   if (isHouse() && (audioName || flatOsc || oxOn)) return;
+  // the show's seizure scene has no per-beat tone under the alarms: only the pulse-ox tone and the fast beeping
+  if (S.toneSet === 'classic' && R.scene === 'seizure') return;
   // pitch follows SpO2 (lower saturation = lower pitch)
   const s = M.spo2 != null ? M.spo2 : 100;
   if (S.toneSet === 'classic') return tone(960, AC.currentTime + 0.005, 0.08, qrsGain, false); // legacy fixed-pitch beep
@@ -1200,7 +1283,8 @@ function rowValueY(r, t) {
   switch (r.id) {
     case 'ecg1': case 'ecg2': {
       const lead = r.id === 'ecg1' ? S.lead1 : S.lead2;
-      return mid + 8 - ecgAt(t, lead) * 10 * PXMM * S.gain * 0.85;
+      // an off-scale signal (defib shock) pins the trace flat at the channel edge, like a saturated amplifier
+      return clamp(mid + 8 - ecgAt(t, lead) * 10 * PXMM * S.gain * 0.85, r.y + 3, r.y + r.h - 3);
     }
     case 'art': { if (!artZeroed) return null; const v = artAt(t); return top + h - clamp(v / artScaleNow, -0.05, 1.05) * h; }
     case 'cvp': { if (!cvpZeroed) return null; const v = cvpAt(t); return top + h - clamp(v / 20, -0.05, 1.05) * h; }
@@ -1289,6 +1373,8 @@ function flush(c, pts, GAP) {
   ctx.clearRect(x0 + 1, r.y, x1 - x0 + GAP, r.h);
   if (x1 + GAP > WAVE_W) ctx.clearRect(0, r.y, x1 + GAP - WAVE_W, r.h);
   if (r.id === 'art' || r.id === 'cvp' || (isHouse() && r.id === 'spo2')) { drawScale(r, x0 + 1, Math.min(WAVE_W, x1 + GAP)); }
+  // keep each trace inside its own channel (a defib spike or huge QRS is cut off at the channel edge, as on the monitor)
+  ctx.save(); ctx.beginPath(); ctx.rect(0, r.y, WAVE_W, r.h); ctx.clip();
   ctx.strokeStyle = rowColor(r.id);
   ctx.beginPath();
   let pen = false;
@@ -1297,7 +1383,7 @@ function flush(c, pts, GAP) {
     if (p[1] == null) { pen = false; continue; }
     if (pen) ctx.lineTo(p[0], p[1]); else { ctx.moveTo(p[0], p[1]); pen = true; }
   }
-  ctx.stroke();
+  ctx.stroke(); ctx.restore();
   c.last = pts[pts.length - 1];
 }
 
@@ -1368,7 +1454,7 @@ function buildParams() {
       <div class="msg" data-msg="resp"></div>`;
   }
   // bottom row: NIBP, Temp, (SpO2/CO2 without waveform are not shown)
-  const br = $('#bottomRow'); br.innerHTML = '';
+  const br = $('#bottomRow'); br.innerHTML = ''; br.classList.remove('hc');
   const nb = el('div', 'bpw'); nb.style.flex = '2.2'; nb.style.color = c.nibp; nb.style.setProperty('--pc', c.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 130};
   nb.innerHTML = `<div class="lbl">NIBP <span style="font-size:12px;font-weight:400">mmHg</span><span class="belloff" data-bell="nibp"></span></div>
     <div class="lim" style="left:8px;top:26px;text-align:left" data-lim="nibp"></div>
@@ -1405,7 +1491,7 @@ function buildParamsHouse() {
     <div class="big hv" data-v="spo2" style="right:16px;top:24px;font-size:118px"></div>
     <div class="hl hbell" title="Pulse tone on/off" style="left:178px;top:156px;font-weight:700"><svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:-3px;margin-right:6px"><path d="M8 2a4 4 0 0 0-4 4v4l-2 2h12l-2-2V6a4 4 0 0 0-4-4z" fill="#e9edf2"/><circle cx="8" cy="14" r="1.6" fill="#e9edf2"/></svg>Pulse</div>
     <div class="hv hmid" style="right:16px;top:148px" data-v="pr"></div>`);
-  const br = $('#bottomRow'); br.innerHTML = '';
+  const br = $('#bottomRow'); br.innerHTML = ''; br.classList.add('hc');
   const nb = place(el('div', 'pw'), {left: '0px', top: '0px', width: '1280px', height: '258px', color: C.nibp, border: 'none'});
   nb.style.setProperty('--pc', C.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 258};
   nb.innerHTML = `<div class="hl" style="left:8px;top:40px">NBP</div><div class="hl" style="left:96px;top:40px">Cuff <span data-v="hCuff"></span></div>
@@ -1449,7 +1535,7 @@ function buildParamsHouseGeneric() {
   if (rmap.co2) mk('co2', rmap.co2, C.co2, `<div class="lbl">CO<sub>2</sub></div><div class="lim" style="left:10px;top:26px" data-lim="co2"></div>
       ${big('etco2', rmap.co2.h)}<div class="hsub" style="left:10px;bottom:8px">Fi<b data-v="fico2"></b></div><div class="hsub" style="left:120px;bottom:8px">Resp<b data-v="rr"></b></div>`);
   if (rmap.resp) mk('resp', rmap.resp, C.resp, `<div class="lbl">Resp</div><div class="lim" style="left:10px;top:26px" data-lim="rr"></div>${big('rr', rmap.resp.h)}`);
-  const br = $('#bottomRow'); br.innerHTML = '';
+  const br = $('#bottomRow'); br.innerHTML = ''; br.classList.remove('hc');
   const nb = el('div', 'bpw'); nb.style.flex = '2.4'; nb.style.color = C.nibp; nb.style.setProperty('--pc', C.nibp); br.appendChild(nb); PW.nibp = {el: nb, h: 204};
   nb.innerHTML = `<div class="lbl">NBP &nbsp; Cuff</div><div class="lim" style="left:10px;top:26px" data-lim="nibp"></div>
     <div class="hsub" style="left:300px;top:8px" data-v="nibpMode"></div>
@@ -1773,6 +1859,7 @@ function openAlarmsSetup(idx = 0) {
       }
       b.appendChild(t);
       row(b, 'Apnea time (s)', stepper(() => S.apnea.time, v => S.apnea.time = v, 10, 60, 5), toggle(() => S.apnea.on, v => S.apnea.on = v));
+      row(b, 'SpO2 Desat, red (below %)', stepper(() => S.desat || (S.cat === 'Neonate' ? 80 : 85), v => S.desat = v, 50, 95, 1));
       row(b, 'Extreme Tachy (bpm)', stepper(() => S.xtachy, v => S.xtachy = v, 100, 300, 5));
       row(b, 'Extreme Brady (bpm)', stepper(() => S.xbrady, v => S.xbrady = v, 20, 100, 5));
       const r = el('div'); r.style.marginTop = '10px';
@@ -1977,14 +2064,21 @@ const PRESETS = {
   'Opioid overdose':      {rhythm:'sbrady', ectopy:'none', hr:52, spo2:82, sys:98, dia:60, cvp:6, rr:4, etco2:68, temp:36.4, st:0},
   'AFib RVR':             {rhythm:'afib', ectopy:'none', hr:148, spo2:95, sys:104, dia:66, cvp:10, rr:22, etco2:35, temp:37.0, st:0},
   'SVT':                  {rhythm:'svt', ectopy:'none', hr:188, spo2:97, sys:108, dia:72, cvp:7, rr:20, etco2:35, temp:37.0, st:0},
-  'Complete heart block': {rhythm:'avb3', ectopy:'none', hr:34, spo2:94, sys:82, dia:48, cvp:12, rr:18, etco2:36, temp:36.8, st:0},
+  // ventricular escape (degenerative / anterior MI): wide, ~34/min; long diastole -> wide-ish pulse pressure
+  'Complete heart block': {rhythm:'avb3', ectopy:'none', hr:34, spo2:93, sys:88, dia:44, cvp:11, rr:18, etco2:36, temp:36.8, st:0},
+  // junctional escape (inferior MI, vagal / AV-nodal): narrow, ~46/min, better tolerated
+  'CHB (junctional, inf. MI)': {rhythm:'avb3', ectopy:'none', hr:46, spo2:96, sys:102, dia:52, cvp:10, rr:18, etco2:36, temp:36.8, st:2},
   'VT with pulse':        {rhythm:'vt', ectopy:'none', hr:172, spo2:92, sys:82, dia:54, cvp:12, rr:24, etco2:32, temp:37.0, st:0, vtPulse:true},
   'Pulseless VT':         {rhythm:'vt', ectopy:'none', hr:190, spo2:90, sys:120, dia:78, cvp:12, rr:0, etco2:12, temp:37.0, st:0, vtPulse:false},
   'VF arrest':            {rhythm:'vf', ectopy:'none', hr:0, spo2:88, sys:120, dia:78, cvp:14, rr:0, etco2:10, temp:37.0, st:0},
   'Asystole':             {rhythm:'asys', ectopy:'none', hr:0, spo2:85, sys:120, dia:78, cvp:14, rr:0, etco2:8, temp:36.8, st:0},
   'PEA':                  {rhythm:'pea', ectopy:'none', hr:64, spo2:85, sys:120, dia:78, cvp:14, rr:0, etco2:12, temp:36.8, st:0},
   'ROSC':                 {rhythm:'stach', ectopy:'pvc', hr:112, spo2:94, sys:96, dia:58, cvp:10, rr:12, etco2:42, temp:36.6, st:1.5},
-  'Seizure':              {rhythm:'stach', ectopy:'none', hr:146, spo2:84, sys:168, dia:98, cvp:9, rr:32, etco2:52, temp:37.8, st:0, artifact:true},
+  // generalized seizure: marked sinus tachycardia (Extreme Tachy, red) + desaturation -> in House mode the fast beeping
+  // with the pulse-ox tone over it, and no "beep beep", as in the show's seizure scene
+  'Seizure':              {rhythm:'stach', ectopy:'none', hr:166, spo2:84, sys:168, dia:98, cvp:9, rr:32, etco2:52, temp:37.8, st:0, artifact:true,
+                           // abrupt onset: tachycardic within seconds, desaturating over ~6 s; the pressure climbs over ~15 s
+                           onset: {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 6}},
   'Hyperthermia':         {rhythm:'stach', ectopy:'none', hr:118, spo2:96, sys:132, dia:80, cvp:7, rr:24, etco2:32, temp:40.2, st:0},
 };
 const SLIDERS = [['hr','Heart rate',0,250,1,''],['spo2','SpO2',40,100,1,'%'],['sys','Systolic',0,260,1,''],['dia','Diastolic',0,160,1,''],
@@ -2008,6 +2102,7 @@ function buildInstructor() {
   h += `<h3>Sensors &amp; faults</h3>
    <div class="ir"><label>ECG</label><div class="seg" data-sen="ecg">${seg([['ok','Connected'],['leadsoff','Leads off'],['vlead','V lead off'],['none','Unplugged']])}</div></div>
    <div class="ir"><label>SpO2</label><div class="seg" data-sen="spo2">${seg([['ok','On'],['probeoff','Probe off'],['none','Unplugged']])}</div></div>
+   <div class="ir"><label>Arterial line</label><div class="seg"><button class="sb" id="iAline">Insert A-line (zeroed)</button><button class="sb" id="iAlineOut">Remove</button></div></div>
    <div class="ir"><label>ART line</label><div class="seg" data-sen="art">${seg([['ok','On'],['none','Off']])}<button class="sb" id="iDamp">Damped</button></div></div>
    <div class="ir"><label>CVP</label><div class="seg" data-sen="cvp">${seg([['ok','On'],['none','Off']])}</div></div>
    <div class="ir"><label>CO2</label><div class="seg" data-sen="co2">${seg([['ok','On'],['occl','Occluded'],['none','Off']])}</div></div>
@@ -2019,7 +2114,7 @@ function buildInstructor() {
   I.innerHTML = h;
   $('#instrClose').onclick = () => I.classList.remove('open');
   I.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(PRESETS[b.dataset.preset]));
-  $('#iRhythm').onchange = e => { setRhythm(e.target.value); };
+  $('#iRhythm').onchange = e => { R.scene = null; setRhythm(e.target.value); };
   $('#iEct').onchange = e => { R.ectopy = e.target.value; };
   $('#iPulseless').onclick = () => { R.pulseless = !R.pulseless; syncInstr(); };
   $('#iVtPulse').onclick = () => { R.vtPulse = !R.vtPulse; syncInstr(); };
@@ -2028,6 +2123,15 @@ function buildInstructor() {
   $('#iArt').onclick = () => { R.artifact = !R.artifact; syncInstr(); };
   $('#iDamp').onclick = () => { artDamped = !artDamped; syncInstr(); };
   $('#iAC').onclick = () => { SEN.ac = !SEN.ac; syncInstr(); };
+  // one-click arterial line: connect the transducer and zero it, and keep it through power-on (House mode included)
+  // with an A-line the cuff stays on as a backup / cross-check, but stops auto-cycling (beat-to-beat pressure is on the
+  // screen); removing the line puts the cuff back on Auto
+  $('#iAline').onclick = () => { const was = SEN.art; SEN.art = 'ok'; S.artLine = true;
+    if (S.nibpAuto) { S.nibpAutoWas = S.nibpAuto; S.nibpAuto = 0; NB.nextAuto = null; }
+    save(); if (was !== 'ok') layout(); zeroAll(); syncInstr(); setTimeout(() => toast('A-line in: NBP set to Manual (cuff kept for checks)'), 2400); };
+  $('#iAlineOut').onclick = () => { SEN.art = 'none'; S.artLine = false;
+    if (!S.nibpAuto && S.nibpAutoWas) { S.nibpAuto = S.nibpAutoWas; NB.nextAuto = simT + 5; }
+    save(); layout(); syncInstr(); };
   $('#iNbp').onclick = () => { ensureAudio(); if (NB.state === 'idle') nibpStart(); };
   $('#iNbpNow').onclick = () => {   // skip the 20 s cuff cycle: post a reading of the current pressure at once
     NB.state = 'idle'; NB.cuff = 0;
@@ -2043,6 +2147,7 @@ function buildInstructor() {
   I.querySelectorAll('[data-sen] .sb[data-v]').forEach(b => b.onclick = () => {
     const key = b.parentElement.dataset.sen, prev = SEN[key];
     SEN[key] = b.dataset.v;
+    if (key === 'art') { S.artLine = SEN.art === 'ok'; save(); }
     if (key === 'art' && prev === 'none' && SEN.art === 'ok') artZeroed = false;
     if (key === 'cvp' && prev === 'none' && SEN.cvp === 'ok') cvpZeroed = false;
     if ((prev === 'none') !== (SEN[key] === 'none') || key === 'ecg' || key === 'spo2' || key === 'co2') layout();
@@ -2063,18 +2168,34 @@ function syncInstr() {
 }
 function setRhythm(r, keepHr) {
   const prev = R.rhythm; R.rhythm = r; if (prev !== r) hrResetT = simT;
+  if (r === 'avb3' && prev !== 'avb3') R.chb = null;   // new heart-block episode: new atrial rate / ventriculophasic pattern
   if (!keepHr) setTarget('hr', RHY_HR[r], (r === 'vf' || r === 'asys' || r === 'vt' || prev === 'vf' || prev === 'asys') ? 0 : Math.min(rampDur, 5));
   // restart the beat scheduler at the current time so the new rhythm starts promptly
   beats = beats.filter(b => b.t <= simT + 0.05);
   const lq = beats.filter(b => b.k !== 'P').pop(); lastQRS = lq ? lq.t : simT;
   schedT = Math.max(simT + 0.2, lastQRS + 0.3); atrialT = schedT; wenckIdx = 0; mob2Idx = 0;
+  // count HR only from the new rhythm's beats: the gap between the last old beat and the first new one is not a real
+  // R-R interval (it made the HR overshoot, e.g. 188 going from heart block to Seizure -> false Extreme Tachy)
+  if (prev !== r) hrResetT = schedT - 0.001;
   syncInstr();
 }
 function applyPreset(p) {
   R.ectopy = p.ectopy; if ('vtPulse' in p) R.vtPulse = p.vtPulse; R.pulseless = false; R.artifact = !!p.artifact;
+  R.scene = p === PRESETS['Seizure'] ? 'seizure' : null;
   setRhythm(p.rhythm, true);
   const instant = ['vf', 'asys', 'vt', 'pea'].includes(p.rhythm);
-  for (const k of ['hr','spo2','sys','dia','cvp','rr','etco2','temp','st']) setTarget(k, p[k], (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : rampDur);
+  // some states come on suddenly whatever the transition time: p.onset caps the ramp (seconds) for the listed vitals
+  for (const k of ['hr','spo2','sys','dia','cvp','rr','etco2','temp','st']) {
+    let d = (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : rampDur;
+    if (p.onset && p.onset[k] != null) d = Math.min(d, p.onset[k]);
+    setTarget(k, p[k], d);
+  }
+  // a new scenario is a new patient state: the last cuff reading belongs to the old one, so silence its alarm and
+  // re-cycle the cuff once the vitals have settled (as a nurse would)
+  if (NB.last) NB.last.ack = true;
+  if (NB.err) NB.err.ack = true;
+  clearTimeout(applyPreset.nbT);
+  if (powered && SEN.nibp === 'ok' && SEN.art !== 'ok') applyPreset.nbT = setTimeout(() => { if (powered && NB.state === 'idle') nibpStart(); }, (rampDur + 1) * 1000);
   syncInstr();
 }
 function shock() {
@@ -2088,6 +2209,7 @@ function shock() {
 /* ---------------- main loop ---------------- */
 let lastFrame = performance.now(), lastSlow = 0, lastAlarmEval = 0, lastBeepIdx = 0;
 function frame(now) {
+  requestAnimationFrame(frame);   // queued first, so an error later in this frame cannot freeze the screen
   const dt = Math.min(0.1, (now - lastFrame) / 1000); lastFrame = now;
   if (powered) {
     simT += dt;
@@ -2107,9 +2229,8 @@ function frame(now) {
     if (now - lastSlow > 250) { lastSlow = now; updateParams(); updateTop(); }
     if (simT - lastTrend >= 30 && simT > 5) { lastTrend = simT; addTrend(false); }
     updateAlarmLight(now);
-    audioTick();
+    try { audioTick(); } catch (e) { console.error(e); }   // a sound problem must never stop the monitor
   }
-  requestAnimationFrame(frame);
 }
 
 /* ---------------- fit / resize ---------------- */
@@ -2133,9 +2254,9 @@ function powerOn() {
   setTimeout(() => {
     $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
     schedT = 0.6; lastQRS = 0; breathT = 0.4; beats = []; breaths = []; alarms = {}; pending = {}; events = {}; hrResetT = -1;
-    if (isHouse() && !S.nibpAuto) S.nibpAuto = 15;          // the set monitor ran NBP on Auto 15 min
+    if (isHouse() && !S.nibpAuto && !S.artLine) S.nibpAuto = 15;   // the set monitor ran NBP on Auto 15 min (no A-line)
     NB.state = 'idle'; NB.last = null; NB.err = null; NB.nextAuto = S.nibpAuto ? 3 : null;   // first reading right after power-on
-    if (isHouse()) { SEN.art = SEN.cvp = SEN.co2 = SEN.temp = 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
+    if (isHouse()) { SEN.cvp = SEN.co2 = SEN.temp = 'none'; SEN.art = S.artLine ? 'ok' : 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
     layout();
   }, 2600);
 }
