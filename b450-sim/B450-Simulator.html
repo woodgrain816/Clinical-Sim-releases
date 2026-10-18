@@ -865,7 +865,9 @@ function evalAlarms() {
     limCheck('spo2', M.spo2, 'SpO2', 'spo2', spo2Sounding ? 0 : 1.5);
     // severe desaturation is a red alarm of its own (below the desat limit, default 85 % adult / 80 % neonate)
     const desat = S.desat || (S.cat === 'Neonate' ? 80 : 85);
-    if (S.lim.spo2.on && M.spo2 != null && M.spo2 < desat) want('spo2desat', 'high', 'SpO2 Desat ' + M.spo2 + ' < ' + desat, {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
+    // 1 % hysteresis like the other limit alarms: once on, it clears only at desat + 1 (no chattering at the line)
+    const desatOn = alarms.spo2desat && !alarms.spo2desat.latched;
+    if (S.lim.spo2.on && M.spo2 != null && (M.spo2 < desat || (desatOn && M.spo2 < desat + 1))) want('spo2desat', 'high', 'SpO2 Desat ' + M.spo2 + ' < ' + desat, {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
   }
   // --- ART / CVP ---
   if (SEN.art === 'ok') {
