@@ -836,10 +836,14 @@ function evalAlarms() {
     const A = S.arr;
     const q = beats.filter(b => b.k !== 'P' && b.t <= t);
     const lastQ = q.length ? q[q.length - 1].t : -99;
+    const lastRR = q.length > 1 ? lastQ - q[q.length - 2].t : 1;
+    const asysAfter = (S.toneSet === 'classic' && S.tvFlatline) ? clamp(1.5 * lastRR, 1.2, 3) : 3;
     // every alarm comes from what the monitor itself measures, never from which rhythm the instructor picked:
     // V Tach = 6+ consecutive wide beats at >= 100/min (detectArrhythmia, ~2 s at 175/min); Asystole = no QRS for 3 s
     if (R.rhythm === 'vf') want('vfib', 'high', 'V Fib/V Tach', {param: 'hr', delay: 0.5, latch: S.arr.vfib.latch, bt: true});
-    else if (t - lastQ > 3 && t > 4) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
+    // ...but the House set monitor calls it as soon as a beat is clearly overdue (1.5 x the last R-R, 1.2-3 s), so the
+    // flatline comes in about a second after the last beat as in the show, instead of after 3-5 s of silence
+    else if (t - lastQ > asysAfter && t > 4) want('asys', 'high', 'Asystole', {param: 'hr', latch: S.arr.asys.latch, bt: true});
     // run analysis on newly detected beats
     detectArrhythmia(q);
     for (const id in events) {
