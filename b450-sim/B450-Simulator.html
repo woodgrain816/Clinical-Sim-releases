@@ -520,7 +520,8 @@ const LEADS = {
 };
 function beatECG(b, tau, L) {
   let v = 0;
-  if (b.hasP) v += 0.14 * L.p * gauss(tau, -b.pr + 0.05, 0.022);
+  // P wave ~0.2 mV, ~100 ms (it was 0.14 mV / ~50 ms: too small and narrow to see march through a heart block)
+  if (b.hasP) v += 0.2 * L.p * gauss(tau, -b.pr + 0.05, 0.027);
   if (b.k === 'P') return v;
   if (b.k === 'N') {
     const qt = b.qt || clamp(0.38 * Math.sqrt(b.rr), 0.26, 0.44);
@@ -530,12 +531,11 @@ function beatECG(b, tau, L) {
     return v;
   }
   if (b.k === 'E') {
-    // ventricular escape in CHB: ~160 ms, bundle-branch-like - small r, broad notched S (negative in II with the usual
-    // left axis), then a big discordant upright T, late because the QT is long
+    // ventricular escape in CHB, the classic "wide and bizarre" lead II picture: a broad notched upright QRS (~160 ms,
+    // ~1.5 mV, 7-8x the P wave) with a deep discordant T, late because the QT is long at this rate
     const qt = b.qt || 0.54;
-    // amplitude ~1.1 mV (ventricular escapes are large, 5-10x the P wave), slurred broad S
-    v += L.w * (0.22 * gauss(tau, 0.02, 0.012) - 0.95 * gauss(tau, 0.072, 0.028) - 0.6 * gauss(tau, 0.13, 0.026));
-    v += 0.5 * L.w * gauss(tau, qt - 0.14, 0.08);
+    v += L.w * (1.05 * gauss(tau, 0.05, 0.03) + 0.62 * gauss(tau, 0.112, 0.027) - 0.14 * gauss(tau, 0.165, 0.02));
+    v -= 0.45 * L.w * gauss(tau, qt - 0.14, 0.085);
     return v;
   }
   // wide complexes: V (PVC / VT / idioventricular), Vp (paced)
@@ -2082,6 +2082,9 @@ function applyBrightness() { $('#dim').style.opacity = String((100 - S.brightnes
 /* ---------------- instructor panel ---------------- */
 const PRESETS = {
   'Healthy adult':        {rhythm:'nsr', ectopy:'none', hr:75, spo2:98, sys:120, dia:78, cvp:6, rr:14, etco2:37, temp:37.0, st:0},
+  // plain sinus rate changes: every P conducted, normal QRS, only the rate is off
+  'Sinus tachycardia':    {rhythm:'stach', ectopy:'none', hr:124, spo2:97, sys:132, dia:82, cvp:6, rr:20, etco2:35, temp:37.4, st:0},   // pain / anxiety / fever
+  'Sinus bradycardia':    {rhythm:'sbrady', ectopy:'none', hr:46, spo2:98, sys:112, dia:70, cvp:6, rr:12, etco2:38, temp:36.7, st:0},   // beta-blocker / vagal
   'Sepsis':               {rhythm:'stach', ectopy:'none', hr:128, spo2:93, sys:86, dia:44, cvp:3, rr:28, etco2:28, temp:39.4, st:0},
   'Hemorrhagic shock':    {rhythm:'stach', ectopy:'none', hr:142, spo2:95, sys:72, dia:48, cvp:1, rr:30, etco2:26, temp:36.1, st:0},
   'STEMI + PVCs':         {rhythm:'nsr', ectopy:'freq', hr:96, spo2:95, sys:146, dia:92, cvp:9, rr:20, etco2:34, temp:37.0, st:3},
