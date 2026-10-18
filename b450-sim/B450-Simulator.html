@@ -744,7 +744,8 @@ function computeMeasures(dt) {
   const respSrcOK = SEN.co2 === 'ok' || SEN.ecg === 'ok' || SEN.ecg === 'vlead';
   if (!respSrcOK) M.rr = null;
   else if (!lastB || t - lastB.t > Math.max(12, 3 * (lastB ? lastB.per : 5))) M.rr = 0;
-  else { const n = Math.min(2, br.length - 1); M.rr = n > 0 ? Math.round(60 / ((lastB.t - br[br.length - 1 - n].t) / n)) : Math.round(P.rr); }
+  else { const n = Math.min(2, br.length - 1); M.rr = n > 0 ? Math.round(60 / ((lastB.t - br[br.length - 1 - n].t) / n)) : Math.round(P.rr);
+    const gap = t - lastB.t; if (n > 0 && gap > (lastB.t - br[br.length - 2].t)) M.rr = Math.min(M.rr, Math.round(60 / gap)); }
   // CO2
   if (SEN.co2 === 'ok' && co2Buf.length > 10) {
     let mx = 0, mn = 99; const lb = lastB ? lastB.per * 1.5 : 8;
@@ -883,11 +884,13 @@ function evalAlarms() {
   }
   if (NB.err && t - NB.err.t < 60 && !NB.err.ack) want('nibperr', 'low', NB.err.msg, {param: 'nibp', ackable: true});
   // --- Respiration / CO2 ---
-  if (S.apnea.on && M.rr === 0 && (SEN.co2 === 'ok' || SEN.ecg === 'ok')) {
+  // the House screen shows no respiration, so it raises no RR/apnea alarms: an alarm always points at a number on screen
+  const respShown = !houseClassic();
+  if (respShown && S.apnea.on && M.rr === 0 && (SEN.co2 === 'ok' || SEN.ecg === 'ok')) {
     const lb = lastBreath(t);
     if (lb && t - lb.t > S.apnea.time) want('apnea', 'high', 'Apnea', {param: SEN.co2 === 'ok' ? 'co2' : 'resp'});
   }
-  if (M.rr) limCheck('rr', M.rr, 'RR', SEN.co2 === 'ok' ? 'co2' : 'resp', 3);
+  if (respShown && M.rr) limCheck('rr', M.rr, 'RR', SEN.co2 === 'ok' ? 'co2' : 'resp', 3);
   if (SEN.co2 === 'occl') want('co2occl', 'medium', 'CO2 Occlusion', {param: 'co2'});
   if (SEN.co2 === 'ok') { if (M.rr) limCheck('etco2', M.etco2, 'EtCO2', 'co2', 3); limCheck('fico2', M.fico2, 'FiCO2', 'co2', 3);
     if (lim.fico2.lo === 0 && cur.fico2Lo) delete cur.fico2Lo; }
@@ -899,7 +902,7 @@ function evalAlarms() {
   // arrhythmia hierarchy, as on a real monitor: the most serious rhythm alarm hides the lesser ones
   const RHYTHM = ['vtach', 'vt2', 'accv', 'vbrady', 'pause', 'ront', 'couplet', 'bigem', 'trigem', 'pvc', 'tachy', 'brady', 'xtachy', 'xbrady', 'afib', 'irreg'];
   if (cur.vfib || cur.asys) { for (const id of RHYTHM) delete cur[id]; if (cur.vfib) delete cur.asys; }
-  else if (cur.vtach) { for (const id of ['vt2', 'accv', 'couplet', 'pvc', 'bigem', 'trigem', 'ront', 'tachy', 'xtachy']) delete cur[id]; }
+  else if (cur.vtach || R.rhythm === 'vt') { for (const id of ['vt2', 'accv', 'couplet', 'pvc', 'bigem', 'trigem', 'ront', 'tachy', 'xtachy']) delete cur[id]; }
   else if (cur.vt2) { for (const id of ['couplet', 'pvc']) delete cur[id]; }
   if (cur.xtachy) delete cur.tachy;
   if (cur.xbrady) delete cur.brady;
@@ -936,6 +939,8 @@ function detectArrhythmia(q) {
   const newBeats = q.filter(b => !b.det && b.t <= t - 0.15);
   for (const b of newBeats) {
     b.det = true;
+    // beats still running out from the previous rhythm after a change are not analyzed: their alarm ended with them
+    if (b.t < hrResetT) continue;
     const i = q.indexOf(b); if (i < 1) continue;
     const prev = q[i - 1], rr = b.t - prev.t;
     if (rr > 3.0 && rr < 4 && R.rhythm !== 'asys') events.pause = t + 8;
@@ -1131,7 +1136,11 @@ function audioTick() {
   setFlatline(flat);
   const set = TONESETS[S.toneSet] || TONESETS.carescape;
   // TV mode: pulse-ox alarms sound on their own channel, alongside the ECG alarm sound
-  const ox = !!set.ox && list.some(a => OX_IDS.has(a.id));
+  // one alarm sound at a time, as on the real monitor: a red alarm (any parameter) is the fast beeping alone; the
+  // pulse-ox tone plays only while an SpO2 alarm is the most serious one. The arrest scene is the exception: the
+  // flatline with the faint pulse-ox under it, as in the show
+  const oxTop = topPriority(list.filter(a => OX_IDS.has(a.id))), otherTop = topPriority(list.filter(a => !OX_IDS.has(a.id)));
+  const ox = !!set.ox && oxTop > 0 && (flat || (oxTop < 3 && oxTop >= otherTop));
   if (ox && !oxOn) {
     nextOx = AC.currentTime + 0.05;
     // join the running fast beeping in step: the next fast beep lands syncOff into the pulse-ox beep
@@ -1140,14 +1149,12 @@ function audioTick() {
   oxOn = ox;
   if (ox && nextOx < AC.currentTime - 0.05) nextOx = AC.currentTime + 0.05;
   if (ox && AC.currentTime + 0.15 >= nextOx) { playPattern(set.ox, nextOx); nextOx += set.ox.repeat; }
-  const p = topPriority(set.ox ? list.filter(a => !OX_IDS.has(a.id)) : list);
+  const p = set.ox ? (ox && !flat ? 0 : Math.max(otherTop, oxTop === 3 ? 3 : 0)) : topPriority(list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
   if (flat) name = 'ber';
   // ...and the seizure scene: only the pulse-ox tone and the fast beeping, never the yellow "beep beep"
   if (S.toneSet === 'classic' && R.scene === 'seizure' && name === 'medium') name = null;
-  // severe desaturation (red) brings in the fast beeping under the pulse-ox tone: together they are the two-tone
-  if (set.ox && !flat && name !== 'high' && list.some(a => a.id === 'spo2desat')) name = 'high';
   if (name !== audioName) {
     audioName = name; nextBurst = AC.currentTime + 0.05; nextLayer = AC.currentTime + 0.4;
     // fast beeping starting while the pulse-ox runs falls into step with it
@@ -2185,7 +2192,10 @@ function applyPreset(p) {
   setRhythm(p.rhythm, true);
   const instant = ['vf', 'asys', 'vt', 'pea'].includes(p.rhythm);
   // some states come on suddenly whatever the transition time: p.onset caps the ramp (seconds) for the listed vitals
+  const pulseless = ['vf', 'asys', 'pea'].includes(p.rhythm) || (p.rhythm === 'vt' && p.vtPulse === false);
+  for (const id of ['vtach', 'pvc', 'couplet', 'bigem', 'trigem', 'ront', 'vt2', 'accv', 'vbrady', 'pause']) delete events[id];
   for (const k of ['hr','spo2','sys','dia','cvp','rr','etco2','temp','st']) {
+    if (pulseless && k === 'spo2') continue;
     let d = (instant && (k === 'hr' || k === 'rr')) || k === 'st' ? 0 : rampDur;
     if (p.onset && p.onset[k] != null) d = Math.min(d, p.onset[k]);
     setTarget(k, p[k], d);
