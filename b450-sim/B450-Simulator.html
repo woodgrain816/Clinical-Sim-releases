@@ -1142,7 +1142,11 @@ function audioTick() {
   // pulse-ox tone plays only while an SpO2 alarm is the most serious one. The arrest scene is the exception: the
   // flatline with the faint pulse-ox under it, as in the show
   const oxTop = topPriority(list.filter(a => OX_IDS.has(a.id))), otherTop = topPriority(list.filter(a => !OX_IDS.has(a.id)));
-  const ox = !!set.ox && oxTop > 0 && (flat || (oxTop < 3 && oxTop >= otherTop));
+  // the pulse-ox tone stays on while an SpO2 alarm is at least as serious as any other (no cut-out when SpO2 Low turns
+  // into the red SpO2 Desat); a red SpO2 alarm adds the fast beeping under it - the two-tone of the seizure and
+  // overdose scenes. A red alarm from anything else (V Tach...) with a lesser SpO2 alarm is the fast beeping alone.
+  // (the seizure scene is that two-tone from the first SpO2 alarm on, so its red Extreme Tachy never cuts the tone)
+  const ox = !!set.ox && oxTop > 0 && (flat || oxTop >= otherTop || R.scene === 'seizure');
   if (ox && !oxOn) {
     nextOx = AC.currentTime + 0.05;
     // join the running fast beeping in step: the next fast beep lands syncOff into the pulse-ox beep
@@ -1151,7 +1155,7 @@ function audioTick() {
   oxOn = ox;
   if (ox && nextOx < AC.currentTime - 0.05) nextOx = AC.currentTime + 0.05;
   if (ox && AC.currentTime + 0.15 >= nextOx) { playPattern(set.ox, nextOx); nextOx += set.ox.repeat; }
-  const p = set.ox ? (ox && !flat ? 0 : Math.max(otherTop, oxTop === 3 ? 3 : 0)) : topPriority(list);
+  const p = set.ox ? (ox && !flat ? (oxTop === 3 || otherTop === 3 ? 3 : 0) : Math.max(otherTop, oxTop === 3 ? 3 : 0)) : topPriority(list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
   if (flat) name = 'ber';
