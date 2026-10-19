@@ -1183,7 +1183,23 @@ function ensureAudio() {
     const lim = AC.createDynamicsCompressor();
     lim.threshold.value = -1; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.05;
     const trim = AC.createGain(); trim.gain.value = 0.9;
-    master.connect(lim); lim.connect(trim); trim.connect(AC.destination);
+    master.connect(lim); lim.connect(trim);
+    // Android app: the sound is handed to the app's own media player (window.NativeAudio) instead of the WebView's
+    // audio output, so phone screen recorders always capture it as ordinary media audio. Each 2048-sample block is
+    // sent as 16-bit PCM; the WebView itself plays silence.
+    if (window.NativeAudio && AC.createScriptProcessor) {
+      try {
+        NativeAudio.start(AC.sampleRate);
+        const sp = AC.createScriptProcessor(2048, 1, 1);
+        sp.onaudioprocess = e => {
+          const x = e.inputBuffer.getChannelData(0), o = e.outputBuffer.getChannelData(0), b = new Uint8Array(x.length * 2);
+          for (let i = 0; i < x.length; i++) { const v = Math.max(-1, Math.min(1, x[i])) * 32767 | 0; b[2 * i] = v & 255; b[2 * i + 1] = (v >> 8) & 255; o[i] = 0; }
+          let s = ''; for (let i = 0; i < b.length; i += 4096) s += String.fromCharCode.apply(null, b.subarray(i, i + 4096));
+          NativeAudio.write(btoa(s));
+        };
+        trim.connect(sp); sp.connect(AC.destination); AC.nativeOut = sp;
+      } catch (e) { trim.connect(AC.destination); }
+    } else trim.connect(AC.destination);
     alarmGain = AC.createGain(); alarmGain.connect(master);
     qrsGain = AC.createGain(); qrsGain.connect(master);
     // IEC 60601-1-8 requires >= 4 harmonics in the 300-4000 Hz range
