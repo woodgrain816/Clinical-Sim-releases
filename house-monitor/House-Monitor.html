@@ -6,7 +6,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-10-19.2';
+var HM_BUILD = '2026-10-19.3';
 (function () {
   try {
     if (window.__hmSwapped) return;
@@ -2525,6 +2525,8 @@ async function checkUpdate() {
 // timed patient courses that slide from one state into the next. Each step can change the rhythm and ramps the vitals
 // to its values over the time until the next step, so the numbers drift continuously and every alarm comes on by
 // itself when a number crosses its limit. at = seconds from the start (at 1x speed); now = values set at once.
+// a generalized seizure comes on within seconds: rate and breathing at once, saturation over ~8 s, pressure over ~15 s
+const SEIZE_ONSET = {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 8};
 const COURSES = {
   // class I -> IV haemorrhage: the pulse climbs first while the pressure holds (diastolic even rises, so the pulse
   // pressure narrows), then the pressure falls, CVP and EtCO2 fall with the cardiac output, and the heart finally
@@ -2613,6 +2615,74 @@ const COURSES = {
     {at: 480, say: 'Post-ictal, drowsy', v: {hr: 112, spo2: 96, sys: 150, dia: 92, rr: 18, etco2: 40}},
     {at: 600, say: 'Second seizure: status epilepticus', rhythm: 'stach', scene: 'seizure', onset: {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 8}, v: {hr: 168, spo2: 80, sys: 182, dia: 108, rr: 34, etco2: 58}},
     {at: 720, say: 'Status epilepticus continues', v: {hr: 162, spo2: 76, temp: 38.9, etco2: 62}}],
+  // ---- new-onset seizures by cause. The monitor cannot show glucose, sodium or a CT, so each cause shows itself the
+  // way it does at the bedside: through the vital signs before the seizure (the "say" line tells the operator why).
+  // During any generalized seizure: rate up within seconds, pressure up, saturation falling, muscle artifact.
+  // low blood sugar (insulin / sulfonylurea, missed meal): adrenaline first - fast pulse, sweaty and cool, systolic up
+  // with a wide pulse pressure - then confusion and a seizure; it keeps coming back until glucose is given
+  'Seizure: low blood sugar': [
+    {at: 0, say: 'Diabetic, missed a meal: shaky, sweaty', ramp: 5, rhythm: 'nsr', ectopy: 'none', scene: null, v: {hr: 92, spo2: 98, sys: 132, dia: 76, cvp: 6, rr: 18, etco2: 36, temp: 36.4, st: 0}},
+    {at: 90, say: 'Glucose falling: tachycardic, clammy', rhythm: 'stach', v: {hr: 114, sys: 146, dia: 74, rr: 20, temp: 36.1}},
+    {at: 180, say: 'Confused, slurring (glucose ~1.8 mmol/L / 32 mg/dL)', v: {hr: 122, sys: 150, dia: 72}},
+    {at: 240, say: 'Hypoglycaemic seizure', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 162, spo2: 84, sys: 172, dia: 92, rr: 32, etco2: 52}},
+    {at: 320, say: 'Seizure stops: post-ictal, still hypoglycaemic', scene: null, ramp: 80, v: {hr: 118, spo2: 95, sys: 146, dia: 76, rr: 20, etco2: 40}},
+    {at: 480, say: 'No glucose given: seizing again', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 164, spo2: 82, sys: 170, dia: 90, rr: 32, etco2: 54}}],
+  // low sodium (water intoxication, SIADH, thiazides, marathon): the vital signs stay almost normal - headache,
+  // vomiting, confusion - and then a seizure out of nowhere
+  'Seizure: low sodium': [
+    {at: 0, say: 'Headache and nausea (sodium 118)', ramp: 5, rhythm: 'nsr', ectopy: 'none', scene: null, v: {hr: 82, spo2: 98, sys: 128, dia: 80, cvp: 8, rr: 16, etco2: 37, temp: 36.8, st: 0}},
+    {at: 120, say: 'Vomiting, confused', v: {hr: 90, sys: 136, dia: 84, rr: 18}},
+    {at: 240, say: 'Drowsy, sodium still falling', v: {hr: 86, sys: 140, dia: 86, rr: 14}},
+    {at: 300, say: 'Hyponatraemic seizure', rhythm: 'stach', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 158, spo2: 83, sys: 170, dia: 100, rr: 30, etco2: 52}},
+    {at: 380, say: 'Seizure stops: post-ictal', scene: null, ramp: 100, v: {hr: 104, spo2: 95, sys: 142, dia: 86, rr: 18, etco2: 40}}],
+  // alcohol withdrawal (6-48 h after the last drink): tremor, sweating, a fast pulse, high blood pressure and a low
+  // fever; withdrawal seizures come 6-48 h in, delirium tremens (worse tachycardia, fever) after that
+  'Seizure: alcohol withdrawal': [
+    {at: 0, say: 'Day 2 without a drink: tremor, sweating', ramp: 5, rhythm: 'stach', ectopy: 'none', scene: null, v: {hr: 108, spo2: 97, sys: 154, dia: 96, cvp: 6, rr: 20, etco2: 34, temp: 37.6, st: 0}},
+    {at: 120, say: 'Agitated, hallucinating', ectopy: 'pvc', v: {hr: 122, sys: 166, dia: 102, rr: 22, temp: 38.0}},
+    {at: 240, say: 'Withdrawal seizure', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 168, spo2: 84, sys: 184, dia: 108, rr: 32, etco2: 50}},
+    {at: 310, say: 'Seizure stops: post-ictal', scene: null, ramp: 90, ectopy: 'none', v: {hr: 126, spo2: 95, sys: 160, dia: 98, rr: 22, etco2: 38}},
+    {at: 480, say: 'Delirium tremens: fever, very fast pulse', ectopy: 'pvc', v: {hr: 142, sys: 172, dia: 104, rr: 26, temp: 38.8, etco2: 32}}],
+  // eclampsia (pregnancy over 20 weeks, or just after birth): pre-eclampsia's blood pressure keeps climbing, headache,
+  // spots in front of the eyes, then a seizure; the pressure stays dangerously high afterwards
+  'Seizure: eclampsia': [
+    {at: 0, say: '34 weeks pregnant: headache, swollen', ramp: 5, rhythm: 'nsr', ectopy: 'none', scene: null, v: {hr: 94, spo2: 98, sys: 152, dia: 98, cvp: 7, rr: 18, etco2: 32, temp: 36.9, st: 0}},
+    {at: 120, say: 'Severe pre-eclampsia: BP climbing, seeing spots', v: {hr: 102, sys: 168, dia: 108, rr: 20}},
+    {at: 240, say: 'Pain under the ribs, very high BP', v: {hr: 108, sys: 178, dia: 116}},
+    {at: 300, say: 'Eclamptic seizure', rhythm: 'stach', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 156, spo2: 84, sys: 196, dia: 124, rr: 32, etco2: 46}},
+    {at: 370, say: 'Seizure stops: post-ictal, BP still severe', scene: null, ramp: 90, v: {hr: 118, spo2: 95, sys: 176, dia: 114, rr: 20, etco2: 34}}],
+  // head injury with a bleed: as the pressure inside the skull rises the body pushes the blood pressure up (wide pulse
+  // pressure), the pulse slows and breathing becomes slow and irregular (Cushing's triad); the injured brain seizes,
+  // and afterwards the triad is back and worse - herniation if nothing is done
+  'Seizure: head injury (brain bleed)': [
+    {at: 0, say: 'Fell and hit head: talking, headache', ramp: 5, rhythm: 'nsr', ectopy: 'none', scene: null, v: {hr: 90, spo2: 98, sys: 140, dia: 84, cvp: 7, rr: 16, etco2: 37, temp: 36.8, st: 0}},
+    {at: 120, say: 'Bleed expanding: drowsy, vomiting', v: {hr: 72, sys: 160, dia: 82, rr: 14}},
+    {at: 240, say: "Cushing's: BP up, pulse slowing", rhythm: 'sbrady', v: {hr: 54, sys: 182, dia: 78, rr: 10, etco2: 44}},
+    {at: 300, say: 'Post-traumatic seizure', rhythm: 'stach', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 142, spo2: 82, sys: 206, dia: 104, rr: 28, etco2: 54}},
+    {at: 370, say: "Seizure stops: Cushing's worse", rhythm: 'sbrady', scene: null, ramp: 60, v: {hr: 48, spo2: 93, sys: 202, dia: 80, rr: 8, etco2: 50}},
+    {at: 480, say: 'Herniating: one pupil blown, breathing irregular', v: {hr: 40, sys: 214, dia: 78, rr: 6, spo2: 88}}],
+  // meningitis / encephalitis: high fever, fast pulse, the pressure starting to fall as sepsis sets in, then a seizure
+  'Seizure: meningitis': [
+    {at: 0, say: 'Fever, headache, stiff neck', ramp: 5, rhythm: 'stach', ectopy: 'none', scene: null, v: {hr: 112, spo2: 97, sys: 118, dia: 68, cvp: 6, rr: 22, etco2: 33, temp: 38.9, st: 0}},
+    {at: 120, say: 'Rash, confused, light hurts', v: {hr: 126, sys: 108, dia: 60, rr: 24, temp: 39.6}},
+    {at: 240, say: 'Hardly rousable, septic', v: {hr: 136, sys: 98, dia: 54, rr: 26, temp: 40.1, spo2: 95}},
+    {at: 300, say: 'Seizure (meningitis)', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 172, spo2: 82, sys: 128, dia: 72, rr: 34, etco2: 50}},
+    {at: 370, say: 'Seizure stops: post-ictal, septic', scene: null, ramp: 90, v: {hr: 138, spo2: 93, sys: 94, dia: 50, rr: 26, etco2: 34, temp: 40.2}}],
+  // tricyclic antidepressant overdose: anticholinergic - hot, a fast pulse - with the pressure falling (alpha block),
+  // then a seizure; the acid that builds up during it pushes the poisoned heart into VT
+  'Seizure: antidepressant overdose': [
+    {at: 0, say: 'Took a bottle of amitriptyline: drowsy', ramp: 5, rhythm: 'stach', ectopy: 'none', scene: null, v: {hr: 112, spo2: 97, sys: 118, dia: 72, cvp: 6, rr: 16, etco2: 38, temp: 37.6, st: 0}},
+    {at: 120, say: 'Hot, dry, pupils wide; BP falling', v: {hr: 128, sys: 98, dia: 58, rr: 14, temp: 38.0}},
+    {at: 210, say: 'Very drowsy, QRS widening', ectopy: 'pvc', v: {hr: 134, sys: 88, dia: 50, rr: 12}},
+    {at: 240, say: 'Toxic seizure', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 168, spo2: 80, sys: 110, dia: 64, rr: 30, etco2: 56}},
+    {at: 310, say: 'Seizure stops: acidotic, hypotensive', scene: null, ramp: 50, ectopy: 'freq', v: {hr: 142, spo2: 92, sys: 82, dia: 46, rr: 16, etco2: 48}},
+    {at: 380, say: 'Wide-complex tachycardia (VT)', rhythm: 'vt', vtPulse: true, ectopy: 'none', now: {hr: 168}, ramp: 30, v: {sys: 70, dia: 40}}],
+  // heat stroke: core temperature over 40, a racing pulse and falling pressure, then a seizure
+  'Seizure: heat stroke': [
+    {at: 0, say: 'Collapsed in the heat: hot, confused', ramp: 5, rhythm: 'stach', ectopy: 'none', scene: null, v: {hr: 128, spo2: 97, sys: 108, dia: 62, cvp: 4, rr: 26, etco2: 30, temp: 39.8, st: 0}},
+    {at: 120, say: 'Temperature still climbing', v: {hr: 142, sys: 96, dia: 54, rr: 30, temp: 40.8}},
+    {at: 240, say: 'Heat-stroke seizure', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 170, spo2: 85, sys: 118, dia: 66, rr: 34, etco2: 44, temp: 41.3}},
+    {at: 310, say: 'Seizure stops: post-ictal, shocked', scene: null, ramp: 90, v: {hr: 148, spo2: 94, sys: 84, dia: 46, rr: 28, etco2: 30, temp: 41.0}}],
 };
 const CRS = {name: null, t0: 0, i: 0, speed: 1, say: ''};
 // the user's own timelines (Instructor -> Build your own timeline) live in the settings next to the built-in courses
@@ -2663,7 +2733,6 @@ function courseShow() {
 // rows: when it starts, what is happening, and what the patient drifts to by the next row (a blank box = unchanged).
 // Seizure = the House seizure scene with its sounds and the muscle artifact; No pulse = pulseless (PEA / pulseless VT)
 const TL_VIT = [['hr', 'HR'], ['spo2', 'SpO2'], ['sys', 'Sys'], ['dia', 'Dia'], ['rr', 'RR'], ['temp', 'Temp']];
-const SEIZE_ONSET = {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 8};
 let tlRows = [];
 function tlBlank(at) { return {at: at || 0, say: '', rhythm: '', ectopy: '', seizure: false, noPulse: false, v: {}}; }
 function tlFromSteps(st) {
