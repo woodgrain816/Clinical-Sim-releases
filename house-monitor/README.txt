@@ -3,6 +3,8 @@ HOUSE MONITOR (Windows)
 
 Start:   double-click  "Start House Monitor.bat"
          (or "Start House Monitor (Full Screen).bat" - press Alt+F4 to close)
+         It opens on the TOP screen: the display that sits highest (the
+         monitor above a laptop). With one screen it opens on that one.
          Run "Create Desktop Shortcut.bat" once to get a "House Monitor"
          shortcut with the monitor icon on your desktop.
          The screen starts black: click the dim power button (or press
@@ -21,6 +23,12 @@ Keys:    Space = Pause Audio    N = NIBP start/stop    F = Freeze
 
 The Instructor panel (button at the top right, or the I key) controls the
 patient: scenarios, rhythm, ectopy, vital signs, sensor faults, shocks.
+Deteriorations run a patient through timed stages on their own (1x/2x/4x);
+Build your own timeline makes your own (saved on this computer).
+
+Updates: Instructor -> Software -> Check for updates. It downloads the
+newest monitor, keeps it on this computer and restarts (it comes back on if
+it was on). Needs internet only for the check.
 It opens in its own window (put it on a second screen); move the mouse to
 show the faded Instructor button. The monitor fills the window with no
 drawn frame (Monitor Setup -> Show monitor housing turns one on).

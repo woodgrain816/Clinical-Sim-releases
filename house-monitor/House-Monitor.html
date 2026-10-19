@@ -2,6 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
+   monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
+   swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
+var HM_BUILD = '2026-10-19.2';
+(function () {
+  try {
+    if (window.__hmSwapped) return;
+    var b = localStorage.getItem('hm.update.build');
+    if (!b) return;
+    if (b <= HM_BUILD) { localStorage.removeItem('hm.update.build'); localStorage.removeItem('hm.update.html'); return; }
+    var html = localStorage.getItem('hm.update.html');
+    if (!html || html.indexOf('function powerOn') < 0) return;
+    window.__hmSwapped = true;
+    document.write('<plaintext hidden>');
+    document.addEventListener('DOMContentLoaded', function () { document.open(); document.write(html); document.close(); });
+  } catch (e) {}
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>House Monitor</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -287,6 +306,12 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #instr .seg{display:flex;flex-wrap:wrap;gap:4px;flex:1}
 #instr .seg .sb{padding:4px 7px;text-align:center}
 #instr .seg .sb.sel{background:#2f6db5;border-color:#7fb0ff}
+#instr .tlr{border:1px solid #2a3a4d;border-radius:3px;padding:5px;margin:5px 0;background:#0e151e}
+#instr .tl1{display:flex;gap:4px;align-items:center;margin:3px 0;flex-wrap:wrap}
+#instr .tl1 input{background:#0b1016;color:#fff;border:1px solid #34465c;padding:3px;font-size:12.5px;font-family:inherit;min-width:0}
+#instr .tl1 .tlAt{width:52px;flex:none}#instr .tl1 .tlSay{flex:1}#instr .tl1 select{flex:1;min-width:0;font-size:12px}
+#instr .tl1 label{display:flex;flex-direction:column;font-size:10.5px;color:#7f9ab8;flex:1;min-width:44px}
+#instr .tl1 label input{width:100%}#instr .tl1 label.tlc{flex-direction:row;align-items:center;gap:4px;font-size:12px;color:#c2cfdd;flex:none}
 #instr .presets button.sel{background:#2f6db5;border-color:#7fb0ff}
 #instr .hint{color:#7f9ab8;font-size:11.5px;line-height:1.4}
 </style>
@@ -2317,9 +2342,15 @@ function buildInstructor() {
    <div class="hint">Controls the simulated patient. Changes ramp over the transition time (like a real patient), so alarms trigger naturally.</div>
    <h3>Scenarios</h3><div class="presets">${Object.keys(PRESETS).map(k => `<button data-preset="${k}">${k}</button>`).join('')}</div>
    <h3>Deteriorations</h3><div class="hint">The patient slides from one state into the next on its own; every alarm comes from the numbers crossing their limits. A scenario or a shock to a new rhythm stops it.</div>
-   <div class="presets">${Object.keys(COURSES).map(k => `<button data-course="${k}">${k}</button>`).join('')}</div>
+   <div class="presets">${courseNames().map(k => `<button data-course="${k}">${k}</button>`).join('')}</div>
    <div class="ir"><label>Speed</label><div class="seg">${[1, 2, 4].map(s => `<button class="sb" data-cspeed="${s}">${s}x</button>`).join('')}<button class="sb" id="crsStop">Stop</button></div></div>
    <div class="hint" id="crsState">Not running</div>
+   <h3>Build your own timeline</h3>
+   <div class="hint">Each row starts at its time (m:ss) and the patient drifts to its numbers by the next row; a blank box keeps the number. Tick Seizure for a seizure (it ends at the first row without the tick).</div>
+   <div class="ir"><label>Name</label><input id="tlName" class="inp" style="flex:1" value="${tlName0()}"><select id="tlLoad" style="flex:1"></select></div>
+   <div id="tlRows"></div>
+   <div class="ir"><div class="seg"><button class="sb" id="tlAdd">+ Row</button><button class="sb" id="tlSave">Save</button><button class="sb" id="tlRun">&#9654; Run</button><button class="sb" id="tlDel">Delete</button></div></div>
+   <div class="hint" id="tlState"></div>
    <h3>Rhythm</h3>
    <div class="ir"><label>Rhythm</label><select id="iRhythm">${Object.entries(RHYTHMS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
    <div class="ir"><label>Ectopy</label><select id="iEct">${Object.entries(ECTOPY).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
@@ -2345,6 +2376,9 @@ function buildInstructor() {
    <h3>Operator station</h3>
    <div class="ir"><label>Address</label><input id="iOpAddr" placeholder="PC address, e.g. 192.168.1.20:8460" style="flex:1"><button class="sb" id="iOpGo">Connect</button></div>
    <div class="hint" id="opState">Not set</div>
+   <h3>Software</h3>
+   <div class="ir"><label>Updates</label><div class="seg"><button class="sb" id="iUpd">Check for updates</button></div></div>
+   <div class="hint" id="updState">Build ${HM_BUILD}</div>
    <h3>Keyboard</h3><div class="hint">Space: Pause Audio · N: NIBP start/stop · F: Freeze · Z: Zero all · I: this panel · Esc: close menu · F11: full screen</div>`;
   I.innerHTML = h;
   $('#iOpAddr').value = S.opAddr || '';
@@ -2361,6 +2395,8 @@ function buildInstructor() {
     if (CRS.name) CRS.t0 = simT - (simT - CRS.t0) * CRS.speed / s;
     CRS.speed = s; courseShow(); });
   $('#crsStop').onclick = courseStop;
+  $('#iUpd').onclick = checkUpdate;
+  tlWire();
   courseShow();
   $('#iRhythm').onchange = e => { R.scene = null; setRhythm(e.target.value); };
   $('#iEct').onchange = e => { R.ectopy = e.target.value; };
@@ -2459,6 +2495,32 @@ function shock(toOverride) {
   if (to) setTimeout(() => { if (to === 'nsr') applyPreset(PRESETS.ROSC); else setRhythm(to); }, 1500);
 }
 
+/* ---------------- check for updates ---------------- */
+const UPDATE_SOURCES = [
+  'https://raw.githubusercontent.com/woodgrain816/Clinical-Sim-releases/ccr-231e7428-nx1vu3/house-monitor/House-Monitor.html',
+  'https://raw.githubusercontent.com/woodgrain816/Clinical-Sim-releases/main/house-monitor/House-Monitor.html'];
+function updState(t) { const e = $('#updState'); if (e) e.textContent = t; }
+async function checkUpdate() {
+  updState('Checking...');
+  let best = null;
+  for (const u of UPDATE_SOURCES) {
+    try {
+      const r = await fetch(u + '?t=' + Date.now(), {cache: 'no-store'}); if (!r.ok) continue;
+      const t = await r.text(), m = t.match(/var HM_BUILD = '([^']+)'/);
+      // only a complete monitor page counts: never replace a working monitor with an error page or half a file
+      if (!m || t.length < 100000 || t.indexOf('function powerOn') < 0 || t.indexOf('TONESETS') < 0 || !/<\/html>\s*$/.test(t)) continue;
+      if (!best || m[1] > best.b) best = {b: m[1], t: t};
+    } catch (e) {}
+  }
+  if (!best) return updState('Could not reach the update server (no internet?). Running build ' + HM_BUILD + '.');
+  if (best.b <= HM_BUILD) return updState('Up to date (build ' + HM_BUILD + ').');
+  try { localStorage.setItem('hm.update.html', best.t); localStorage.setItem('hm.update.build', best.b); }
+  catch (e) { return updState('Could not store the update: ' + e.message); }
+  try { sessionStorage.setItem('hm.resume', powered ? '1' : ''); } catch (e) {}
+  updState('Updated to build ' + best.b + '. Restarting...');
+  setTimeout(() => location.reload(), 900);
+}
+
 /* ---------------- deteriorations ---------------- */
 // timed patient courses that slide from one state into the next. Each step can change the rhythm and ramps the vitals
 // to its values over the time until the next step, so the numbers drift continuously and every alarm comes on by
@@ -2535,10 +2597,29 @@ const COURSES = {
     {at: 400, say: 'Peri-arrest', rhythm: 'stach', v: {hr: 138, sys: 50, dia: 28, rr: 8, etco2: 16}},
     {at: 450, say: 'PEA arrest (no pulse)', rhythm: 'pea', v: {hr: 104, rr: 0, etco2: 10}},
     {at: 560, say: 'PEA, slowing', v: {hr: 56}}],
+  // neuropsychiatric lupus, not yet diagnosed: days of headache and confusion with a low fever and a rising blood
+  // pressure (lupus kidney disease), a sinus tachycardia that creeps up as the patient gets agitated, then a
+  // generalized tonic-clonic seizure: the rate jumps within seconds, the pressure climbs, the breathing stops being
+  // effective so the saturation falls, and muscle activity smears the traces. After ~90 s it stops: post-ictal, the
+  // rate and pressure settle over minutes and the saturation recovers on oxygen. A second seizure follows
+  // (status epilepticus).
+  'Lupus (NPSLE) → seizure': [
+    {at: 0, say: 'Undiagnosed lupus: headache, confused', ramp: 5, rhythm: 'nsr', ectopy: 'none', scene: null, v: {hr: 86, spo2: 98, sys: 136, dia: 86, cvp: 7, rr: 16, etco2: 37, temp: 37.6, st: 0}},
+    {at: 90, say: 'More confused, low fever, BP rising', v: {hr: 98, sys: 148, dia: 92, temp: 38.0, rr: 18}},
+    {at: 210, say: 'Agitated, staring spells', rhythm: 'stach', v: {hr: 108, sys: 158, dia: 98, temp: 38.2, rr: 20}},
+    {at: 300, say: 'Generalized tonic-clonic seizure', scene: 'seizure', onset: {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 8}, v: {hr: 164, spo2: 84, sys: 178, dia: 104, rr: 32, etco2: 52}},
+    {at: 340, say: 'Still seizing', v: {hr: 158, spo2: 79, etco2: 56}},
+    {at: 390, say: 'Seizure stops: post-ictal', scene: null, ramp: 90, v: {hr: 122, spo2: 93, sys: 156, dia: 94, rr: 22, etco2: 44}},
+    {at: 480, say: 'Post-ictal, drowsy', v: {hr: 112, spo2: 96, sys: 150, dia: 92, rr: 18, etco2: 40}},
+    {at: 600, say: 'Second seizure: status epilepticus', rhythm: 'stach', scene: 'seizure', onset: {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 8}, v: {hr: 168, spo2: 80, sys: 182, dia: 108, rr: 34, etco2: 58}},
+    {at: 720, say: 'Status epilepticus continues', v: {hr: 162, spo2: 76, temp: 38.9, etco2: 62}}],
 };
 const CRS = {name: null, t0: 0, i: 0, speed: 1, say: ''};
+// the user's own timelines (Instructor -> Build your own timeline) live in the settings next to the built-in courses
+function courseSteps(name) { return COURSES[name] || (S.timelines && S.timelines[name]) || null; }
+function courseNames() { return Object.keys(COURSES).concat(Object.keys(S.timelines || {})); }
 function courseStart(name, speed) {
-  const st = COURSES[name]; if (!st) return;
+  const st = courseSteps(name); if (!st || !st.length) return;
   if (speed) CRS.speed = speed;
   CRS.name = name; CRS.t0 = simT; CRS.i = 0; CRS.say = '';
   R.scene = null; R.pulseless = false; R.artifact = false; R.vtPulse = true; R.vfCoarse = true;
@@ -2548,7 +2629,8 @@ function courseStart(name, speed) {
 function courseStop() { CRS.name = null; courseShow(); }
 function courseTick() {
   if (!CRS.name) return;
-  const st = COURSES[CRS.name], el = (simT - CRS.t0) * CRS.speed;
+  const st = courseSteps(CRS.name); if (!st) { CRS.name = null; return; }
+  const el = (simT - CRS.t0) * CRS.speed;
   while (CRS.i < st.length && st[CRS.i].at <= el) {
     const s = st[CRS.i], next = st[CRS.i + 1];
     const ramp = (s.ramp != null ? s.ramp : next ? next.at - s.at : 30) / CRS.speed;
@@ -2558,7 +2640,11 @@ function courseTick() {
     if ('coarse' in s) R.vfCoarse = s.coarse;
     if (s.now) for (const k in s.now) setTarget(k, s.now[k], 0);
     if (s.rhythm && s.rhythm !== R.rhythm) setRhythm(s.rhythm, true);
-    if (s.v) for (const k in s.v) setTarget(k, s.v[k], ramp);
+    // a seizure: the House seizure sounds, and muscle activity on the traces; it ends with the step that clears it
+    if ('scene' in s) { R.scene = s.scene || null; R.artifact = s.scene === 'seizure'; }
+    if ('artifact' in s) R.artifact = !!s.artifact;
+    // onset: some changes come on within seconds whatever the step length (a seizure's rate jump)
+    if (s.v) for (const k in s.v) setTarget(k, s.v[k], s.onset && s.onset[k] != null ? Math.min(ramp, s.onset[k] / CRS.speed) : ramp);
     CRS.say = s.say || CRS.say; CRS.i++;
   }
 }
@@ -2568,8 +2654,88 @@ function courseShow() {
   document.querySelectorAll('[data-course]').forEach(b => b.classList.toggle('sel', b.dataset.course === CRS.name));
   document.querySelectorAll('[data-cspeed]').forEach(b => b.classList.toggle('sel', +b.dataset.cspeed === CRS.speed));
   if (!CRS.name) { e.textContent = 'Not running'; return; }
-  const st = COURSES[CRS.name], end = st[st.length - 1].at / CRS.speed, el = simT - CRS.t0;
+  const st = courseSteps(CRS.name); if (!st) { e.textContent = 'Not running'; return; }
+  const end = st[st.length - 1].at / CRS.speed, el = simT - CRS.t0;
   e.textContent = (el >= end ? 'Finished - ' : fmtMS(el) + ' / ' + fmtMS(end) + ' - ') + CRS.say;
+}
+
+/* ---------------- build your own timeline ---------------- */
+// rows: when it starts, what is happening, and what the patient drifts to by the next row (a blank box = unchanged).
+// Seizure = the House seizure scene with its sounds and the muscle artifact; No pulse = pulseless (PEA / pulseless VT)
+const TL_VIT = [['hr', 'HR'], ['spo2', 'SpO2'], ['sys', 'Sys'], ['dia', 'Dia'], ['rr', 'RR'], ['temp', 'Temp']];
+const SEIZE_ONSET = {hr: 2, rr: 2, sys: 15, dia: 15, spo2: 8};
+let tlRows = [];
+function tlBlank(at) { return {at: at || 0, say: '', rhythm: '', ectopy: '', seizure: false, noPulse: false, v: {}}; }
+function tlFromSteps(st) {
+  let seiz = false, nop = false;
+  return st.map(s => { if ('scene' in s) seiz = s.scene === 'seizure'; if ('pulseless' in s) nop = !!s.pulseless;
+    return {at: s.at, say: s.say || '', rhythm: s.rhythm || '', ectopy: s.ectopy || '', seizure: seiz, noPulse: nop, v: Object.assign({}, s.v || {}, s.now || {})}; });
+}
+function tlToSteps(rows) {
+  let seiz = false, nop = false;
+  return rows.slice().sort((a, b) => a.at - b.at).map((r, i) => {
+    const s = {at: r.at, say: r.say || ''};
+    if (r.rhythm) s.rhythm = r.rhythm;
+    if (r.ectopy) s.ectopy = r.ectopy;
+    if (i === 0 || r.seizure !== seiz) { s.scene = r.seizure ? 'seizure' : null; if (r.seizure) s.onset = SEIZE_ONSET; seiz = r.seizure; }
+    if (i === 0 || r.noPulse !== nop) { s.pulseless = r.noPulse; nop = r.noPulse; }
+    if (i === 0) s.ramp = 5;
+    const v = {}; for (const [k] of TL_VIT) if (r.v[k] != null && r.v[k] !== '' && !isNaN(+r.v[k])) v[k] = +r.v[k];
+    if (Object.keys(v).length) s.v = v;
+    return s;
+  });
+}
+function tlRender() {
+  const box = $('#tlRows'); if (!box) return;
+  const opt = (o, sel) => '<option value="">(no change)</option>' + Object.entries(o).map(([k, t]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${t}</option>`).join('');
+  box.innerHTML = tlRows.map((r, i) => `<div class="tlr" data-i="${i}">
+    <div class="tl1"><input class="tlAt" value="${fmtMS(r.at)}" title="Starts at (m:ss)"><input class="tlSay" value="${(r.say || '').replace(/"/g, '&quot;')}" placeholder="What is happening"><button class="sb tlX" title="Remove row">&#10005;</button></div>
+    <div class="tl1"><select class="tlRh">${opt(RHYTHMS, r.rhythm)}</select><select class="tlEc">${opt(ECTOPY, r.ectopy)}</select></div>
+    <div class="tl1">${TL_VIT.map(([k, t]) => `<label>${t}<input type="number" data-k="${k}" value="${r.v[k] != null ? r.v[k] : ''}"></label>`).join('')}</div>
+    <div class="tl1"><label class="tlc"><input type="checkbox" class="tlSz"${r.seizure ? ' checked' : ''}> Seizure</label><label class="tlc"><input type="checkbox" class="tlNp"${r.noPulse ? ' checked' : ''}> No pulse</label></div>
+  </div>`).join('') || '<div class="hint">No rows yet: add one, or load a deterioration to start from.</div>';
+  box.querySelectorAll('.tlr').forEach(el => {
+    const r = tlRows[+el.dataset.i];
+    el.querySelector('.tlAt').onchange = e => { const v = String(e.target.value).trim(), p = v.split(':'); r.at = p.length > 1 ? (+p[0] || 0) * 60 + (+p[1] || 0) : (+v || 0); };
+    el.querySelector('.tlSay').oninput = e => r.say = e.target.value;
+    el.querySelector('.tlRh').onchange = e => r.rhythm = e.target.value;
+    el.querySelector('.tlEc').onchange = e => r.ectopy = e.target.value;
+    el.querySelector('.tlSz').onchange = e => r.seizure = e.target.checked;
+    el.querySelector('.tlNp').onchange = e => r.noPulse = e.target.checked;
+    el.querySelectorAll('input[data-k]').forEach(n => n.oninput = () => { if (n.value === '') delete r.v[n.dataset.k]; else r.v[n.dataset.k] = +n.value; });
+    el.querySelector('.tlX').onclick = () => { tlRows.splice(+el.dataset.i, 1); tlRender(); };
+  });
+}
+function tlName0() { const e = $('#tlName'); return e ? e.value.replace(/"/g, '&quot;') : ''; }
+function tlMsg(t) { const e = $('#tlState'); if (e) e.textContent = t; }
+function tlLoadList() {
+  const s = $('#tlLoad'); if (!s) return;
+  s.innerHTML = '<option value="">Start from...</option>' + courseNames().map(n => `<option>${n}</option>`).join('');
+}
+function tlWire() {
+  if (!$('#tlRows')) return;
+  tlLoadList(); tlRender();
+  $('#tlLoad').onchange = e => { const n = e.target.value; if (!n) return; tlRows = tlFromSteps(courseSteps(n)); $('#tlName').value = S.timelines && S.timelines[n] ? n : n + ' (mine)'; tlRender(); e.target.value = ''; };
+  $('#tlAdd').onclick = () => { const last = tlRows[tlRows.length - 1]; tlRows.push(tlBlank(last ? last.at + 60 : 0)); tlRender(); };
+  $('#tlSave').onclick = () => {
+    const n = $('#tlName').value.trim(); if (!n) return tlMsg('Give it a name first.');
+    if (COURSES[n]) return tlMsg('That name belongs to a built-in deterioration: pick another.');
+    if (!tlRows.length) return tlMsg('Add at least one row.');
+    S.timelines = S.timelines || {}; S.timelines[n] = tlToSteps(tlRows); save();
+    buildInstructor(); tlMsg('Saved "' + n + '". It is in the Deteriorations list.');
+  };
+  $('#tlRun').onclick = () => {
+    if (!tlRows.length) return tlMsg('Add at least one row.');
+    S.timelines = S.timelines || {}; const n = $('#tlName').value.trim() || 'Unsaved timeline';
+    if (COURSES[n]) return tlMsg('That name belongs to a built-in deterioration: pick another.');
+    S.timelines[n] = tlToSteps(tlRows); if (n !== 'Unsaved timeline') save();
+    courseStart(n); tlMsg('Running "' + n + '".');
+  };
+  $('#tlDel').onclick = () => {
+    const n = $('#tlName').value.trim();
+    if (S.timelines && S.timelines[n]) { if (CRS.name === n) courseStop(); delete S.timelines[n]; save(); tlRows = []; buildInstructor(); tlMsg('Deleted "' + n + '".'); }
+    else { tlRows = []; tlRender(); tlMsg('Cleared.'); }
+  };
 }
 
 /* ---------------- main loop ---------------- */
@@ -2608,7 +2774,7 @@ function fit() {
   // the screen takes the window's shape (between 4:3 and ultra-wide), so the monitor fills the whole window
   // a window taller than wide (a phone held upright) shows the normal 16:10 monitor, centered
   const H = S.bezel ? 892 : phone ? 800 : 812, ar = innerWidth / Math.max(1, innerHeight);   // 812 = 800 screen + 12 alarm-light strip
-  const sw = ar < 1 ? 1280 : Math.round(Math.min(2200, Math.max(1066, S.bezel ? H * ar - 60 : 800 * ar)));
+  const sw = ar < 1 ? 1280 : Math.round(Math.min(2200, Math.max(1066, S.bezel ? H * ar - 60 : H * ar)));   // H, not 800: the alarm-light strip is part of the height, and leaving it out left a bar down each side
   const W = S.bezel ? sw + 60 : sw;
   scale = Math.min(innerWidth / W, innerHeight / H);
   d.style.transform = `scale(${scale})`;
@@ -2695,7 +2861,7 @@ function opCommand(c) {
     case 'preset': if (PRESETS[c.name]) { const keep = rampDur; if (c.ramp != null) rampDur = +c.ramp; applyPreset(PRESETS[c.name]); rampDur = keep; } break;
     case 'state':  opApplyState(c); break;
     case 'shock':  shock(c.to || ''); break;
-    case 'course': if (c.name && COURSES[c.name]) courseStart(c.name, +c.speed || 0); else courseStop(); break;
+    case 'course': if (c.name && courseSteps(c.name)) courseStart(c.name, +c.speed || 0); else courseStop(); break;
     case 'nibp':   if (NB.state === 'idle') nibpStart(); break;
     case 'silence': pauseAudio(); break;
     case 'power':  if (c.on && !powered) powerOn(); else if (!c.on && powered) powerOff(); break;
@@ -2714,7 +2880,7 @@ function opReport(now) {
     alarms: Object.values(alarms).filter(a => a.pri !== 'info').map(a => ({pri: a.pri, msg: a.msg, latched: !!a.latched})),
     sound: {pattern: audioName, ox: oxOn, flat: !!flatOsc, paused: simT < pauseUntil},
     sensors: Object.assign({}, SEN), monitor: S.toneSet === 'classic' && S.tvFlatline ? 'tv' : 'real',
-    presets: Object.keys(PRESETS), courses: Object.keys(COURSES), course: CRS.name ? {name: CRS.name, speed: CRS.speed, at: +((simT - CRS.t0) * CRS.speed).toFixed(0), say: CRS.say} : null,
+    presets: Object.keys(PRESETS), courses: courseNames(), course: CRS.name ? {name: CRS.name, speed: CRS.speed, at: +((simT - CRS.t0) * CRS.speed).toFixed(0), say: CRS.say} : null,
     rhythms: RHYTHMS, ectopies: ECTOPY,
     screen: navigator.userAgent.includes('Android') ? 'Android' : 'PC'
   };
@@ -2756,6 +2922,8 @@ addEventListener('pointerdown', () => ensureAudio(), {capture: true});
 applyGeometry(); buildInstructor(); applyBrightness(); fit(); updateTop();
 requestAnimationFrame(frame);
 if (new URLSearchParams(location.search).has('autostart')) powerOn();
+// restarted by Check for updates while the monitor was on: switch it straight back on
+try { if (sessionStorage.getItem('hm.resume') === '1') { sessionStorage.removeItem('hm.resume'); powerOn(); } else sessionStorage.removeItem('hm.resume'); } catch (e) {}
 </script>
 </body>
 </html>
