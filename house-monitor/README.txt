@@ -1,8 +1,10 @@
 HOUSE MONITOR (Windows)
 =======================
 
-Start:   double-click  "Start House Monitor.bat"
-         (or "Start House Monitor (Full Screen).bat" - press Alt+F4 to close)
+Start:   double-click  "House Monitor.exe"  (one file: copy it anywhere;
+         "House Monitor.exe" --full opens it full screen), or
+         "Start House Monitor.bat" / "Start House Monitor (Full Screen).bat"
+         - press Alt+F4 to close full screen.
          It opens on the TOP screen: the display that sits highest (the
          monitor above a laptop). With one screen it opens on that one.
          Run "Create Desktop Shortcut.bat" once to get a "House Monitor"
