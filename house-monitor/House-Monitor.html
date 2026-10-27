@@ -6,7 +6,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-10-19.3';
+var HM_BUILD = '2026-10-27.1';
 (function () {
   try {
     if (window.__hmSwapped) return;
@@ -627,7 +627,8 @@ function beatECG(b, tau, L) {
     const qt = b.qt || clamp(0.38 * Math.sqrt(b.rr), 0.26, 0.44);
     v += -0.08 * L.s * gauss(tau, 0.012, 0.009) + 1.15 * L.r * gauss(tau, 0.036, 0.011) - 0.3 * L.s * gauss(tau, 0.062, 0.011);
     if (P.st) { const a = clamp((tau - 0.07) / 0.03, 0, 1) * clamp((qt - 0.04 - tau) / 0.08, 0, 1); v += P.st * 0.1 * Math.sign(L.r || 1) * a; }
-    v += 0.32 * L.t * gauss(tau, qt - 0.09, 0.045);
+    // T wave ~0.25 mV in lead II (a quarter of the R): it was 0.11 mV, a tenth of the R, which reads as flattened T waves
+    v += 0.7 * L.t * gauss(tau, qt - 0.09, 0.045);
     return v;
   }
   if (b.k === 'E') {
