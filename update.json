@@ -1,23 +1,23 @@
 {
-  "version": "1.63",
+  "version": "1.64",
   "minNative": 6,
-  "title": "Phone polish: cleaner screens and fixed bugs",
+  "title": "A truer heart trace",
   "major": false,
   "notes": [
-    "Fixed: on the compact phone monitor every number sat one column to the right (the heart rate showed under SpO₂). Each value is now under its own label",
-    "Fixed: Surgery and Discharge (from More) no longer have the big monitor covering the top of the screen. They fold it to the slim vitals bar like every other tab",
-    "Fixed: the same guidance no longer shows twice (Next step plus a second Guidance box)",
-    "Fixed: the ⓘ info buttons on Orders are joined to their test, so one can never wrap onto the next line in front of a different test",
-    "Fixed: results no longer repeat the test name (\"Urinalysis: Urinalysis…\")",
-    "Suggested questions are written properly: \"What's wrong?\" instead of \"whats wrong\"",
-    "US hospital words on the Talk buttons: Nausea med, Emesis bag, Bathroom, Bed bath",
-    "Sound, Beep and Alarms have proper icons and fit on one line with the volume",
-    "The alarm lights are a clean strip along the top of the monitor",
-    "Short, uncut hints in every search and typing box; \"tap\" instead of \"click\" on the phone",
-    "Menu: full-width choices, spaced icons, one style for buttons that are on, and settings laid out as tidy rows",
-    "The empty chart says what will appear in it"
+    "The QT interval on the monitor now follows the heart rate, as a real one does: shorter when the heart is fast, longer when it is slow. Before, every beat had the T wave in the same place, so a fast sinus rhythm looked like a long QT and a slow one looked like a short one",
+    "Checked against adult ECG norms at every rate: P wave, PR, QRS, ST and T heights are normal, and the QTc stays about 380-420 ms from 46 to 150 beats a minute"
   ],
   "changelog": [
+    {
+      "v": "1.64",
+      "date": "2026-10-27",
+      "major": false,
+      "title": "A truer heart trace",
+      "notes": [
+        "The QT interval on the monitor now follows the heart rate, as a real one does: shorter when the heart is fast, longer when it is slow. Before, every beat had the T wave in the same place, so a fast sinus rhythm looked like a long QT and a slow one looked like a short one",
+        "Checked against adult ECG norms at every rate: P wave, PR, QRS, ST and T heights are normal, and the QTc stays about 380-420 ms from 46 to 150 beats a minute"
+      ]
+    },
     {
       "v": "1.63",
       "date": "2026-10-06",
@@ -834,7 +834,7 @@
       ]
     }
   ],
-  "page": "clinicalsim-1.63.html",
-  "sha256": "5cbd4c31a55eac627ac04b04d9515aedef21882725ee924fdb9463fbbce43f4b",
-  "size": 4468612
+  "page": "clinicalsim-1.64.html",
+  "sha256": "ea211224423a3c665803d7bf183dbe8ec8b3cf09c602be17ade769d7fb847adf",
+  "size": 4469876
 }
