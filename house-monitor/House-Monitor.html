@@ -6,7 +6,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-10-30.2';
+var HM_BUILD = '2026-10-30.3';
 (function () {
   try {
     if (window.__hmSwapped) return;
@@ -443,6 +443,9 @@ const arrPri = id => { const a = S.arr[id]; return a && a.pri && a.pri !== 'off'
 const TEST_ALARMS = [
   // id, button label, alarm message, parameter, priority
   ['asys', 'Asystole', () => 'Asystole', 'hr', () => 'high'],
+  // the two halves of the asystole sound on their own: the steady flatline tone, or the "beR beR beR" alone
+  ['flatonly', 'Flatline only', () => 'Asystole', 'hr', () => 'high', 'asys'],
+  ['beronly', 'Three-beep only', () => 'Asystole', 'hr', () => 'high', 'asys'],
   ['vfib', 'V Fib / V Tach', () => 'V Fib/V Tach', 'hr', () => 'high'],
   ['vtach', 'V Tach', () => 'V Tach', 'hr', () => arrPri('vtach')],
   ['xtachy', 'Extreme Tachy', () => 'Extreme Tachy ' + S.xtachy, 'hr', () => arrPri('xtachy')],
@@ -468,7 +471,7 @@ const TEST_ALARMS = [
 ];
 // the House sounds, each with what it is there to alert for, and the alarms that use it (at their default priorities)
 const TEST_SOUNDS = [
-  ['Flatline + three-beep', 'Cardiac arrest: the heart has stopped (asystole). The steady tone with "beR beR beR" under it', ['asys']],
+  ['Flatline + three-beep', 'Cardiac arrest: the heart has stopped (asystole). The steady tone with "beR beR beR" under it; each can be played on its own', ['asys', 'flatonly', 'beronly']],
   ['Fast beeping + beep beep', 'Lethal rhythm: ventricular fibrillation / V tach, shock now', ['vfib', 'vtach']],
   ['Fast beeping', 'Crisis (red, master warning): a life-threatening number, act now', ['xtachy', 'xbrady', 'spo2desat']],
   ['Two-tone (pulse-ox + fast beeping)', 'Crisis with the oxygen falling: severe desaturation, as in the seizure scene', ['twotone']],
@@ -1442,7 +1445,9 @@ function setFlatline(on) {
 function audioTick() {
   if (!AC) return;
   const list = (powered && !standby) ? audibleAlarms() : [];
-  const flat = S.tvFlatline && list.some(a => a.id === 'asys' && !a.latched);
+  // alarm test of one half of the asystole sound: the flatline alone or the three-beep alone
+  const solo = alarmTest === 'flatonly' || alarmTest === 'beronly' ? alarmTest : null;
+  const flat = solo ? solo === 'flatonly' : S.tvFlatline && list.some(a => a.id === 'asys' && !a.latched);
   setFlatline(flat);
   const set = TONESETS[S.toneSet] || TONESETS.carescape;
   // TV mode: pulse-ox alarms sound on their own channel, alongside the ECG alarm sound
@@ -1456,7 +1461,7 @@ function audioTick() {
   // (the seizure scene is that two-tone from the first SpO2 alarm on, so its red Extreme Tachy never cuts the tone)
   // a red SpO2 alarm (Desat) is the fast beeping alone, like any other red alarm; only the seizure and arrest scenes
   // keep the pulse-ox tone under it, as heard in those clips
-  const ox = !!set.ox && oxTop > 0 && (flat || alarmTest === 'twotone' || R.scene === 'seizure' || (oxTop < 3 && oxTop >= otherTop));
+  const ox = !solo && !!set.ox && oxTop > 0 && (flat || alarmTest === 'twotone' || R.scene === 'seizure' || (oxTop < 3 && oxTop >= otherTop));
   if (ox && !oxOn) {
     nextOx = AC.currentTime + 0.05;
     // join the running fast beeping in step: the next fast beep lands syncOff into the pulse-ox beep
@@ -1469,6 +1474,7 @@ function audioTick() {
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
   if (flat) name = 'ber';
+  if (solo) name = solo === 'beronly' && set.ber ? 'ber' : null;
   // ...and the seizure scene: only the pulse-ox tone and the fast beeping, never the yellow "beep beep"
   if (S.toneSet === 'classic' && R.scene === 'seizure' && name === 'medium') name = null;
   if (name !== audioName) {
