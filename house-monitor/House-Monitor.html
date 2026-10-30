@@ -6,7 +6,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-10-30.1';
+var HM_BUILD = '2026-10-30.2';
 (function () {
   try {
     if (window.__hmSwapped) return;
@@ -312,6 +312,9 @@ table.lt th{color:#9fb3c8;font-weight:600;position:sticky;top:0;background:var(-
 #instr .tl1 .tlAt{width:52px;flex:none}#instr .tl1 .tlSay{flex:1}#instr .tl1 select{flex:1;min-width:0;font-size:12px}
 #instr .tl1 label{display:flex;flex-direction:column;font-size:10.5px;color:#7f9ab8;flex:1;min-width:44px}
 #instr .tl1 label input{width:100%}#instr .tl1 label.tlc{flex-direction:row;align-items:center;gap:4px;font-size:12px;color:#c2cfdd;flex:none}
+#instr .tsnd{margin:12px 0 5px;line-height:1.35}
+#instr .tsnd b{display:block;color:#e6eef8;font-size:13.5px}
+#instr .tsnd span{color:#9fb3c8;font-size:12px}
 #instr .presets button.sel{background:#2f6db5;border-color:#7fb0ff}
 #instr .hint{color:#7f9ab8;font-size:11.5px;line-height:1.4}
 </style>
@@ -445,6 +448,8 @@ const TEST_ALARMS = [
   ['xtachy', 'Extreme Tachy', () => 'Extreme Tachy ' + S.xtachy, 'hr', () => arrPri('xtachy')],
   ['xbrady', 'Extreme Brady', () => 'Extreme Brady ' + S.xbrady, 'hr', () => arrPri('xbrady')],
   ['spo2desat', 'SpO2 Desat', () => { const d = S.desat || (S.cat === 'Neonate' ? 80 : 85); return 'SpO2 Desat ' + (d - 3) + ' < ' + d; }, 'spo2', () => 'high'],
+  // the seizure / arrest two-tone: a red SpO2 Desat with the pulse-ox tone kept on over the fast beeping
+  ['twotone', 'SpO2 Desat (seizure)', () => { const d = S.desat || (S.cat === 'Neonate' ? 80 : 85); return 'SpO2 Desat ' + (d - 6) + ' < ' + d; }, 'spo2', () => 'high', 'spo2desat'],
   ['tachy', 'Tachy', () => fmtLimMsg('HR', S.lim.hr.hi + 10, 1, S.lim.hr.hi).replace('HR High', 'Tachy'), 'hr', () => arrPri('tachy')],
   ['brady', 'Brady', () => fmtLimMsg('HR', S.lim.hr.lo - 8, -1, S.lim.hr.lo).replace('HR Low', 'Brady'), 'hr', () => arrPri('brady')],
   ['vt2', 'VT>2', () => 'VT>2', 'hr', () => arrPri('vt2')],
@@ -461,7 +466,32 @@ const TEST_ALARMS = [
   ['spo2art', 'SpO2 Artifact', () => 'SpO2 Artifact', 'spo2', () => 'low'],
   ['batlow', 'Battery Low', () => 'Battery Low', null, () => 'medium'],
 ];
+// the House sounds, each with what it is there to alert for, and the alarms that use it (at their default priorities)
+const TEST_SOUNDS = [
+  ['Flatline + three-beep', 'Cardiac arrest: the heart has stopped (asystole). The steady tone with "beR beR beR" under it', ['asys']],
+  ['Fast beeping + beep beep', 'Lethal rhythm: ventricular fibrillation / V tach, shock now', ['vfib', 'vtach']],
+  ['Fast beeping', 'Crisis (red, master warning): a life-threatening number, act now', ['xtachy', 'xbrady', 'spo2desat']],
+  ['Two-tone (pulse-ox + fast beeping)', 'Crisis with the oxygen falling: severe desaturation, as in the seizure scene', ['twotone']],
+  ['Pulse-ox beeping', 'Oxygen alarm (pulse oximeter): low saturation, no pulse at the finger, probe off', ['spo2Lo', 'spo2nop', 'spo2off', 'spo2art']],
+  ['Beep beep (two-beep)', 'Warning (yellow, master caution): needs attention soon', ['tachy', 'brady', 'vt2', 'pause', 'leads', 'nibpSLo', 'nibpSHi', 'batlow']],
+  ['Single beep', 'Advisory (blue): for information, not urgent', ['couplet', 'pvc', 'afib']],
+];
 let alarmTest = null;
+// "Disconnect patient": every lead, probe and cuff unplugged, as a monitor with nothing attached: no waveforms, no
+// numbers, no alarms of its own, so the only alarm is the one being tested. Reconnect puts it all back.
+let unplugged = null;
+function setUnplugged(on) {
+  if (on && !unplugged) {
+    unplugged = {sen: Object.assign({}, SEN), nb: NB.last, auto: S.nibpAuto};
+    for (const k of ['ecg', 'spo2', 'art', 'cvp', 'co2', 'nibp', 'temp']) SEN[k] = 'none';
+    NB.state = 'idle'; NB.cuff = 0; NB.last = null; NB.err = null; S.nibpAuto = 0; NB.nextAuto = null;
+  } else if (!on && unplugged) {
+    Object.assign(SEN, unplugged.sen); NB.last = unplugged.nb; S.nibpAuto = unplugged.auto;
+    NB.nextAuto = S.nibpAuto ? simT + 2 : null; unplugged = null;
+  }
+  alarms = {}; pending = {};
+  layout(); syncInstr(); syncTestButtons();
+}
 function setTestAlarm(id) {
   ensureAudio();
   alarmTest = id && (!alarmTest || alarmTest !== id) ? id : null;
@@ -473,6 +503,7 @@ function syncTestButtons() {
   const box = $('#iTests'); if (!box) return;
   box.querySelectorAll('[data-test]').forEach(b => b.classList.toggle('sel', b.dataset.test === alarmTest));
   const st = $('#iTestStop'); if (st) st.classList.toggle('on', !!alarmTest);
+  const u = $('#iUnplug'); if (u) { u.classList.toggle('on', !!unplugged); u.textContent = unplugged ? 'Reconnect patient' : 'Disconnect patient'; }
 }
 const PALETTE = {Green:'#00ff3c', Red:'#ff2a2a', Yellow:'#ffee00', Cyan:'#00e5ff', Blue:'#4aa3ff', White:'#ffffff', Magenta:'#ff4dff', Orange:'#ff9a1a'};
 
@@ -974,6 +1005,7 @@ function computeMeasures(dt) {
 const NB = {state:'idle', cuff:0, target:0, stepT:0, t0:0, last:null, nextAuto:null, statUntil:0, err:null};
 function nibpStart() {
   if (standby || !powered) return;
+  if (SEN.nibp === 'none') { toast('No NIBP cuff connected'); return; }
   if (NB.state !== 'idle') { NB.state = 'idle'; NB.cuff = 0; toast('NIBP measurement stopped'); return; }
   NB.state = 'infl'; NB.cuff = 0; NB.t0 = simT; NB.err = null;
   NB.target = Math.max(150, Math.min(260, (NB.last ? NB.last.s : P.sys) + 35));
@@ -1169,10 +1201,10 @@ function evalAlarms() {
 
   // alarm test: only the chosen alarm, as the monitor raises it
   if (alarmTest) {
-    const d = TEST_ALARMS.find(x => x[0] === alarmTest);
+    const d = TEST_ALARMS.find(x => x[0] === alarmTest), id = d ? d[5] || d[0] : null;
     for (const k in cur) delete cur[k];
-    for (const k in alarms) if (k !== alarmTest) delete alarms[k];
-    if (d) cur[d[0]] = {pri: d[4](), msg: d[2](), param: d[3], bt: ['asys', 'vfib', 'vtach'].includes(d[0])};
+    for (const k in alarms) if (k !== id) delete alarms[k];
+    if (d) cur[id] = {pri: d[4](), msg: d[2](), param: d[3], bt: ['asys', 'vfib', 'vtach'].includes(id)};
   }
   // merge into active set
   for (const id in cur) {
@@ -1424,7 +1456,7 @@ function audioTick() {
   // (the seizure scene is that two-tone from the first SpO2 alarm on, so its red Extreme Tachy never cuts the tone)
   // a red SpO2 alarm (Desat) is the fast beeping alone, like any other red alarm; only the seizure and arrest scenes
   // keep the pulse-ox tone under it, as heard in those clips
-  const ox = !!set.ox && oxTop > 0 && (flat || R.scene === 'seizure' || (oxTop < 3 && oxTop >= otherTop));
+  const ox = !!set.ox && oxTop > 0 && (flat || alarmTest === 'twotone' || R.scene === 'seizure' || (oxTop < 3 && oxTop >= otherTop));
   if (ox && !oxOn) {
     nextOx = AC.currentTime + 0.05;
     // join the running fast beeping in step: the next fast beep lands syncOff into the pulse-ox beep
@@ -2411,8 +2443,10 @@ function buildInstructor() {
    <div class="ir"><label>Transition</label><div class="seg" id="iRamp">${[0, 10, 30, 60, 120].map(s => `<button class="sb" data-ramp="${s}">${s ? (s < 60 ? s + 's' : s / 60 + 'm') : 'Now'}</button>`).join('')}</div></div>`;
   for (const [k, lab, mn, mx, st] of SLIDERS) h += `<div class="ir"><label>${lab}</label><input type="range" min="${mn}" max="${mx}" step="${st}" id="s_${k}"><output id="o_${k}"></output></div>`;
   const dot = p => `<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:${p === 'high' ? '#ff3030' : p === 'medium' ? '#ffd000' : '#18d8ff'}"></i>`;
-  h += `<h3>Test alarms</h3><div class="hint">Tap an alarm to make the monitor raise it, with its real sound and screen. Real alarms are held back during the test. Tap it again or Stop to end.</div>
-   <div class="presets" id="iTests">${TEST_ALARMS.map(d => `<button data-test="${d[0]}">${dot(d[4]())}${d[1]}</button>`).join('')}</div>
+  h += `<h3>Test alarms</h3><div class="hint">Disconnect the patient for a monitor with nothing attached (no waveforms, numbers or alarms), then tap an alarm to make the monitor raise just that one, with its real sound and screen. Tap it again or Stop to end.</div>
+   <div class="ir"><label></label><div class="seg"><button class="sb" id="iUnplug">Disconnect patient</button></div></div>
+   <div id="iTests">${TEST_SOUNDS.map(([snd, means, ids]) => `<div class="tsnd"><b>${snd}</b><span>${means}</span></div>
+     <div class="presets">${ids.map(id => { const d = TEST_ALARMS.find(x => x[0] === id); return `<button data-test="${id}">${dot(d[4]())}${d[1]}</button>`; }).join('')}</div>`).join('')}</div>
    <div class="ir"><label></label><div class="seg"><button class="sb" id="iTestStop">&#9632; Stop test</button></div></div>`;
   h += `<h3>NBP</h3>
    <div class="ir"><label>Cuff</label><div class="seg"><button class="sb" id="iNbp">Measure now</button><button class="sb" id="iNbpNow">Instant result</button></div></div>`;
@@ -2472,6 +2506,7 @@ function buildInstructor() {
     save(); layout(); syncInstr(); };
   I.querySelectorAll('[data-test]').forEach(b => b.onclick = () => setTestAlarm(b.dataset.test));
   $('#iTestStop').onclick = () => setTestAlarm(null);
+  $('#iUnplug').onclick = () => setUnplugged(!unplugged);
   syncTestButtons();
   $('#iNbp').onclick = () => { ensureAudio(); if (NB.state === 'idle') nibpStart(); };
   $('#iNbpNow').onclick = () => {   // skip the 20 s cuff cycle: post a reading of the current pressure at once
