@@ -6,7 +6,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-10-30.3';
+var HM_BUILD = '2026-11-01.1';
 (function () {
   try {
     if (window.__hmSwapped) return;
@@ -572,8 +572,16 @@ const ECTOPY = {none:'None', pvc:'Occasional PVCs', freq:'Frequent PVCs', bigem:
   couplet:'Couplets', nsvt:'Runs of VT (3-5)', ront:'R on T PVCs'};
 
 function addBeat(b) {
-  const prev = beats.length ? beats[beats.length - 1] : null;
-  if (prev && b.k !== 'P' ) { for (let i = beats.length - 1; i >= 0; i--) if (beats[i].k !== 'P') { beats[i].next = b.t; break; } }
+  if (b.k !== 'P') {
+    let pq = null;
+    for (let i = beats.length - 1; i >= 0; i--) if (beats[i].k !== 'P') { beats[i].next = b.t; pq = beats[i]; break; }
+    // the R-R before the beat sets its QT (a beat after a pause has a longer QT, one after a short R-R a shorter one)
+    if (pq && b.t - pq.t < 3) b.prr = b.t - pq.t;
+    // no two beats are the same: the QRS grows and shrinks a few per cent with breathing (the heart moves against the
+    // electrodes) and each stroke volume differs by a couple of per cent
+    if (b.amp == null) b.amp = 1 - 0.08 * (respPhase(b.t) - 0.42) + rnd(-0.015, 0.015);
+    if (b.perf > 0) b.perf *= rnd(0.98, 1.02);
+  }
   b.det = false; beats.push(b);
 }
 function noPulse() { return R.pulseless || R.rhythm === 'pea' || (R.rhythm === 'vt' && !R.vtPulse); }
@@ -585,8 +593,19 @@ function scheduleBeats(until) {
     const perfN = noPulse() ? 0 : 1;
     if (rh === 'vf' || rh === 'asys') { schedT += 0.5; continue; }
     if (rh === 'vt' || rh === 'idio') {
+      // VT: AV dissociation - the sinus node keeps firing at its own rate, so P waves march through the wide complexes
+      // (seen now and then between them) and the atria squeezing against closed valves give cannon a waves on the CVP
+      if (rh === 'vt') {
+        if (!R.vtA) R.vtA = {pp: 60 / rnd(70, 100)};
+        while (atrialT < schedT) {
+          const sinceQ = atrialT - lastQRS;
+          addBeat({t: atrialT, k: 'P', hasP: true, pr: 0, rr: R.vtA.pp, perf: 0, cannon: sinceQ >= 0 && sinceQ < 0.35});
+          atrialT += R.vtA.pp * rnd(0.98, 1.02);
+        }
+      }
       addBeat({t: schedT, k: 'V', hasP: false, rr: rr, perf: rh === 'vt' ? (R.vtPulse && !R.pulseless ? 0.55 : 0) : (R.pulseless ? 0 : 0.8)});
-      lastQRS = schedT; schedT += rr * rnd(0.98, 1.02); continue;
+      // monomorphic VT is regular within a few per cent; torsades is irregular (200-250/min, R-R +-15 %)
+      lastQRS = schedT; schedT += rr * (rh === 'vt' && R.vtPoly ? rnd(0.85, 1.15) : rnd(0.98, 1.02)); continue;
     }
     if (rh === 'paced') {
       addBeat({t: schedT, k: 'Vp', hasP: false, rr: rr, perf: perfN}); lastQRS = schedT; schedT += rr; continue;
@@ -597,9 +616,16 @@ function scheduleBeats(until) {
       lastQRS = schedT; schedT += r; continue;
     }
     if (rh === 'aflut') {
-      const ratio = clamp(Math.round(300 / hr), 2, 6);
-      addBeat({t: schedT, k: 'N', hasP: false, rr: ratio * 0.2, perf: perfN});
-      lastQRS = schedT; schedT += ratio * 0.2; continue;
+      // typical flutter: one re-entry circuit, 285-315/min for the episode and very regular; every 2nd wave (or 4th) is
+      // conducted, each QRS the same time after its flutter wave. A rate between two even ratios is a variable block
+      // (2:1 mixed with 4:1, irregular), never a steady odd 3:1
+      if (!R.fl) R.fl = {cl: 60 / rnd(285, 315), fr: rnd(0.22, 0.28)};
+      const x = rr / R.fl.cl; let n = 2 * Math.round(x / 2);
+      if (Math.abs(x - n) > 0.15) { const lo = Math.max(2, 2 * Math.floor(x / 2)), hi = lo + 2; n = Math.random() < (hi - x) / 2 ? lo : hi; }
+      n = clamp(n, 2, 8);
+      const t = R.fl.fr + Math.ceil((schedT - R.fl.fr) / R.fl.cl - 1e-6) * R.fl.cl;
+      addBeat({t: t + rnd(-0.004, 0.004), k: 'N', hasP: false, rr: n * R.fl.cl, perf: perfN});
+      lastQRS = t; schedT = t + n * R.fl.cl; continue;
     }
     if (rh === 'avb3') {
       // Complete heart block (LITFL; Essential ECG; PMC6652288, PMC322298, PMC4837247):
@@ -619,7 +645,11 @@ function scheduleBeats(until) {
       }
       // the escape focus: junctional (narrow, 40-60/min, e.g. inferior MI) or ventricular (wide, 20-40/min, degenerative /
       // anterior MI). Regular, but not metronomic: junctional ±2.5 %, ventricular ±4 %. QT long at these rates (~0.5 s).
-      const junct = hr >= 40;
+      // the escape focus is set for the episode (narrow junctional if it starts at 40/min or more, wide ventricular
+      // below), so a rate drifting across 40 does not change the QRS shape halfway through
+      const tg = RAMP.hr ? RAMP.hr.to : P.hr;
+      if (R.chb.junct == null) R.chb.junct = tg >= 40; else if (tg >= 46) R.chb.junct = true; else if (tg < 34) R.chb.junct = false;
+      const junct = R.chb.junct;
       const prevP = beats.filter(b => b.k === 'P' && b.t <= schedT).pop(), pq = prevP ? schedT - prevP.t : 9;
       // stroke volume varies beat to beat with P timing (atrial kick ~25 % of SV): best with a P 120-200 ms before the
       // QRS, a little less 80-300 ms, least when no P precedes it or the P is buried in the QRS
@@ -628,38 +658,58 @@ function scheduleBeats(until) {
       lastQRS = schedT; schedT += rr * rnd(junct ? 0.975 : 0.96, junct ? 1.025 : 1.04); continue;
     }
     if (rh === 'wenck') {
-      const pp = rr * 0.75; // 4:3 conduction
-      const seq = [0.16, 0.26, 0.32];
-      if (wenckIdx < 3) {
+      // groups vary as they do in patients (3:2, 4:3, 5:4, 6:5); the PR grows by less each beat (+0.10, +0.06, +0.04,
+      // +0.03 s), so the R-R shortens before the dropped P and the pause is shorter than two P-P intervals.
+      // Mean conduction 3.5 of 4.5 P waves sets the atrial rate for the chosen ventricular rate.
+      if (wenckIdx === 0) R.wkN = [2, 3, 3, 4, 4, 5][Math.floor(Math.random() * 6)];
+      const pp = rr * 0.778 * rnd(0.99, 1.01);
+      const seq = [0.16, 0.26, 0.32, 0.36, 0.39];
+      if (wenckIdx < R.wkN) {
         const pr = seq[wenckIdx];
         addBeat({t: schedT + pr, k: 'N', hasP: true, pr: pr, rr: rr, perf: perfN}); lastQRS = schedT + pr;
       } else addBeat({t: schedT, k: 'P', hasP: true, pr: 0, rr: rr, perf: 0});
-      wenckIdx = (wenckIdx + 1) % 4; schedT += pp; continue;
+      wenckIdx = wenckIdx >= R.wkN ? 0 : wenckIdx + 1; schedT += pp; continue;
     }
     if (rh === 'mob2') {
-      const pp = rr * 0.6667; // 3:2 conduction
-      if (mob2Idx < 2) { addBeat({t: schedT + 0.2, k: 'N', hasP: true, pr: 0.2, rr: rr, perf: perfN}); lastQRS = schedT + 0.2; }
+      // constant PR, then a P with no QRS without warning: mostly 3:2, now and then 4:3 (mean 2.25 of 3.25 conducted)
+      if (mob2Idx === 0) R.m2N = Math.random() < 0.75 ? 2 : 3;
+      const pp = rr * 0.692 * rnd(0.99, 1.01);
+      if (mob2Idx < R.m2N) { addBeat({t: schedT + 0.2, k: 'N', hasP: true, pr: 0.2, rr: rr, perf: perfN}); lastQRS = schedT + 0.2; }
       else addBeat({t: schedT, k: 'P', hasP: true, pr: 0, rr: rr, perf: 0});
-      mob2Idx = (mob2Idx + 1) % 3; schedT += pp; continue;
+      mob2Idx = mob2Idx >= R.m2N ? 0 : mob2Idx + 1; schedT += pp; continue;
     }
     // sinus-family (nsr, sbrady, stach, avb1, svt, junct, pea) + ectopy
     const hasP = !(rh === 'svt' || rh === 'junct');
-    const pr = rh === 'avb1' ? 0.30 : 0.16;
+    // the PR shortens a little as the sinus rate rises (0.17 s at 45/min, 0.16 at 75, 0.14 at 125)
+    const pr = rh === 'avb1' ? 0.30 : clamp(0.16 - 0.0004 * (hr - 75), 0.13, 0.18);
+    // junctional: per episode the retrograde P is hidden in the QRS, inverted just after it (in the ST segment) or
+    // inverted just before it with a PR under 0.12 s
+    if (rh === 'junct' && !R.jun) { const u = Math.random(); R.jun = {rp: u < 0.45 ? null : u < 0.8 ? rnd(0.09, 0.14) : -rnd(0.07, 0.10)}; }
     const nV = ectopyDecide(beatN++);
     if (nV > 0 && rh !== 'pea') {
-      const coupling = R.ectopy === 'ront' ? 0.30 : clamp(rr * 0.6, 0.34, 0.7);
+      const coupling = R.ectopy === 'ront' ? 0.30 : clamp(rr * 0.6, 0.34, 0.7), run = nV > 2 ? rnd(0.3, 0.42) : 0.4;
       let t = lastQRS + coupling;
       if (t < schedT - rr * 0.95) t = schedT - rr * 0.4;
       for (let i = 0; i < nV; i++) {
         const perf = (coupling < 0.36 || i > 0) ? 0.15 : 0.45;
-        addBeat({t: t, k: 'V', hasP: false, rr: i ? 0.4 : coupling, perf: noPulse() ? 0 : perf, ront: R.ectopy === 'ront' && i === 0});
-        lastQRS = t; t += 0.4;
+        addBeat({t: t, k: 'V', hasP: false, rr: i ? run : coupling, perf: noPulse() ? 0 : perf, ront: R.ectopy === 'ront' && i === 0});
+        lastQRS = t; t += run;
       }
+      // the sinus P of the beat the PVC replaced still comes on time, buried in the PVC's ST-T, and is not conducted
+      // (that is why the pause is fully compensatory)
+      if (hasP && nV === 1 && schedT > lastQRS + 0.05) addBeat({t: schedT, k: 'P', hasP: true, pr: 0, rr: rr, perf: 0, cannon: schedT - lastQRS < 0.35});
       schedT = Math.max(schedT + rr, lastQRS + rr * 1.1); // compensatory pause
       continue;
     }
-    const r = rr * rnd(0.975, 1.025);
-    addBeat({t: schedT, k: 'N', hasP: hasP, pr: pr, rr: r, perf: perfN});
+    let r;
+    if (rh === 'svt') r = rr * rnd(0.995, 1.005);   // re-entry: almost metronomic
+    else {
+      // sinus node (and, much less, the junction): respiratory sinus arrhythmia - faster while breathing in - largest
+      // at rest and nearly gone in a fast tachycardia, a slow ~0.1 Hz drift, and a little beat-to-beat noise
+      const rsa = (rh === 'junct' ? 0.3 : 1) * clamp(0.075 * (1 - (hr - 60) / 75), 0.006, 0.075);
+      r = rr * (1 - rsa * (P.rr >= 1 ? respPhase(schedT) - 0.42 : 0) + (rh === 'junct' ? 0.006 : 0.012) * Math.sin(2 * Math.PI * 0.095 * schedT + 1.3) + rnd(-0.006, 0.006));
+    }
+    addBeat({t: schedT, k: 'N', hasP: hasP, pr: pr, rr: r, perf: perfN, rp: rh === 'junct' && R.jun ? R.jun.rp : null});
     lastQRS = schedT; schedT += r;
   }
   // prune
@@ -682,7 +732,8 @@ function scheduleBreaths(until) {
   while (breathT < until && guard++ < 20) {
     if (P.rr < 1) { if (breathT > simT + 1) break; breathT += 0.5; continue; }
     const per = 60 / P.rr * rnd(0.95, 1.05);
-    breaths.push({t: breathT, per: per, ti: Math.min(per * 0.36, 1.6), et: P.etco2});
+    // no two breaths alike: depth +-10 %, end-tidal CO2 +-0.6 mmHg
+    breaths.push({t: breathT, per: per, ti: Math.min(per * 0.36, 1.6), et: P.etco2 > 5 ? P.etco2 + rnd(-0.6, 0.6) : P.etco2, depth: rnd(0.9, 1.1)});
     breathT += per;
   }
   const cut = simT - 30; let i = 0; while (i < breaths.length && breaths[i].t < cut) i++; if (i) breaths.splice(0, i);
@@ -700,25 +751,33 @@ function beatECG(b, tau, L) {
   if (b.hasP) v += 0.2 * L.p * gauss(tau, -b.pr + 0.05, 0.027);
   if (b.k === 'P') return v;
   if (b.k === 'N') {
-    const qt = b.qt || clamp(0.38 * Math.sqrt(b.rr), 0.26, 0.44);
-    v += -0.08 * L.s * gauss(tau, 0.012, 0.009) + 1.15 * L.r * gauss(tau, 0.036, 0.011) - 0.3 * L.s * gauss(tau, 0.062, 0.011);
-    if (P.st) { const a = clamp((tau - 0.07) / 0.03, 0, 1) * clamp((qt - 0.04 - tau) / 0.08, 0, 1); v += P.st * 0.1 * Math.sign(L.r || 1) * a; }
-    // T wave ~0.25 mV in lead II (a quarter of the R): it was 0.11 mV, a tenth of the R, which reads as flattened T waves
-    v += 0.7 * L.t * gauss(tau, qt - 0.09, 0.045);
+    // QT from the preceding R-R (QTc ~0.39 s, so 0.35 s at 75/min, 0.25 s at 185/min); R.qtx = QT-prolonging drug or
+    // low K+, R.qrsx = a widened QRS (tricyclics, high K+), R.tx = tall peaked T waves (high K+)
+    const qt = b.qt || clamp(0.39 * Math.sqrt(clamp(b.prr || b.rr, 0.3, 2)), 0.22, 0.48) * (R.qtx || 1);
+    const a = b.amp || 1, w = R.qrsx || 1, tx = R.tx || 1;
+    // narrow QRS ~85 ms (Q, R, S), upright in II
+    v += a * (-0.08 * L.s * gauss(tau, 0.014 * w, 0.01 * w) + 1.15 * L.r * gauss(tau, 0.041 * w, 0.0125 * w) - 0.3 * L.s * gauss(tau, 0.071 * w, 0.0125 * w));
+    if (b.rp != null) v -= 0.13 * L.p * gauss(tau, b.rp + 0.035, 0.019);   // retrograde (inverted) junctional P
+    if (P.st) { const s = clamp((tau - 0.08 * w) / 0.03, 0, 1) * clamp((qt - 0.04 - tau) / 0.08, 0, 1); v += P.st * 0.1 * Math.sign(L.r || 1) * s; }
+    // T wave ~0.25 mV in lead II (a quarter of the R); narrower at fast rates, and narrow and tall when peaked
+    const sd = 0.045 * clamp(qt / 0.34, 0.7, 1.25) / Math.sqrt(Math.max(1, tx));
+    v += 0.7 * L.t * tx * gauss(tau, qt - 2 * sd, sd);
     return v;
   }
   if (b.k === 'E') {
     // ventricular escape in CHB, the classic "wide and bizarre" lead II picture: a broad notched upright QRS (~160 ms,
     // ~1.5 mV, 7-8x the P wave) with a deep discordant T, late because the QT is long at this rate
     const qt = b.qt || 0.54;
-    v += L.w * (1.05 * gauss(tau, 0.05, 0.03) + 0.62 * gauss(tau, 0.112, 0.027) - 0.14 * gauss(tau, 0.165, 0.02));
+    v += (b.amp || 1) * L.w * (1.05 * gauss(tau, 0.05, 0.03) + 0.62 * gauss(tau, 0.112, 0.027) - 0.14 * gauss(tau, 0.165, 0.02));
     v -= 0.45 * L.w * gauss(tau, qt - 0.14, 0.085);
     return v;
   }
   // wide complexes: V (PVC / VT / idioventricular), Vp (paced)
   let off = 0;
   if (b.k === 'Vp') { if (tau >= 0 && tau < 0.006) v += 2.2; off = 0.02; }
-  const sc = b.k === 'E' ? 0.75 : 1;
+  // torsades: the QRS axis twists around the baseline, the complexes growing and shrinking and flipping every ~10 beats
+  let sc = b.amp || 1;
+  if (R.vtPoly && R.rhythm === 'vt' && b.k === 'V') { const c = Math.cos(Math.PI * b.t / 2.6); sc *= (0.25 + 0.85 * Math.abs(c)) * (c < 0 ? -1 : 1); }
   const tw = Math.min(0.3, Math.max(0.17, b.rr * 0.55));
   const x = tau - off;
   v += sc * (1.35 * L.w * gauss(x, 0.05, 0.03) - 0.55 * L.w * gauss(x, 0.13, 0.03) - 0.42 * L.w * gauss(x, tw, 0.065));
@@ -736,13 +795,21 @@ function ecgAt(t, lead) {
     v += beatECG(b, tau, L);
   }
   const rh = R.rhythm;
-  if (rh === 'afib') v += L.p * (0.05 * Math.sin(2 * Math.PI * 6.1 * t) + 0.035 * Math.sin(2 * Math.PI * 8.3 * t + 2) + 0.02 * Math.sin(2 * Math.PI * 4.7 * t + 1));
-  else if (rh === 'aflut') { const ph = (t * 5) % 1; v += L.p * -0.2 * (ph < 0.8 ? ph / 0.8 : 1 - (ph - 0.8) / 0.2) + 0.1 * L.p; }
+  // f waves: 350-600/min, never repeating - three generators whose rates and sizes wander (fine-to-medium, <0.2 mV in II)
+  if (rh === 'afib') v += L.p * (0.045 * Math.sin(2 * Math.PI * 6.1 * t + 1.7 * Math.sin(2 * Math.PI * 0.37 * t)) * (0.7 + 0.3 * Math.sin(2 * Math.PI * 0.23 * t + 1))
+    + 0.032 * Math.sin(2 * Math.PI * 7.9 * t + 2 + 1.3 * Math.sin(2 * Math.PI * 0.29 * t + 2)) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 0.41 * t))
+    + 0.022 * Math.sin(2 * Math.PI * 5.2 * t + 1 + 2 * Math.sin(2 * Math.PI * 0.19 * t)));
+  // flutter waves: negative sawtooth in II, on the same circuit timing the QRS complexes follow
+  else if (rh === 'aflut') { const ph = (t / (R.fl ? R.fl.cl : 0.2)) % 1; v += L.p * -0.2 * (ph < 0.8 ? ph / 0.8 : 1 - (ph - 0.8) / 0.2) + 0.1 * L.p; }
   else if (rh === 'vf') {
-    const a = (R.vfCoarse ? 0.55 : 0.16) * (0.7 + 0.3 * Math.sin(0.45 * t));
-    v += a * (0.6 * Math.sin(2 * Math.PI * 4.6 * t + 1.4 * Math.sin(0.7 * t)) + 0.3 * Math.sin(2 * Math.PI * 6.2 * t + 0.5) + 0.2 * Math.sin(2 * Math.PI * 2.9 * t)) * Math.sign(L.w || 1);
+    // chaotic: a dominant 4-6 Hz (240-370/min) whose rate keeps drifting, size waxing and waning; coarse ~0.5-1.2 mV
+    // peak to peak, fine ~0.15-0.3 mV
+    const a = (R.vfCoarse ? 0.55 : 0.16) * (0.7 + 0.18 * Math.sin(2 * Math.PI * 0.21 * t) + 0.1 * Math.sin(2 * Math.PI * 0.53 * t + 2) + 0.12 * Math.sin(2 * Math.PI * 0.9 * t + 1));
+    const ph = 2 * Math.PI * 5.0 * t + 3.2 * Math.sin(2 * Math.PI * 0.17 * t) + 1.6 * Math.sin(2 * Math.PI * 0.43 * t + 1) + 0.9 * Math.sin(2 * Math.PI * 1.3 * t + 0.5);
+    v += a * (0.65 * Math.sin(ph) + 0.25 * Math.sin(2 * Math.PI * 7.1 * t + 2.4 * Math.sin(2 * Math.PI * 0.29 * t)) + 0.15 * Math.sin(2 * Math.PI * 3.1 * t + 1.5 * Math.sin(2 * Math.PI * 0.11 * t))) * Math.sign(L.w || 1);
   }
-  v += 0.02 * Math.sin(2 * Math.PI * 0.25 * t); // baseline wander
+  // baseline wander: the chest moving with each breath plus a slow drift (electrode/skin), a few hundredths of a mV
+  v += 0.025 * respPhase(t) + 0.015 * Math.sin(2 * Math.PI * 0.07 * t) + 0.008 * Math.sin(2 * Math.PI * 0.23 * t + 1);
   if (R.artifact) v += 0.18 * Math.sin(2 * Math.PI * 1.7 * t) * Math.sin(2 * Math.PI * 0.3 * t) + (Math.random() - 0.5) * 0.25;
   if (t >= shockT && t < shockT + 4) {
     // defibrillation as the bedside monitor sees it: a ~10 ms biphasic pulse drives the ECG amplifier off-scale, the
@@ -793,8 +860,10 @@ function artAt(t) {
   if (t < zeroingUntil) return 0;
   const f = floorDecay(t, 0.16);
   const floorP = 14, D = floorP + (P.dia - floorP) * f;
-  let v = D + (P.sys - P.dia) * pulseSum(t, 0.16, artShape);
-  v += -2.5 * respPhase(t); // respiratory variation
+  const ps = pulseSum(t, 0.16, artShape), rp = respPhase(t);
+  // respiratory variation (~3 mmHg breathing in); R.paradox = pulsus paradoxus, an extra systolic fall (tamponade,
+  // severe asthma) that leaves the diastolic nearly alone
+  let v = D + (P.sys - P.dia) * ps - 2.5 * rp - (R.paradox || 0) * rp * Math.min(1, ps);
   if (artDamped) { const m = P.dia + (P.sys - P.dia) / 3; v = m + (v - m) * 0.45; }
   if (R.artifact) v += 6 * Math.sin(2 * Math.PI * 1.3 * t);
   v += 22 * shockJerk(t);   // the shock jerks the patient: the fluid line whips, then settles
@@ -816,7 +885,9 @@ function plethShape(tau, dur) {
 }
 function plethAt(t) {
   if (SEN.spo2 !== 'ok') return 0;
-  let v = pulseSum(t, 0.26, plethShape);
+  // the pleth swings ~8 % with breathing (venous return), the baseline with it
+  const rp = respPhase(t);
+  let v = pulseSum(t, 0.26, plethShape) * (1 - 0.08 * rp) + 0.03 * rp;
   if (R.artifact) v += 0.4 * Math.sin(2 * Math.PI * 1.1 * t) + (Math.random() - 0.5) * 0.15;
   v += 0.45 * Math.max(0, shockJerk(t) + 0.3 * Math.exp(-Math.max(0, t - shockT) / 0.3) * (t > shockT));
   return v;
@@ -829,6 +900,8 @@ function cvpAt(t) {
     if (tau < -0.2) continue; if (tau > 1) break;
     // normal a wave ~2-4 mmHg; cannon a wave (atrium vs closed tricuspid) ~10-15 mmHg above baseline
     if (b.hasP) v += (b.cannon ? 12 : 2.5) * gauss(tau, -b.pr + 0.14, b.cannon ? 0.05 : 0.04);
+    // retrograde junctional P: after the QRS the atria contract against closed valves (cannon a wave)
+    if (b.rp != null) v += (b.rp > 0 ? 9 : 2.5) * gauss(tau, b.rp + 0.12, 0.05);
     if (b.k !== 'P') v += 0.8 * gauss(tau, 0.1, 0.03) + 1.4 * gauss(tau, 0.45, 0.06);
   }
   return v;
@@ -843,7 +916,8 @@ function respPhase(t) {
 }
 function respAt(t) {
   if (SEN.ecg !== 'ok' && SEN.ecg !== 'vlead') return 0;
-  let v = respPhase(t);
+  const lb = lastBreath(t);
+  let v = respPhase(t) * (lb ? lb.depth || 1 : 1);
   v += 0.03 * Math.sin(2 * Math.PI * P.hr / 60 * t); // cardiac oscillation
   if (R.artifact) v += 0.25 * Math.sin(2 * Math.PI * 0.9 * t);
   return v;
@@ -2551,6 +2625,7 @@ function syncInstr() {
 function setRhythm(r, keepHr) {
   const prev = R.rhythm; R.rhythm = r; if (prev !== r) hrResetT = simT;
   if (r === 'avb3' && prev !== 'avb3') R.chb = null;   // new heart-block episode: new atrial rate / ventriculophasic pattern
+  if (r !== prev) { R.fl = null; R.jun = null; R.vtA = null; if (r !== 'vt') R.vtPoly = false; }   // new episode of flutter / junctional / VT
   if (!keepHr) setTarget('hr', RHY_HR[r], (r === 'vf' || r === 'asys' || r === 'vt' || prev === 'vf' || prev === 'asys') ? 0 : Math.min(rampDur, 5));
   // restart the beat scheduler at the current time so the new rhythm starts promptly
   beats = beats.filter(b => b.t <= simT + 0.05);
@@ -2561,8 +2636,9 @@ function setRhythm(r, keepHr) {
   if (prev !== r) hrResetT = schedT - 0.001;
   syncInstr();
 }
+function resetMorph() { R.qtx = 1; R.qrsx = 1; R.tx = 1; R.paradox = 0; R.vtPoly = false; }
 function applyPreset(p) {
-  CRS.name = null; courseShow();
+  CRS.name = null; courseShow(); resetMorph();
   R.ectopy = p.ectopy; if ('vtPulse' in p) R.vtPulse = p.vtPulse; R.pulseless = false; R.artifact = !!p.artifact;
   R.scene = p === PRESETS['Seizure'] ? 'seizure' : null;
   setRhythm(p.rhythm, true);
@@ -2671,9 +2747,9 @@ const COURSES = {
   // heart can no longer fill and it beats with no output (PEA)
   'Cardiac tamponade → PEA': [
     {at: 0, say: 'After chest trauma / surgery', ramp: 5, rhythm: 'stach', ectopy: 'none', v: {hr: 108, spo2: 96, sys: 114, dia: 76, cvp: 12, rr: 22, etco2: 34, temp: 36.9, st: 0}},
-    {at: 90, say: 'CVP rising, pulse pressure narrowing', v: {hr: 122, sys: 100, dia: 76, cvp: 17}},
-    {at: 180, say: 'Hypotensive', v: {hr: 136, sys: 86, dia: 70, cvp: 21, rr: 28, etco2: 30}},
-    {at: 270, say: 'Severe shock', v: {hr: 146, sys: 70, dia: 58, cvp: 24, spo2: 93, etco2: 24}},
+    {at: 90, say: 'CVP rising, pulse pressure narrowing', paradox: 7, v: {hr: 122, sys: 100, dia: 76, cvp: 17}},
+    {at: 180, say: 'Hypotensive, pulsus paradoxus', paradox: 12, v: {hr: 136, sys: 86, dia: 70, cvp: 21, rr: 28, etco2: 30}},
+    {at: 270, say: 'Severe shock', paradox: 15, v: {hr: 146, sys: 70, dia: 58, cvp: 24, spo2: 93, etco2: 24}},
     {at: 340, say: 'Peri-arrest', v: {hr: 150, sys: 56, dia: 48, cvp: 26, rr: 8, etco2: 18}},
     {at: 390, say: 'PEA arrest (no pulse)', rhythm: 'pea', v: {hr: 124, rr: 0, etco2: 10}},
     {at: 480, say: 'PEA, slowing', v: {hr: 76}}],
@@ -2694,8 +2770,8 @@ const COURSES = {
     {at: 90, say: 'Sepsis: vasodilated', v: {hr: 122, sys: 98, dia: 50, rr: 26, temp: 39.4, cvp: 4, etco2: 30}},
     {at: 180, say: 'Septic shock, new A Fib', rhythm: 'afib', v: {hr: 142, sys: 84, dia: 42, spo2: 93, rr: 30, cvp: 3}},
     {at: 300, say: 'Refractory hypotension', v: {hr: 150, sys: 66, dia: 34, spo2: 90, etco2: 24, temp: 39.8}},
-    {at: 400, say: 'Peri-arrest', rhythm: 'stach', v: {hr: 138, sys: 50, dia: 28, rr: 8, etco2: 16}},
-    {at: 450, say: 'PEA arrest (no pulse)', rhythm: 'pea', v: {hr: 104, rr: 0, etco2: 10}},
+    {at: 400, say: 'Peri-arrest', v: {hr: 138, sys: 50, dia: 28, rr: 8, etco2: 16}},
+    {at: 450, say: 'PEA arrest (no pulse, still in A Fib)', pulseless: true, v: {hr: 104, rr: 0, etco2: 10}},
     {at: 560, say: 'PEA, slowing', v: {hr: 56}}],
   // neuropsychiatric lupus, not yet diagnosed: days of headache and confusion with a low fever and a rising blood
   // pressure (lupus kidney disease), a sinus tachycardia that creeps up as the patient gets agitated, then a
@@ -2771,9 +2847,9 @@ const COURSES = {
   'Seizure: antidepressant overdose': [
     {at: 0, say: 'Took a bottle of amitriptyline: drowsy', ramp: 5, rhythm: 'stach', ectopy: 'none', scene: null, v: {hr: 112, spo2: 97, sys: 118, dia: 72, cvp: 6, rr: 16, etco2: 38, temp: 37.6, st: 0}},
     {at: 120, say: 'Hot, dry, pupils wide; BP falling', v: {hr: 128, sys: 98, dia: 58, rr: 14, temp: 38.0}},
-    {at: 210, say: 'Very drowsy, QRS widening', ectopy: 'pvc', v: {hr: 134, sys: 88, dia: 50, rr: 12}},
+    {at: 210, say: 'Very drowsy, QRS widening', ectopy: 'pvc', qrsx: 1.4, v: {hr: 134, sys: 88, dia: 50, rr: 12}},
     {at: 240, say: 'Toxic seizure', scene: 'seizure', onset: SEIZE_ONSET, v: {hr: 168, spo2: 80, sys: 110, dia: 64, rr: 30, etco2: 56}},
-    {at: 310, say: 'Seizure stops: acidotic, hypotensive', scene: null, ramp: 50, ectopy: 'freq', v: {hr: 142, spo2: 92, sys: 82, dia: 46, rr: 16, etco2: 48}},
+    {at: 310, say: 'Seizure stops: acidotic, hypotensive', scene: null, ramp: 50, ectopy: 'freq', qrsx: 1.7, v: {hr: 142, spo2: 92, sys: 82, dia: 46, rr: 16, etco2: 48}},
     {at: 380, say: 'Wide-complex tachycardia (VT)', rhythm: 'vt', vtPulse: true, ectopy: 'none', now: {hr: 168}, ramp: 30, v: {sys: 70, dia: 40}}],
   // heat stroke: core temperature over 40, a racing pulse and falling pressure, then a seizure
   'Seizure: heat stroke': [
@@ -2790,7 +2866,7 @@ function courseStart(name, speed) {
   const st = courseSteps(name); if (!st || !st.length) return;
   if (speed) CRS.speed = speed;
   CRS.name = name; CRS.t0 = simT; CRS.i = 0; CRS.say = '';
-  R.scene = null; R.pulseless = false; R.artifact = false; R.vtPulse = true; R.vfCoarse = true;
+  R.scene = null; R.pulseless = false; R.artifact = false; R.vtPulse = true; R.vfCoarse = true; resetMorph();
   for (const id of ['vtach', 'pvc', 'couplet', 'bigem', 'trigem', 'ront', 'vt2', 'accv', 'vbrady', 'pause']) delete events[id];
   courseTick(); courseShow();
 }
@@ -2806,6 +2882,9 @@ function courseTick() {
     if ('vtPulse' in s) R.vtPulse = s.vtPulse;
     if ('pulseless' in s) R.pulseless = s.pulseless;
     if ('coarse' in s) R.vfCoarse = s.coarse;
+    // ECG shape changes a course can make: qtx (QT x), qrsx (QRS width x), tx (peaked T x), paradox (mmHg), poly (torsades)
+    for (const k of ['qtx', 'qrsx', 'tx', 'paradox']) if (k in s) R[k] = s[k];
+    if ('poly' in s) R.vtPoly = !!s.poly;
     if (s.now) for (const k in s.now) setTarget(k, s.now[k], 0);
     if (s.rhythm && s.rhythm !== R.rhythm) setRhythm(s.rhythm, true);
     // a seizure: the House seizure sounds, and muscle activity on the traces; it ends with the step that clears it
