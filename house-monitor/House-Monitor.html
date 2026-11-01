@@ -6,13 +6,15 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-01.3';
+var HM_BUILD = '2026-11-01.4';
+// builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
+function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
   try {
     if (window.__hmSwapped) return;
     var b = localStorage.getItem('hm.update.build');
     if (!b) return;
-    if (b <= HM_BUILD) { localStorage.removeItem('hm.update.build'); localStorage.removeItem('hm.update.html'); return; }
+    if (!hmBuildNewer(b, HM_BUILD)) { localStorage.removeItem('hm.update.build'); localStorage.removeItem('hm.update.html'); return; }
     var html = localStorage.getItem('hm.update.html');
     if (!html || html.indexOf('function powerOn') < 0) return;
     window.__hmSwapped = true;
@@ -527,7 +529,11 @@ function defaultSettings(cat = 'Adult') {
 }
 let S = defaultSettings();
 try { const saved = JSON.parse(localStorage.getItem('b450sim.settings') || 'null');
-  if (saved && saved.lim && saved.arr) S = Object.assign(defaultSettings(saved.cat || 'Adult'), saved); } catch (e) {}
+  if (saved && saved.lim && saved.arr) { const d = defaultSettings(saved.cat || 'Adult');
+    // limits, arrhythmia alarms and colours merge one level down, so a limit or alarm added in a later build still
+    // gets its default instead of being missing (which would stop the alarm engine)
+    for (const k of ['lim', 'arr', 'colors']) if (saved[k] && d[k]) saved[k] = Object.assign({}, d[k], saved[k]);
+    S = Object.assign(d, saved); } } catch (e) {}
 // settings saved by older versions latched the lethal alarms with no way to change it
 for (const id of ['asys', 'vfib', 'vtach', 'xtachy', 'xbrady']) if (S.arr[id] && !S.latchSet) S.arr[id].latch = false;
 // the real frame is around the TV: no drawn housing unless it was switched on in Monitor Setup after this change
@@ -739,7 +745,8 @@ function scheduleBreaths(until) {
     breaths.push({t: breathT, per: per, ti: Math.min(per * (talk ? 0.2 : 0.36), talk ? 0.7 : 1.6), et: P.etco2 > 5 ? P.etco2 + rnd(-0.6, 0.6) : P.etco2, depth: rnd(0.9, 1.1)});
     breathT += per;
   }
-  const cut = simT - 30; let i = 0; while (i < breaths.length && breaths[i].t < cut) i++; if (i) breaths.splice(0, i);
+  // (the latest breath is always kept: the Apnea alarm is timed from it, and with no breath on record it would clear)
+  const cut = simT - 30; let i = 0; while (i < breaths.length - 1 && breaths[i].t < cut) i++; if (i) breaths.splice(0, i);
 }
 
 /* ---------------- patient activity: motion and interference artifact ---------------- */
@@ -1422,7 +1429,9 @@ function evalAlarms() {
   // --- Respiration / CO2 ---
   // the House screen shows no respiration, so it raises no RR/apnea alarms: an alarm always points at a number on screen
   const respShown = !houseClassic();
-  if (respShown && S.apnea.on && M.rr === 0 && (SEN.co2 === 'ok' || SEN.ecg === 'ok')) {
+  // timed from the last breath itself, not from the RR reading dropping to 0 (that takes up to three breath intervals,
+  // so after slow breathing the alarm came 45-60 s late)
+  if (respShown && S.apnea.on && (SEN.co2 === 'ok' || SEN.ecg === 'ok')) {
     const lb = lastBreath(t);
     if (lb && t - lb.t > S.apnea.time) want('apnea', 'high', 'Apnea', {param: SEN.co2 === 'ok' ? 'co2' : 'resp'});
   }
@@ -1690,7 +1699,7 @@ const TONESETS = {
   },
 };
 function playPattern(pat, t0) { for (const [off, f, d, w, lv, att, env] of pat.notes) tone(f, t0 + off, d, alarmGain, w || pat.wave || true, lv, att, env); }
-let audioPri = 0, audioName = null, nextBurst = 0, nextLayer = 0, nextOx = 0, oxOn = false, flatOsc = null;
+let audioPri = 0, audioName = null, nextBurst = 0, nextLayer = 0, nextOx = 0, oxOn = false, flatOsc = null, flatTestUntil = 0;
 const OX_IDS = new Set(['spo2Lo', 'spo2Hi', 'spo2nop', 'spo2off', 'spo2art', 'spo2desat']);
 function setFlatline(on) {
   // TV-drama style continuous flatline tone (real monitors use the normal high-priority pattern instead)
@@ -1706,8 +1715,10 @@ function audioTick() {
   if (!AC) return;
   const list = (powered && !standby) ? audibleAlarms() : [];
   // alarm test of one half of the asystole sound: the flatline alone or the three-beep alone
-  const solo = alarmTest === 'flatonly' || alarmTest === 'beronly' ? alarmTest : null;
-  const flat = solo ? solo === 'flatonly' : S.tvFlatline && list.some(a => a.id === 'asys' && !a.latched);
+  // (never in standby: the screen says alarms are suspended)
+  const solo = powered && !standby && (alarmTest === 'flatonly' || alarmTest === 'beronly') ? alarmTest : null;
+  // flatTestUntil: the Sound setup's "Asystole (flatline)" button, which plays the tone for a few seconds
+  const flat = solo ? solo === 'flatonly' : (S.tvFlatline && list.some(a => a.id === 'asys' && !a.latched)) || AC.currentTime < flatTestUntil;
   setFlatline(flat);
   const set = TONESETS[S.toneSet] || TONESETS.carescape;
   // TV mode: pulse-ox alarms sound on their own channel, alongside the ECG alarm sound
@@ -2485,7 +2496,7 @@ function openAlarmsSetup(idx = 0) {
       row(b, 'Audio pause time', choice([[60,'1 min'],[120,'2 min'],[180,'3 min'],[300,'5 min']], () => S.pauseTime, v => S.pauseTime = +v));
       row(b, 'Alarm tones', choice([['carescape','CARESCAPE (default)'],['iec','IEC 60601-1-8 general'],['classic','GE legacy / TV (House MD style)']], () => S.toneSet, v => S.toneSet = v),
         button('High', () => testAlarm('high')), button('Medium', () => testAlarm('medium')), button('Low', () => testAlarm('low')));
-      if (S.toneSet === 'classic') row(b, 'TV crisis sounds', button('Asystole (flatline)', () => { ensureAudio(); setFlatline(true); setTimeout(() => setFlatline(false), 3400); }),
+      if (S.toneSet === 'classic') row(b, 'TV crisis sounds', button('Asystole (flatline)', () => { ensureAudio(); if (!AC) return; flatTestUntil = AC.currentTime + 3.4; setFlatline(true); setTimeout(() => { if (!powered) setFlatline(false); }, 3400); }),
         button('V-tach (fast + beep beep)', () => { const c = TONESETS.classic, t0 = AC.currentTime + 0.05;
           for (let i = 0; i < 28; i++) playPattern(c.high, t0 + i * c.high.repeat); for (let i = 0; i < 5; i++) playPattern(c.pair, t0 + 0.4 + i * c.pair.repeat); }),
         button('Beep beep', () => testAlarm('medium')),
@@ -2528,7 +2539,8 @@ function openMonitorSetup(tab = 0) {
   openMenu('Monitor Setup', [
     {name: 'Screen Setup', build: b => {
       row(b, 'Sweep speed', choice([[12.5,'12.5 mm/s'],[25,'25 mm/s'],[50,'50 mm/s']], () => S.sweep, v => { S.sweep = +v; layout(); }));
-      row(b, 'Second ECG waveform', toggle(() => S.showEcg2, v => { S.showEcg2 = v; layout(); }));
+      // (the House set screen has one ECG only, so the switch is offered on the CARESCAPE screens only)
+  if (!isHouse()) row(b, 'Second ECG waveform', toggle(() => S.showEcg2, v => { S.showEcg2 = v; layout(); }));
       row(b, 'Brightness', stepper(() => S.brightness, v => { S.brightness = v; applyBrightness(); }, 20, 100, 10, v => v + '%'));
       row(b, 'Screen style', choice([['carescape', 'CARESCAPE B450'], ['house', 'House M.D. set monitor']], () => S.display, v => { S.display = v; layout(); }));
       row(b, 'Show monitor housing', toggle(() => S.bezel, v => { S.bezel = v; S.bezelSet = true; save(); fit(); }));
@@ -2694,7 +2706,7 @@ function buildInstructor() {
    <div class="hint" id="crsState">Not running</div>
    <h3>Build your own timeline</h3>
    <div class="hint">Each row starts at its time (m:ss) and the patient drifts to its numbers by the next row; a blank box keeps the number. Tick Seizure for a seizure (it ends at the first row without the tick).</div>
-   <div class="ir"><label>Name</label><input id="tlName" class="inp" style="flex:1" value="${tlName0()}"><select id="tlLoad" style="flex:1"></select></div>
+   <div class="ir"><label>Name</label><input id="tlName" class="inp" style="flex:1;min-width:0" value="${tlName0()}"><select id="tlLoad" style="flex:1;min-width:0"></select></div>
    <div id="tlRows"></div>
    <div class="ir"><div class="seg"><button class="sb" id="tlAdd">+ Row</button><button class="sb" id="tlSave">Save</button><button class="sb" id="tlRun">&#9654; Run</button><button class="sb" id="tlDel">Delete</button></div></div>
    <div class="hint" id="tlState"></div>
@@ -2871,11 +2883,11 @@ async function checkUpdate() {
       const t = await r.text(), m = t.match(/var HM_BUILD = '([^']+)'/);
       // only a complete monitor page counts: never replace a working monitor with an error page or half a file
       if (!m || t.length < 100000 || t.indexOf('function powerOn') < 0 || t.indexOf('TONESETS') < 0 || !/<\/html>\s*$/.test(t)) continue;
-      if (!best || m[1] > best.b) best = {b: m[1], t: t};
+      if (!best || hmBuildNewer(m[1], best.b)) best = {b: m[1], t: t};
     } catch (e) {}
   }
   if (!best) return updState('Could not reach the update server (no internet?). Running build ' + HM_BUILD + '.');
-  if (best.b <= HM_BUILD) return updState('Up to date (build ' + HM_BUILD + ').');
+  if (!hmBuildNewer(best.b, HM_BUILD)) return updState('Up to date (build ' + HM_BUILD + ').');
   try { localStorage.setItem('hm.update.html', best.t); localStorage.setItem('hm.update.build', best.b); }
   catch (e) { return updState('Could not store the update: ' + e.message); }
   try { sessionStorage.setItem('hm.resume', powered ? '1' : ''); } catch (e) {}
@@ -3232,17 +3244,30 @@ function powerOn() {
   const log = $('#bootLog'); log.innerHTML = '';
   // prop: the screen stays black for about a second, then the monitor comes up (no start-up text)
   setTimeout(() => {
+    // the clock starts again from 0, so everything stamped with the old session's clock is reset or moved back with it
+    // (otherwise a second power-on inherits a silence that lasts as long as the last session, frozen pressure numbers,
+    // stalled ramps and scenarios, a phantom shock, and a false Extreme Brady from the old heart rate)
+    const old = simT;
+    for (const k in RAMP) RAMP[k].t0 -= old;
+    if (CRS.name) CRS.t0 -= old;
+    pauseUntil = 0; pauseStart = -1; shockT = -99; lastTrend = -99; lastSample = 0; zeroingUntil = 0; infoMsg = null;
+    artBuf.length = cvpBuf.length = co2Buf.length = 0;
+    NB.statUntil = 0; NB.lastEnd = 0;
+    for (const k in M) M[k] = k === 'pvc' ? 0 : null;
     $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
     schedT = 0.6; lastQRS = 0; breathT = 0.4; beats = []; breaths = []; alarms = {}; pending = {}; events = {}; hrResetT = -1;
     actEv = []; ghosts = []; actUntil = 0; actBoost = {hr: 0, rr: 0, t: 0}; lastGhostBeep = -9;
     if (isHouse() && !S.nibpAuto && !S.artLine) S.nibpAuto = 15;   // the set monitor ran NBP on Auto 15 min (no A-line)
     NB.state = 'idle'; NB.last = null; NB.err = null; NB.nextAuto = S.nibpAuto ? 3 : null;   // first reading right after power-on
-    if (isHouse()) { SEN.cvp = SEN.co2 = SEN.temp = 'none'; SEN.art = S.artLine ? 'ok' : 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
+    if (isHouse()) { SEN.cvp = SEN.co2 = SEN.temp = 'none'; SEN.art = S.artLine ? 'ok' : 'none'; { const d = defaultSettings('Adult').lim.hr; if (S.cat === 'Adult' && S.lim.hr.lo === d.lo && S.lim.hr.hi === d.hi) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } }   /* only untouched adult limits: a child's, a profile's or the user's own stay */ syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
     layout();
   }, 1200);
 }
 function powerOff() {
   powered = false; standby = false; $('#standby').classList.remove('on');
+  // the alarm sound loop stops with the power, so the continuous flatline tone has to be stopped here
+  if (AC) setFlatline(false);
+  alarms = {}; pending = {};
   $('#off').classList.add('on'); $('#bootBar').style.width = '0'; $('#pwrBtn').classList.remove('on');
   $('#alarmLight').className = ''; closeMenu();
 }
