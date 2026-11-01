@@ -6,7 +6,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-01.1';
+var HM_BUILD = '2026-11-01.2';
 (function () {
   try {
     if (window.__hmSwapped) return;
@@ -551,7 +551,7 @@ function setTarget(k, v, dur) {
   }
 }
 let rampDur = 0; // seconds (instructor changes apply at once unless a transition time is chosen)
-const R = {rhythm:'nsr', ectopy:'none', pulseless:false, artifact:false, vfCoarse:true, vtPulse:true};
+const R = {rhythm:'nsr', ectopy:'none', pulseless:false, artifact:false, vfCoarse:true, vtPulse:true, activity:null};
 const SEN = {ecg:'ok', spo2:'ok', art:'ok', cvp:'ok', co2:'ok', nibp:'ok', temp:'ok', ac:true};
 let artZeroed = true, cvpZeroed = true, artDamped = false, zeroingUntil = 0;
 let battery = 100;
@@ -589,7 +589,8 @@ function noPulse() { return R.pulseless || R.rhythm === 'pea' || (R.rhythm === '
 function scheduleBeats(until) {
   let guard = 0;
   while (schedT < until && guard++ < 50) {
-    const rh = R.rhythm, hr = Math.max(P.hr, 1), rr = 60 / hr;
+    const rh = R.rhythm, boost = noPulse() ? 0 : ACT_SINUS.has(rh) ? actBoost.hr : rh === 'afib' ? actBoost.hr * 1.2 : 0;
+    const hr = Math.max(P.hr + boost, 1), rr = 60 / hr;
     const perfN = noPulse() ? 0 : 1;
     if (rh === 'vf' || rh === 'asys') { schedT += 0.5; continue; }
     if (rh === 'vt' || rh === 'idio') {
@@ -707,7 +708,8 @@ function scheduleBeats(until) {
       // sinus node (and, much less, the junction): respiratory sinus arrhythmia - faster while breathing in - largest
       // at rest and nearly gone in a fast tachycardia, a slow ~0.1 Hz drift, and a little beat-to-beat noise
       const rsa = (rh === 'junct' ? 0.3 : 1) * clamp(0.075 * (1 - (hr - 60) / 75), 0.006, 0.075);
-      r = rr * (1 - rsa * (P.rr >= 1 ? respPhase(schedT) - 0.42 : 0) + (rh === 'junct' ? 0.006 : 0.012) * Math.sin(2 * Math.PI * 0.095 * schedT + 1.3) + rnd(-0.006, 0.006));
+      r = rr * (1 - rsa * (P.rr >= 1 ? respPhase(schedT) - 0.42 : 0) + (rh === 'junct' ? 0.006 : 0.012) * Math.sin(2 * Math.PI * 0.095 * schedT + 1.3)
+        + 0.015 * Math.sin(2 * Math.PI * 0.006 * schedT + 0.7) + rnd(-0.006, 0.006));   // + a very slow drift over minutes
     }
     addBeat({t: schedT, k: 'N', hasP: hasP, pr: pr, rr: r, perf: perfN, rp: rh === 'junct' && R.jun ? R.jun.rp : null});
     lastQRS = schedT; schedT += r;
@@ -731,12 +733,189 @@ function scheduleBreaths(until) {
   let guard = 0;
   while (breathT < until && guard++ < 20) {
     if (P.rr < 1) { if (breathT > simT + 1) break; breathT += 0.5; continue; }
-    const per = 60 / P.rr * rnd(0.95, 1.05);
+    // talking: speech breathing - a quick breath in, a long uneven breath out
+    const talk = R.activity === 'talk', per = 60 / (P.rr + actBoost.rr) * (talk ? rnd(0.75, 1.5) : rnd(0.95, 1.05));
     // no two breaths alike: depth +-10 %, end-tidal CO2 +-0.6 mmHg
-    breaths.push({t: breathT, per: per, ti: Math.min(per * 0.36, 1.6), et: P.etco2 > 5 ? P.etco2 + rnd(-0.6, 0.6) : P.etco2, depth: rnd(0.9, 1.1)});
+    breaths.push({t: breathT, per: per, ti: Math.min(per * (talk ? 0.2 : 0.36), talk ? 0.7 : 1.6), et: P.etco2 > 5 ? P.etco2 + rnd(-0.6, 0.6) : P.etco2, depth: rnd(0.9, 1.1)});
     breathT += per;
   }
   const cut = simT - 30; let i = 0; while (i < breaths.length && breaths[i].t < cut) i++; if (i) breaths.splice(0, i);
+}
+
+/* ---------------- patient activity: motion and interference artifact ---------------- */
+// What a real bedside / telemetry monitor shows while the patient does ordinary things, shaped after published strips
+// and descriptions: LITFL "ECG motion artefacts"; Knight et al., NEJM 1999;341:1270 (artifact read as VT, the real QRS
+// complexes marching through it); PhysioNet MIT-BIH Noise Stress Test Database (baseline wander, muscle and electrode-
+// motion noise from active volunteers); tremor pseudo-flutter / pseudo-VT case reports; Drew et al., PLoS ONE 2014
+// (88.8 % of arrhythmia alarms false). The artifact is made per electrode (RA, LA, LL, chest), so every lead shows it
+// as a real one would (a right hand brushing teeth: big in I, II and aVR, almost nothing in III). The QRS detector
+// counts some artifact spikes as beats ("ghosts") and loses the beats while an electrode has no contact, so the false
+// Tachy / V Tach / Asystole alarms come out of the monitor's own measurement like every other alarm.
+const ACTS = {walk: 'Walking', brush: 'Brushing teeth', arm: 'Moving arms', scratch: 'Scratching', shiver: 'Shivering',
+  cough: 'Coughing', talk: 'Talking', chew: 'Eating / chewing', roll: 'Turning in bed', cpr: 'CPR (chest compressions)',
+  loose: 'Loose electrode', mains: '60 Hz interference'};
+// what the activity does to the body (rate +hr, breathing +rr, reached with time constant tau s) and how much the finger
+// with the SpO2 probe moves (pl, 0-1)
+const ACT_PHYS = {walk: {hr: 20, rr: 8, tau: 40, pl: 0.55}, brush: {hr: 6, rr: 2, tau: 20, pl: 0.35}, arm: {hr: 5, rr: 2, tau: 20, pl: 0.8},
+  scratch: {hr: 3, rr: 0, tau: 15, pl: 0.6}, shiver: {hr: 12, rr: 5, tau: 60, pl: 0.3}, cough: {hr: 6, rr: 0, tau: 15, pl: 0.15},
+  talk: {hr: 4, rr: 0, tau: 20, pl: 0}, chew: {hr: 5, rr: 0, tau: 30, pl: 0.05}, roll: {hr: 6, rr: 2, tau: 20, pl: 0.7},
+  cpr: {hr: 0, rr: 0, tau: 1, pl: 0.4}, loose: {hr: 0, rr: 0, tau: 1, pl: 0}, mains: {hr: 0, rr: 0, tau: 1, pl: 0}};
+const ACT_SINUS = new Set(['nsr', 'sbrady', 'stach', 'avb1']);
+let actEv = [], ghosts = [], actUntil = 0, actBoost = {hr: 0, rr: 0, t: 0}, actErr = {spo2: 0, pr: 0};
+function setActivity(id) {
+  id = ACTS[id] ? id : null;
+  if (id === R.activity) return;
+  R.activity = id; R.actN = 0; R.stepP = R.cprP = null;
+  // which hand brushes / scratches / moves (mostly the right), which electrode is loose (one that lead II uses)
+  R.actSide = Math.random() < 0.65 ? 'ra' : 'la'; R.looseEl = Math.random() < 0.5 ? 'ra' : 'll';
+  for (const e of actEv) if (e.t + e.d > simT) e.d = Math.max(0, simT - e.t + 0.2);
+  actEv = actEv.filter(e => e.t <= simT); ghosts = ghosts.filter(g => g.t <= simT); actUntil = simT;
+  if (typeof syncInstr === 'function') try { syncInstr(); } catch (e) {}
+}
+function activityTick(until) {
+  const ph = ACT_PHYS[R.activity] || {hr: 0, rr: 0}, dt = Math.max(0, simT - actBoost.t); actBoost.t = simT;
+  const k = 1 - Math.exp(-dt / (R.activity ? ph.tau : 45));   // back to resting a little slower than it came on
+  actBoost.hr += (ph.hr - actBoost.hr) * k; actBoost.rr += (ph.rr - actBoost.rr) * k;
+  let guard = 0;
+  while (R.activity && actUntil < until && guard++ < 40) actUntil = actMake(R.activity, Math.max(actUntil, simT));
+  const cut = simT - 25;
+  while (actEv.length && actEv[0].t + actEv[0].d < cut) actEv.shift();
+  while (ghosts.length && ghosts[0].t < simT - 15) ghosts.shift();
+}
+function actMake(k, t) {
+  const first = !R.actN++, gap = (a, b) => first ? rnd(0.2, 0.8) : rnd(a, b);
+  // strong: artifact big enough that the detector takes it instead of the real QRS it lands on (a run of it reads as V Tach)
+  const G = (gt, gk, p, strong) => { if (Math.random() < p) ghosts.push({t: gt, k: gk, ghost: true, strong: !!strong, hasP: false, rr: 0.5, perf: 0, det: false}); };
+  const hand = R.actSide === 'la' ? {la: 1, ch: 0.25} : {ra: 1, ch: 0.25}, g0 = ghosts.length;
+  let e;
+  switch (k) {
+    case 'walk': {   // a step every 0.5-0.6 s: heel-strike jolt (legs alternating) on a stride-rate sway, plus leg EMG
+      const sp = R.stepP || (R.stepP = rnd(0.5, 0.6));
+      e = {t, d: 12 * sp, f: sp, a: rnd(0.25, 0.4), el: {ra: -0.45, la: 0.45, ll: 1, ch: 0.3}};
+      for (let i = 0; i < 12; i++) G(t + i * sp + 0.04, 'N', 0.3);
+      break; }
+    case 'brush': {  // bouts of 4-6 Hz strokes, 0.5-1 mV: looks like VT or flutter, the real QRS marching through
+      const t0 = t + gap(0.6, 2.5), d = rnd(3, 8), f = rnd(4, 6), ph = rnd(0, 2 * Math.PI);
+      e = {t: t0, d, f, ph, a: rnd(0.5, 1.0), el: Object.assign({ll: 0.08, la: 0.12}, hand)};
+      for (let i = 0; i < d * f + 2; i++) { const u = (i + 0.25 - ph / 2 / Math.PI) / f; if (u > 0.15 && u < d - 0.15) G(t0 + u, 'V', e.a > 0.75 ? 0.9 : 0.65, e.a > 0.75); }
+      break; }
+    case 'arm': {    // reaching / waving: slow 1-2.5 Hz swings of the baseline, large
+      const t0 = t + gap(2, 6), d = rnd(1.5, 4), f = rnd(1, 2.5);
+      e = {t: t0, d, f, a: rnd(0.4, 0.8), el: Object.assign({}, hand)};
+      for (let i = 0; i < d * f; i++) { const u = (i + 0.25) / f; if (u > 0.15 && u < d - 0.15) G(t0 + u, 'N', 0.25); }
+      break; }
+    case 'scratch': {  // fast 5-7 Hz back and forth, sharp-edged, 1-3 s at a time
+      const t0 = t + gap(3, 12), d = rnd(1, 3), f = rnd(5, 7);
+      e = {t: t0, d, f, a: rnd(0.6, 1.2), el: Object.assign({}, hand)};
+      for (let i = 0; i < d * f; i++) { const u = (i + 0.25) / f; if (u > 0.15 && u < d - 0.15) G(t0 + u, 'V', e.a > 0.9 ? 0.9 : 0.7, e.a > 0.9); }
+      break; }
+    case 'shiver':   // continuous fine, jagged muscle tremor (6-10 Hz plus EMG), waxing and waning
+      e = {t, d: 6, a: rnd(0.06, 0.14), el: {ra: -0.7, la: 0.5, ll: 1, ch: 0.4}}; break;
+    case 'cough': {  // bursts of 2-4 coughs: each a jolt of the chest wall with a burst of muscle noise
+      const t0 = t + gap(4, 15), n = 2 + Math.floor(Math.random() * 3), sp = rnd(0.4, 0.6);
+      e = {t: t0, d: n * sp + 0.5, f: sp, n, a: rnd(0.5, 0.9), el: {ch: 1, ll: 0.8, ra: -0.3, la: 0.3}};
+      for (let i = 0; i < n; i++) G(t0 + i * sp + 0.05, 'V', 0.5);
+      break; }
+    case 'talk':     // phrases of low muscle noise at the syllable rate (no false beats, breathing goes uneven)
+      e = {t: t + gap(1, 4), d: rnd(2, 7), f: rnd(4, 5), a: rnd(0.03, 0.06), el: {ra: 0.6, la: -0.4, ll: 0.15, ch: 0.4}}; break;
+    case 'chew': {   // jaw-muscle EMG burst with every chew (1.2-1.6 a second), pauses to swallow
+      const t0 = t + gap(3, 8), d = rnd(8, 20), f = 1 / rnd(1.2, 1.6);
+      e = {t: t0, d, f, a: rnd(0.08, 0.15), el: {ra: 0.6, la: -0.4, ll: 0.2, ch: 0.4}};
+      for (let i = 0; i < d / f; i++) G(t0 + i * f + 0.12, 'N', 0.04);
+      break; }
+    case 'roll': {   // turning in bed: a big slow lurch of the baseline with muscle noise, every 15-40 s
+      const t0 = t + gap(15, 40), d = rnd(2.5, 4);
+      e = {t: t0, d, a: rnd(1, 2) * (Math.random() < 0.5 ? 1 : -1), el: {ll: 1, ra: -0.3, la: 0.3, ch: 0.6}};
+      for (let i = 0, n = 2 + Math.floor(Math.random() * 3); i < n; i++) G(t0 + rnd(0.3, d - 0.3), Math.random() < 0.5 ? 'V' : 'N', 1);
+      ghosts.sort((x, y) => x.t - y.t);
+      break; }
+    case 'cpr': {    // 100-120 compressions a minute, each a large rounded wave (1-1.5 mV) the monitor counts as a beat
+      const cp = R.cprP || (R.cprP = 60 / rnd(100, 120));
+      e = {t, d: 10 * cp, f: cp, a: rnd(1, 1.5), el: {ch: 1, ll: 0.9, ra: -0.5, la: 0.2}};
+      for (let i = 0; i < 10; i++) G(t + i * cp + 0.12, 'N', 0.97);
+      break; }
+    case 'loose': {  // an electrode losing contact: the trace jumps, goes dead with the beats lost, then snaps back
+      const t0 = t + gap(4, 15), d = rnd(0.3, 2.5);
+      e = {t: t0, d, a: rnd(1, 2.5) * (Math.random() < 0.5 ? 1 : -1), el: {[R.looseEl]: 1}, flat: true};
+      G(t0 + 0.01, 'N', 0.6); G(t0 + d + 0.01, 'N', 0.4);
+      break; }
+    case 'mains':    // 60 Hz from a nearby cable: a thick regular fuzz on the line
+      e = {t, d: 10, a: 0.06, el: {ra: -0.5, la: 0.2, ll: 0.5, ch: 0.2}}; break;
+    default: return t + 1;
+  }
+  e.k = k; actEv.push(e);
+  // the detector analyses lead II: artifact that barely shows there (left hand brushing: it is in I and III) is rarely
+  // counted
+  const vis = Math.min(1, Math.abs(actLead(e.el, 'II')) / 0.6);
+  if (vis < 1) for (let i = ghosts.length - 1; i >= g0; i--) if (Math.random() > vis) ghosts.splice(i, 1);
+  return e.t + e.d;
+}
+// the activity's waveform at u seconds into an event, about -1..1 times e.a (lead-free; actLead projects it)
+function actWave(e, u) {
+  const env = Math.max(0, Math.min(1, u / 0.15, (e.d - u) / 0.15)), T = e.t + u, n = Math.random() - 0.5;
+  switch (e.k) {
+    case 'walk': { const i = Math.floor(u / e.f), x = u - i * e.f, leg = i % 2 ? 1 : -0.8;
+      return e.a * (leg * (gauss(x, 0.04, 0.018) - 0.5 * gauss(x, 0.11, 0.04)) + 0.35 * Math.sin(Math.PI * u / e.f) + 0.12 * n); }
+    case 'brush': return env * e.a * ((0.75 + 0.25 * Math.sin(2 * Math.PI * 0.7 * u)) * (Math.sin(2 * Math.PI * e.f * u + e.ph) + 0.3 * Math.sin(4 * Math.PI * e.f * u + 2 * e.ph)) + 0.08 * n);
+    case 'arm': return env * e.a * (Math.sin(2 * Math.PI * e.f * u) + 0.45 * Math.sin(2 * Math.PI * 1.7 * e.f * u + 1));
+    case 'scratch': { const x = Math.sin(2 * Math.PI * e.f * u); return env * e.a * (Math.sign(x) * Math.abs(x) ** 0.6 + 0.12 * n); }
+    case 'shiver': return e.a * (0.7 + 0.3 * Math.sin(2 * Math.PI * 0.15 * T)) * (0.55 * Math.sin(2 * Math.PI * 9.5 * T + 3 * Math.sin(2 * Math.PI * 0.7 * T))
+      + 0.45 * Math.sin(2 * Math.PI * 6.3 * T + 2 * Math.sin(2 * Math.PI * 1.1 * T)) + 0.9 * n);
+    case 'cough': { const i = Math.min(e.n - 1, Math.floor(u / e.f)), x = u - i * e.f;
+      return e.a * (gauss(x, 0.05, 0.025) - 0.6 * gauss(x, 0.2, 0.08) + n * gauss(x, 0.15, 0.08)); }
+    case 'talk': return env * e.a * 2 * n * (0.4 + 0.6 * Math.abs(Math.sin(2 * Math.PI * e.f * u)));
+    case 'chew': { const x = u - Math.floor(u / e.f) * e.f; return env * (2 * e.a * n * gauss(x, 0.12, 0.06) + 0.03 * Math.sin(2 * Math.PI * u / e.f)); }
+    case 'roll': { const w = Math.sin(Math.PI * Math.min(1, u / e.d)) ** 2; return e.a * w + 0.3 * n * w; }
+    case 'cpr': { const x = u - Math.floor(u / e.f) * e.f; return e.a * (gauss(x, 0.12, 0.06) - 0.35 * gauss(x, 0.32, 0.08)); }
+    case 'loose': return u < e.d ? e.a * (1 - 0.02 * u) + 0.004 * n : -0.3 * e.a * Math.exp(-(u - e.d) / 0.4);
+    case 'mains': return e.a * Math.sin(2 * Math.PI * 60 * T) + 0.01 * n;
+  }
+  return 0;
+}
+// an electrode's artifact as each lead sees it (Einthoven / Goldberger; the V lead against the Wilson terminal)
+function actLead(el, lead) {
+  const ra = el.ra || 0, la = el.la || 0, ll = el.ll || 0;
+  switch (lead) {
+    case 'I': return la - ra; case 'II': return ll - ra; case 'III': return ll - la; case 'aVR': return ra - (la + ll) / 2;
+    case 'aVL': return la - (ra + ll) / 2; case 'aVF': return ll - (ra + la) / 2; default: return (el.ch || 0) - (ra + la + ll) / 3;
+  }
+}
+function actEach(t, fn, tail) { for (let i = actEv.length - 1; i >= 0; i--) { const e = actEv[i]; if (e.t > t) continue; if (e.t < t - 25) break; const u = t - e.t; if (u < e.d + (tail || (e.flat ? 1.5 : 0))) fn(e, u); } }
+// ECG: adds the artifact; gain < 1 while an electrode has no contact (the heart's own signal is lost)
+function actECG(t, lead) { let v = 0, gain = 1; actEach(t, (e, u) => { v += actLead(e.el, lead) * actWave(e, u); if (e.flat && u < e.d) gain = 0.05; }); return {v, gain}; }
+function actMasked(t) { let m = false; actEach(t, (e, u) => { if (e.flat && u < e.d) m = true; }); return m; }
+// the same movement on the other channels: pleth (the probe finger), ART and CVP (cough / compressions / transducer
+// level when turning), impedance respiration (chest and arm movement)
+function actOther(t, ch) {
+  let v = 0;
+  actEach(t, (e, u) => {
+    const w = e.flat || e.k === 'mains' ? 0 : actWave(e, u) / Math.abs(e.a || 1);
+    const per = e.f || 1, x = u - Math.floor(u / per) * per;
+    if (ch === 'pleth') v += e.k === 'cpr' ? 0.45 * gauss(x, 0.16, 0.07) : 0.5 * ACT_PHYS[e.k].pl * w;
+    else if (ch === 'art') v += e.k === 'cough' ? 35 * gauss(x, 0.15, 0.08) * (u < e.n * per) : e.k === 'cpr' ? 60 * gauss(x, 0.13, 0.06)
+      : e.k === 'roll' ? 8 * Math.sign(e.a) * w : e.k === 'arm' || e.k === 'scratch' ? 4 * w : e.k === 'walk' ? 2 * w : 0;
+    else if (ch === 'cvp') v += e.k === 'cough' ? 15 * gauss(x, 0.15, 0.08) * (u < e.n * per) : e.k === 'cpr' ? 30 * gauss(x, 0.13, 0.06) : e.k === 'roll' ? 4 * Math.sign(e.a) * w : 0;
+    else if (ch === 'resp') v += ({walk: 0.5, arm: 0.6, scratch: 0.3, brush: 0.2, cough: 1.2, talk: 3, chew: 0.4, roll: 1.2, cpr: 0.7, shiver: 0.4}[e.k] || 0) * w;
+  });
+  return v;
+}
+// how much the SpO2 probe is being moved, held 8 s past the last movement (bridges the pauses between bouts, so the
+// oximeter's artifact call stays on instead of flickering)
+function actLevel(t) { let l = 0; actEach(t, (e, u) => { if (u < e.d + 8) l = Math.max(l, ACT_PHYS[e.k].pl); }, 8); return l; }
+// what the QRS detector reports: real QRS complexes (less any lost while an electrode had no contact) and artifact it
+// took for beats, in time order, with its ~180 ms refractory period (a spike right after a beat is ignored)
+function ghostHidden(g) { if (g.strong) return false; for (const b of beats) if (b.k !== 'P' && Math.abs(b.t - g.t) < 0.18 && !actMasked(b.t)) return true; return false; }
+function lostInArtifact(b) { for (const g of ghosts) if (g.strong && Math.abs(g.t - b.t) < 0.18) return true; return false; }
+function detBeats(t) {
+  const out = []; let gi = 0;
+  const addG = g => { if (g.t <= t && !ghostHidden(g) && !(out.length && g.t - out[out.length - 1].t < 0.18)) out.push(g); };
+  for (const b of beats) {
+    if (b.k === 'P' || b.t > t) continue;
+    while (gi < ghosts.length && ghosts[gi].t < b.t) addG(ghosts[gi++]);
+    if (!actMasked(b.t) && !lostInArtifact(b) && !(out.length && b.t - out[out.length - 1].t < 0.18)) out.push(b);
+  }
+  while (gi < ghosts.length && ghosts[gi].t <= t) addG(ghosts[gi++]);
+  return out;
 }
 
 /* ---------------- waveform models ---------------- */
@@ -810,6 +989,7 @@ function ecgAt(t, lead) {
   }
   // baseline wander: the chest moving with each breath plus a slow drift (electrode/skin), a few hundredths of a mV
   v += 0.025 * respPhase(t) + 0.015 * Math.sin(2 * Math.PI * 0.07 * t) + 0.008 * Math.sin(2 * Math.PI * 0.23 * t + 1);
+  if (actEv.length) { const a = actECG(t, lead); v = v * a.gain + a.v; }
   if (R.artifact) v += 0.18 * Math.sin(2 * Math.PI * 1.7 * t) * Math.sin(2 * Math.PI * 0.3 * t) + (Math.random() - 0.5) * 0.25;
   if (t >= shockT && t < shockT + 4) {
     // defibrillation as the bedside monitor sees it: a ~10 ms biphasic pulse drives the ECG amplifier off-scale, the
@@ -864,6 +1044,7 @@ function artAt(t) {
   // respiratory variation (~3 mmHg breathing in); R.paradox = pulsus paradoxus, an extra systolic fall (tamponade,
   // severe asthma) that leaves the diastolic nearly alone
   let v = D + (P.sys - P.dia) * ps - 2.5 * rp - (R.paradox || 0) * rp * Math.min(1, ps);
+  if (actEv.length) v += actOther(t, 'art');
   if (artDamped) { const m = P.dia + (P.sys - P.dia) / 3; v = m + (v - m) * 0.45; }
   if (R.artifact) v += 6 * Math.sin(2 * Math.PI * 1.3 * t);
   v += 22 * shockJerk(t);   // the shock jerks the patient: the fluid line whips, then settles
@@ -887,14 +1068,14 @@ function plethAt(t) {
   if (SEN.spo2 !== 'ok') return 0;
   // the pleth swings ~8 % with breathing (venous return), the baseline with it
   const rp = respPhase(t);
-  let v = pulseSum(t, 0.26, plethShape) * (1 - 0.08 * rp) + 0.03 * rp;
+  let v = pulseSum(t, 0.26, plethShape) * (1 - 0.08 * rp) + 0.03 * rp + (actEv.length ? actOther(t, 'pleth') : 0);
   if (R.artifact) v += 0.4 * Math.sin(2 * Math.PI * 1.1 * t) + (Math.random() - 0.5) * 0.15;
   v += 0.45 * Math.max(0, shockJerk(t) + 0.3 * Math.exp(-Math.max(0, t - shockT) / 0.3) * (t > shockT));
   return v;
 }
 function cvpAt(t) {
   if (t < zeroingUntil) return 0;
-  let v = P.cvp - 1.2 * respPhase(t) + 6 * shockJerk(t);
+  let v = P.cvp - 1.2 * respPhase(t) + 6 * shockJerk(t) + (actEv.length ? actOther(t, 'cvp') : 0);
   for (let i = beats.length - 1; i >= 0; i--) {
     const b = beats[i], tau = t - b.t;
     if (tau < -0.2) continue; if (tau > 1) break;
@@ -917,7 +1098,7 @@ function respPhase(t) {
 function respAt(t) {
   if (SEN.ecg !== 'ok' && SEN.ecg !== 'vlead') return 0;
   const lb = lastBreath(t);
-  let v = respPhase(t) * (lb ? lb.depth || 1 : 1);
+  let v = respPhase(t) * (lb ? lb.depth || 1 : 1) + (actEv.length ? 0.3 * actOther(t, 'resp') : 0);
   v += 0.03 * Math.sin(2 * Math.PI * P.hr / 60 * t); // cardiac oscillation
   if (R.artifact) v += 0.25 * Math.sin(2 * Math.PI * 0.9 * t);
   return v;
@@ -994,8 +1175,8 @@ function rrPattern(q) {
 function computeMeasures(dt) {
   const t = simT;
   // HR from detected QRS
-  const q = beats.filter(b => b.k !== 'P' && b.t <= t && b.t >= hrResetT);
-  const allQ = beats.filter(b => b.k !== 'P' && b.t <= t), lastAllQ = allQ.length ? allQ[allQ.length - 1].t : -99;
+  const dq = detBeats(t), q = dq.filter(b => b.t >= hrResetT);
+  const allQ = dq, lastAllQ = allQ.length ? allQ[allQ.length - 1].t : -99;
   if (SEN.ecg === 'leadsoff' || SEN.ecg === 'none') M.hr = null;
   // VF called from the trace: no countable QRS, so the monitor has no rate to show; asystole called: 0
   else if (alarms.vfib && !alarms.vfib.latched) M.hr = null;
@@ -1015,7 +1196,7 @@ function computeMeasures(dt) {
     if (since > (s / n) * 1.5) hr = Math.min(hr, 60 / since);
     M.hr = Math.round(hr);
   }
-  const vRecent = beats.filter(b => (b.k === 'V') && b.t > t - 60 && b.t <= t).length;
+  const vRecent = dq.filter(b => b.k === 'V' && b.t > t - 60).length;
   M.pvc = (R.rhythm === 'vt' || R.rhythm === 'idio') ? 0 : vRecent;
   // SpO2 / PR
   spo2Filt += (P.spo2 - spo2Filt) * Math.min(1, dt / 1.5);
@@ -1023,10 +1204,13 @@ function computeMeasures(dt) {
   if (SEN.spo2 !== 'ok') { M.spo2 = null; M.pr = null; }
   else if (pulses.length < 2 || t - pulses[pulses.length - 1].t > 4) { M.spo2 = null; M.pr = null; }
   else {
-    M.spo2 = Math.round(clamp(spo2Filt + (R.artifact ? rnd(-3, 1) : 0), 0, 100));
+    // a moving probe reads low and the pulse rate wanders (motion is taken for pulses), drifting rather than jumping
+    const lvl = actLevel(t), mv = lvl > 0.3 ? lvl : 0;
+    actErr.spo2 = actErr.spo2 * 0.85 + 0.15 * (mv ? rnd(0, 9 * mv) : 0); actErr.pr = actErr.pr * 0.85 + 0.15 * (mv ? rnd(-10, 30) * mv : 0);
+    M.spo2 = Math.round(clamp(spo2Filt + (R.artifact ? rnd(-3, 1) : 0) - actErr.spo2, 0, 100));
     const n = Math.min(5, pulses.length - 1); let s = 0;
     for (let i = pulses.length - n; i < pulses.length; i++) s += pulses[i].t - pulses[i - 1].t;
-    M.pr = Math.round(60 / (s / n));
+    M.pr = Math.round(60 / (s / n) + actErr.pr);
   }
   // ART
   if (SEN.art === 'ok' && artZeroed && artBuf.length > 20 && t > zeroingUntil + 3) {
@@ -1158,7 +1342,7 @@ function evalAlarms() {
   if (arrSuspended) want('arrsusp', 'low', 'Arrhythmia Suspended', {param: 'hr'});
   if (ecgOk) {
     const A = S.arr;
-    const q = beats.filter(b => b.k !== 'P' && b.t <= t);
+    const q = detBeats(t);
     const lastQ = q.length ? q[q.length - 1].t : -99;
     let lastRR = q.length > 1 ? lastQ - q[q.length - 2].t : 1;
     // the longest of the last few R-R intervals: a rhythm that already drops beats (heart block) is judged by its pauses
@@ -1203,10 +1387,12 @@ function evalAlarms() {
     const spo2Sounding = alarms.spo2Lo || alarms.spo2Hi || alarms.spo2art || alarms.spo2nop || alarms.spo2desat;
     // asystole means no pulse at the finger either: SpO2 No Pulse comes on with it (in the show the pulse-ox tone
     // starts at the same instant as the flatline), instead of waiting for the reading to drop out
-    if (cur.asys && t > 4) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2'});
+    // (only when the finger has lost its pulse too: a loose ECG electrode calls a false asystole while the pleth goes
+    // on beating normally, which is how it is told apart)
+    if (cur.asys && t > 4 && !beats.some(b => b.perf > 0.1 && b.t <= t && b.t > t - 1.9)) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2'});
     else if (M.spo2 == null && (t > 10 || spo2Sounding)) want('spo2nop', 'medium', 'SpO2 No Pulse', {param: 'spo2', delay: spo2Sounding ? 0 : 2});
     // the SpO2 alarms hand over to each other with no gap (Artifact -> Low -> No Pulse and back)
-    if (R.artifact) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
+    if (R.artifact || actLevel(t) > 0.45) want('spo2art', 'low', 'SpO2 Artifact', {param: 'spo2', delay: spo2Sounding ? 0 : 1.5});
     limCheck('spo2', M.spo2, 'SpO2', 'spo2', spo2Sounding ? 0 : 1.5);
     // severe desaturation is a red alarm of its own (below the desat limit, default 85 % adult / 80 % neonate)
     const desat = S.desat || (S.cat === 'Neonate' ? 80 : 85);
@@ -2540,6 +2726,7 @@ function buildInstructor() {
    <div class="ir"><label>NIBP cuff</label><div class="seg" data-sen="nibp">${seg([['ok','On'],['loose','Loose']])}</div></div>
    <div class="ir"><label>Temp</label><div class="seg" data-sen="temp">${seg([['ok','On'],['none','Off']])}</div></div>
    <div class="ir"><label>Artifact</label><div class="seg"><button class="sb" id="iArt">Patient movement</button></div></div>
+   <div class="ir"><label>Activity</label><select id="iAct"><option value="">Lying still</option>${Object.entries(ACTS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
    <div class="ir"><label>Power</label><div class="seg"><button class="sb" id="iAC">Unplug AC (battery)</button></div></div>
    <h3>Operator station</h3>
    <div class="ir"><label>Address</label><input id="iOpAddr" placeholder="PC address, e.g. 192.168.1.20:8460" style="flex:1"><button class="sb" id="iOpGo">Connect</button></div>
@@ -2573,6 +2760,7 @@ function buildInstructor() {
   $('#iCoarse').onclick = () => { R.vfCoarse = !R.vfCoarse; syncInstr(); };
   $('#iShock').onclick = () => shock();
   $('#iArt').onclick = () => { R.artifact = !R.artifact; syncInstr(); };
+  $('#iAct').onchange = e => setActivity(e.target.value);
   $('#iDamp').onclick = () => { artDamped = !artDamped; syncInstr(); };
   $('#iAC').onclick = () => { SEN.ac = !SEN.ac; syncInstr(); };
   // one-click arterial line: connect the transducer and zero it, and keep it through power-on (House mode included)
@@ -2617,6 +2805,7 @@ function syncInstr() {
   $('#iRhythm').value = R.rhythm; $('#iEct').value = R.ectopy;
   $('#iPulseless').classList.toggle('on', R.pulseless); $('#iVtPulse').classList.toggle('on', R.vtPulse);
   $('#iCoarse').classList.toggle('on', R.vfCoarse); $('#iArt').classList.toggle('on', R.artifact);
+  if ($('#iAct')) $('#iAct').value = R.activity || '';
   $('#iDamp').classList.toggle('on', artDamped); $('#iAC').classList.toggle('on', !SEN.ac);
   I.querySelectorAll('[data-ramp]').forEach(b => b.classList.toggle('sel', +b.dataset.ramp === rampDur));
   I.querySelectorAll('[data-sen]').forEach(g => g.querySelectorAll('.sb[data-v]').forEach(b => b.classList.toggle('sel', SEN[g.dataset.sen] === b.dataset.v)));
@@ -2636,7 +2825,7 @@ function setRhythm(r, keepHr) {
   if (prev !== r) hrResetT = schedT - 0.001;
   syncInstr();
 }
-function resetMorph() { R.qtx = 1; R.qrsx = 1; R.tx = 1; R.paradox = 0; R.vtPoly = false; }
+function resetMorph() { R.qtx = 1; R.qrsx = 1; R.tx = 1; R.paradox = 0; R.vtPoly = false; setActivity(null); }
 function applyPreset(p) {
   CRS.name = null; courseShow(); resetMorph();
   R.ectopy = p.ectopy; if ('vtPulse' in p) R.vtPulse = p.vtPulse; R.pulseless = false; R.artifact = !!p.artifact;
@@ -2885,6 +3074,7 @@ function courseTick() {
     // ECG shape changes a course can make: qtx (QT x), qrsx (QRS width x), tx (peaked T x), paradox (mmHg), poly (torsades)
     for (const k of ['qtx', 'qrsx', 'tx', 'paradox']) if (k in s) R[k] = s[k];
     if ('poly' in s) R.vtPoly = !!s.poly;
+    if ('activity' in s) setActivity(s.activity);
     if (s.now) for (const k in s.now) setTarget(k, s.now[k], 0);
     if (s.rhythm && s.rhythm !== R.rhythm) setRhythm(s.rhythm, true);
     // a seizure: the House seizure sounds, and muscle activity on the traces; it ends with the step that clears it
@@ -2985,7 +3175,7 @@ function tlWire() {
 }
 
 /* ---------------- main loop ---------------- */
-let lastFrame = performance.now(), lastSlow = 0, lastAlarmEval = 0, lastBeepIdx = 0;
+let lastFrame = performance.now(), lastSlow = 0, lastAlarmEval = 0, lastBeepIdx = 0, lastGhostBeep = -9;
 function frame(now) {
   requestAnimationFrame(frame);   // queued first, so an error later in this frame cannot freeze the screen
   const dt = Math.min(0.1, (now - lastFrame) / 1000); lastFrame = now;
@@ -2993,14 +3183,16 @@ function frame(now) {
     simT += dt;
     // ramps
     for (const k in RAMP) { const r = RAMP[k], f = clamp((simT - r.t0) / r.dur, 0, 1); P[k] = r.from + (r.to - r.from) * f; if (f >= 1) delete RAMP[k]; }
-    scheduleBeats(simT + 2.5); scheduleBreaths(simT + 8);
+    activityTick(simT + 4); scheduleBeats(simT + 2.5); scheduleBreaths(simT + 8);
     sampleMeasures();
     // QRS tones
     for (const b of beats) {
-      if (b.k !== 'P' && !b.beeped && b.t <= simT) { b.beeped = true;
+      if (b.k !== 'P' && !b.beeped && b.t <= simT) { b.beeped = true; if (actMasked(b.t)) continue;
         if (simT - b.t < 0.2 && (SEN.ecg === 'ok' || SEN.ecg === 'vlead')) qrsBeep(b);
         else if (simT - b.t < 0.2 && SEN.ecg !== 'ok' && SEN.spo2 === 'ok' && b.perf > 0.1) qrsBeep(b); }
     }
+    // artifact the QRS detector took for a beat beeps like one (a real monitor's tone follows its detections)
+    for (const g of ghosts) if (!g.beeped && g.t <= simT) { g.beeped = true; if (simT - g.t < 0.2 && (SEN.ecg === 'ok' || SEN.ecg === 'vlead') && !ghostHidden(g) && simT - lastGhostBeep > 0.18) { lastGhostBeep = simT; qrsBeep(g); } }
     if (!standby) { drawWaves(); nibpUpdate(dt); }
     if (!SEN.ac) battery = Math.max(0, battery - dt * 0.05); else battery = Math.min(100, battery + dt * 0.2);
     if (now - lastAlarmEval > 250) { lastAlarmEval = now; computeMeasures(0.25); evalAlarms(); }
@@ -3043,6 +3235,7 @@ function powerOn() {
   setTimeout(() => {
     $('#boot').classList.remove('on'); powered = true; simT = 0; lastFrame = performance.now();
     schedT = 0.6; lastQRS = 0; breathT = 0.4; beats = []; breaths = []; alarms = {}; pending = {}; events = {}; hrResetT = -1;
+    actEv = []; ghosts = []; actUntil = 0; actBoost = {hr: 0, rr: 0, t: 0}; lastGhostBeep = -9;
     if (isHouse() && !S.nibpAuto && !S.artLine) S.nibpAuto = 15;   // the set monitor ran NBP on Auto 15 min (no A-line)
     NB.state = 'idle'; NB.last = null; NB.err = null; NB.nextAuto = S.nibpAuto ? 3 : null;   // first reading right after power-on
     if (isHouse()) { SEN.cvp = SEN.co2 = SEN.temp = 'none'; SEN.art = S.artLine ? 'ok' : 'none'; if (!S.limTouched) { S.lim.hr.lo = 60; S.lim.hr.hi = 120; } syncInstr(); }   // the House set monitor: ECG II, Pleth, NBP; HR limits 120/60
@@ -3086,6 +3279,7 @@ function opApplyState(c) {
   if (c.ectopy && ECTOPY[c.ectopy]) R.ectopy = c.ectopy;
   for (const f of ['pulseless', 'vtPulse', 'vfCoarse', 'artifact']) if (typeof c[f] === 'boolean') R[f] = c[f];
   if (c.scene !== undefined) R.scene = c.scene || null;
+  if (c.activity !== undefined) setActivity(c.activity);
   const instant = ['vf', 'asys', 'vt', 'pea'].includes(R.rhythm);
   if (c.vitals) for (const k of ['hr', 'spo2', 'sys', 'dia', 'cvp', 'rr', 'etco2', 'temp', 'st']) {
     const v = +c.vitals[k]; if (c.vitals[k] == null || !isFinite(v)) continue;
@@ -3120,7 +3314,7 @@ function opReport(now) {
   if (!OP.base || !OP.ok) return;
   const t = performance.now(); if (!now && t - OP.sent < 450) return; OP.sent = t;
   const st = {
-    id: OP.id, powered, standby, rhythm: R.rhythm, ectopy: R.ectopy, scene: R.scene || null, simT: +simT.toFixed(1),
+    id: OP.id, powered, standby, rhythm: R.rhythm, ectopy: R.ectopy, scene: R.scene || null, activity: R.activity || null, simT: +simT.toFixed(1),
     M: {hr: M.hr, spo2: M.spo2, pr: M.pr, artS: M.artS, artD: M.artD, artM: M.artM, cvp: M.cvp, rr: M.rr, etco2: M.etco2, t1: M.t1},
     target: Object.assign({}, P), nibp: NB.last ? {s: NB.last.s, d: NB.last.d, m: NB.last.m} : null, nibpState: NB.state,
     alarms: Object.values(alarms).filter(a => a.pri !== 'info').map(a => ({pri: a.pri, msg: a.msg, latched: !!a.latched})),
