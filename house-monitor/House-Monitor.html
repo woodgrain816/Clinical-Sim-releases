@@ -6,7 +6,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-05.1';
+var HM_BUILD = '2026-11-05.2';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -1723,8 +1723,12 @@ function audioTick() {
   // (never in standby: the screen says alarms are suspended)
   const solo = powered && !standby && (alarmTest === 'flatonly' || alarmTest === 'beronly') ? alarmTest : null;
   // flatTestUntil: the Sound setup's "Asystole (flatline)" button, which plays the tone for a few seconds
-  const flat = solo ? solo === 'flatonly' : (S.tvFlatline && list.some(a => a.id === 'asys' && !a.latched)) || AC.currentTime < flatTestUntil;
+  // the flatline is the heart signal's own tone, like the beat beep, not an alarm: Silence / Audio Pause does not stop
+  // it while there is asystole; only the alarm sounds (the three-beep under it, the pulse-ox) are silenced
+  const asysOn = powered && !standby && Object.values(alarms).some(a => a.id === 'asys' && !a.latched);
+  const flat = solo ? solo === 'flatonly' : (S.tvFlatline && asysOn) || AC.currentTime < flatTestUntil;
   setFlatline(flat);
+  const flatAlarm = flat && list.some(a => a.id === 'asys' && !a.latched);
   const set = TONESETS[S.toneSet] || TONESETS.carescape;
   // TV mode: pulse-ox alarms sound on their own channel, alongside the ECG alarm sound
   // the SpO2 alarms and the heart / pressure alarms are two sounds that play together (the two-tone of the seizure and
@@ -1734,7 +1738,7 @@ function audioTick() {
   // overlapping alarms are all heard: an SpO2 alarm keeps its pulse-ox tone while a heart alarm sounds (SpO2 88 with HR
   // 201 = the pulse-ox tone AND the fast beeping), so neither problem hides the other. Only a red SpO2 Desat on its own
   // is the fast beeping alone, as before
-  const ox = !solo && !!set.ox && oxTop > 0 && (flat || alarmTest === 'twotone' || R.scene === 'seizure' || oxTop < 3 || otherTop > 0);
+  const ox = !solo && !!set.ox && oxTop > 0 && (flatAlarm || alarmTest === 'twotone' || R.scene === 'seizure' || oxTop < 3 || otherTop > 0);
   if (ox && !oxOn) {
     nextOx = AC.currentTime + 0.05;
     // join the running fast beeping in step: the next fast beep lands syncOff into the pulse-ox beep
@@ -1748,7 +1752,7 @@ function audioTick() {
   const p = set.ox ? Math.max(otherTop, oxTop === 3 ? 3 : 0) : topPriority(list);
   let name = p === 3 ? 'high' : p === 2 ? 'medium' : p === 1 ? 'low' : null;
   // TV mode follows the House M.D. arrest scene: in asystole the flatline plays with "beR beR beR" under it
-  if (flat) name = 'ber';
+  if (flatAlarm) name = 'ber';
   if (solo) name = solo === 'beronly' && set.ber ? 'ber' : null;
   // ...and the seizure scene: only the pulse-ox tone and the fast beeping, never the yellow "beep beep"
   if (S.toneSet === 'classic' && R.scene === 'seizure' && name === 'medium') name = null;
