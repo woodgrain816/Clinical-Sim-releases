@@ -1,6 +1,6 @@
 /* Patient Monitor offline worker: the whole monitor is one page, so once saved it runs with no internet.
    Online the page is fetched fresh (and re-saved) so updates arrive; offline or on a stalled connection the saved copy is used. */
-const CACHE='patientmonitor-2026-11-05.3';
+const CACHE='patientmonitor-2026-11-06.1';
 self.addEventListener('install',e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','manifest.webmanifest','icon-192.png','icon-512.png'])).then(()=>self.skipWaiting())) });
 self.addEventListener('activate',e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE&&k.startsWith('patientmonitor-')).map(k=>caches.delete(k)))).then(()=>self.clients.claim())) });
 self.addEventListener('fetch',e=>{ const r=e.request; if(r.method!=='GET'||new URL(r.url).origin!==location.origin) return;

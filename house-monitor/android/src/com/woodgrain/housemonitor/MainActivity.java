@@ -2,6 +2,8 @@ package com.woodgrain.housemonitor;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -48,12 +50,30 @@ public class MainActivity extends Activity {
             }
         });
         web.addJavascriptInterface(new NativeAudio(), "NativeAudio");
+        web.addJavascriptInterface(new HMApp(), "HMApp");
+        applyOrientation();
         if (saved != null) web.restoreState(saved); else web.loadUrl("file:///android_asset/index.html");
     }
 
     private class NativeAudio {
         @JavascriptInterface public void start(int rate) { startTrack(rate); }
         @JavascriptInterface public void write(String b64) { blocks.offer(Base64.decode(b64, Base64.DEFAULT)); }
+    }
+
+    /** Full screen in the monitor's Monitor Setup: sideways (landscape, either way up) and remembered, or free rotation. */
+    private class HMApp {
+        @JavascriptInterface public boolean isLandscape() { return prefs().getBoolean("landscape", false); }
+        @JavascriptInterface public void setLandscape(boolean on) {
+            prefs().edit().putBoolean("landscape", on).apply();
+            runOnUiThread(new Runnable() { @Override public void run() { applyOrientation(); } });
+        }
+    }
+
+    private SharedPreferences prefs() { return getSharedPreferences("monitor", MODE_PRIVATE); }
+
+    private void applyOrientation() {
+        setRequestedOrientation(prefs().getBoolean("landscape", false)
+            ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
     private synchronized void startTrack(int rate) {

@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-05.3';
+var HM_BUILD = '2026-11-06.1';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -2559,7 +2559,7 @@ function openMonitorSetup(tab = 0) {
       row(b, 'Show monitor housing', toggle(() => S.bezel, v => { S.bezel = v; S.bezelSet = true; save(); fit(); }));
       row(b, 'Temperature unit', choice([['C','°C'],['F','°F']], () => S.tempUnit, v => S.tempUnit = v));
       row(b, 'Monitor standby', button('Standby', () => setStandby(true)));
-      row(b, 'Full screen', button('Toggle full screen (F11)', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }));
+      row(b, 'Full screen', button('Toggle full screen (F11)', toggleFullScreen));
     }},
     {name: 'ECG', build: b => {
       const leads = Object.keys(LEADS);
@@ -2880,6 +2880,21 @@ function shock(toOverride) {
   beats = beats.filter(b => b.t <= simT); schedT = simT + 1.6; lastQRS = simT; hrResetT = simT;
   if (to) { CRS.name = null; courseShow(); }
   if (to) setTimeout(() => { if (to === 'nsr') applyPreset(PRESETS.ROSC); else setRhythm(to); }, 1500);
+}
+
+/* ---------------- full screen ---------------- */
+// full screen is sideways on a phone: the monitor is a landscape screen. In the Android app (window.HMApp) it locks the
+// app to landscape and remembers it; in a phone browser it goes full screen and locks the orientation while it lasts
+function toggleFullScreen() {
+  if (window.HMApp && HMApp.setLandscape) {
+    const on = !HMApp.isLandscape(); HMApp.setLandscape(on);
+    toast(on ? 'Full screen: sideways' : 'Full screen off: turns with the phone'); return;
+  }
+  if (document.fullscreenElement) { try { screen.orientation.unlock(); } catch (e) {} document.exitFullscreen().catch(() => {}); return; }
+  const el = document.documentElement;
+  (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).then(() => {
+    try { const p = screen.orientation && screen.orientation.lock('landscape'); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  }).catch(() => {});
 }
 
 /* ---------------- check for updates ---------------- */
