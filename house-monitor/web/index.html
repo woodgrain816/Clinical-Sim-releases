@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-14.1';
+var HM_BUILD = '2026-11-14.2';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4622,8 +4622,10 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     isY: [[1, -1, 0], [2, 0, 0], [3, -32, 0], [4, -27, 0], [5, -30, 0]],
     // Traditional on the MP30 (same recording): the small speaker lifts the upper overtones - red's 3rd (2880 Hz) and
     // yellow's 3rd-5th - so it sounds sharper than the MX800; decay rates as measured on the MX800
-    trY30: [[1, -1, 22], [2, -24, 18], [3, 0, 33], [4, -1, 18], [5, -6, 18]],
-    trR30: [[1, -13, 25], [2, -23, 29], [3, 0, 20], [4, -32, 22], [5, -44, 70]],
+    // the MP30 holds its Traditional tones (averaged over 27 yellow and 32 red tones): yellow stays nearly level for
+    // ~1 s, red loses only ~7 dB over its second, so the red alarm sounds almost continuous
+    trY30: [[1, -1, 4], [2, -24, 4], [3, 0, 5], [4, -1, 5], [5, -6, 6]],
+    trR30: [[1, -13, 7], [2, -23, 7], [3, 0, 7], [4, -32, 8], [5, -44, 10]],
     isL: [[1, -8, 0], [2, 0, 0], [3, -8, 0], [4, -20, 0], [5, -20, 0]],
     // the heartbeat (pulse) tone: nearly a pure tone, 3rd overtone -22 dB (measured from a real MP30)
     qrs: [[1, 0, 0], [2, -38, 0], [3, -22, 0], [4, -40, 0], [5, -43, 0]],
@@ -4644,10 +4646,36 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
       o.connect(g); g.connect(out); o.start(at); o.stop(end + 0.02);
     }
   }
+  // measured loudness shapes ([seconds, dB], from a real MP30, averaged over every tone in the recording):
+  // the pulse tone is a "tick" (full level for 15 ms) over a softer tone that is gone by ~110 ms; an ISO/IEC yellow
+  // pulse swells in over ~25 ms and rings down over ~100 ms; a red pulse is loud for ~105 ms then sounds on ~10 dB
+  // down until the next pulse
+  const PHENV = {
+    qrs: [[0, -60], [.006, 0], [.02, -1], [.03, -6], [.036, -9], [.04, -16], [.045, -8], [.084, -7], [.093, -12], [.104, -23], [.115, -45]],
+    isY: [[0, -45], [.006, -15], [.03, -4], [.06, -1], [.16, -1], [.2, -8], [.23, -15], [.26, -22], [.3, -30], [.33, -45]],
+    isR: [[0, -45], [.006, 0], [.105, -1], [.13, -4], [.16, -6], [.205, -8], [.215, -45]],
+  };
+  function phShaped(f, at, part, level, out, envPts) {
+    at = Math.max(at, AC.currentTime + 0.005);
+    let sum = 0; for (const p of part) sum += Math.pow(10, p[1] / 20);
+    const end = at + envPts[envPts.length - 1][0];
+    for (const [k, db] of part) {
+      if (f * k > 0.45 * AC.sampleRate) continue;
+      const amp = level * Math.pow(10, db / 20) / sum, o = AC.createOscillator(), g = AC.createGain();
+      o.frequency.value = f * k;
+      g.gain.setValueAtTime(0, at);
+      envPts.forEach(([t, d], i) => { if (i) g.gain.exponentialRampToValueAtTime(Math.max(1e-6, amp * Math.pow(10, d / 20)), at + t); else g.gain.linearRampToValueAtTime(Math.max(1e-6, amp * Math.pow(10, d / 20)), at + 0.0005); });
+      g.gain.linearRampToValueAtTime(0, end + 0.005);
+      o.connect(g); g.connect(out); o.start(at); o.stop(end + 0.02);
+    }
+  }
   const origPlay = playPattern;
   playPattern = function (pat, t0, k) {
     if (!pat.ph) return origPlay(pat, t0, k);
-    for (const [off, f, d, part, lv] of pat.notes) phNote(f, t0 + off, d, PHP[part], lv, alarmGain);
+    for (const [off, f, d, part, lv] of pat.notes) {
+      if (PHENV[part]) phShaped(f, t0 + off, PHP[part], lv, alarmGain, PHENV[part]);
+      else phNote(f, t0 + off, d, PHP[part], lv, alarmGain);
+    }
   };
   TONESETS.phTrad = {
     high:   {ph: 1, notes: [[0, 960, .97, 'trR', .42]], repeat: 1.02},
@@ -4684,8 +4712,8 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     if (S.toneSet === 'classic' || !AC || !S.volQrs || standby || !powered) return origQrs(b);
     const s = clamp(M.spo2 != null ? M.spo2 : 100, 30, 100);
     if (S.display === 'carescape') return tone(920 - (100 - s) * 10, AC.currentTime + 0.005, 0.04, qrsGain, false);
-    // ~90 ms (a real MP30: struck, held ~80 ms, gone by ~110 ms); 528 Hz when there is no SpO2 to modulate it
-    if (isPh()) return phNote(M.spo2 == null ? 528 : 552 * Math.pow(2, (s - 98) / 110), AC.currentTime + 0.005, 0.09, PHP.qrs, .5, qrsGain);
+    // the measured "tick" shape (PHENV.qrs); 528 Hz when there is no SpO2 to modulate it
+    if (isPh()) return phShaped(M.spo2 == null ? 528 : 552 * Math.pow(2, (s - 98) / 110), AC.currentTime + 0.005, PHP.qrs, .5, qrsGain, PHENV.qrs);
     return origQrs(b);
   };
 
