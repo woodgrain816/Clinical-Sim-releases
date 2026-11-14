@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-06.1';
+var HM_BUILD = '2026-11-14.1';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4054,7 +4054,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
 </script>
 <script>/* Monitor picker (website copy only; the House Monitor page itself is never edited).
    At every start the page asks which monitor to show: Default Monitor (the page's own TV-style screen), GE CARESCAPE B450
-   (the page's own B450 screen), Philips IntelliVue MX800 or Philips IntelliVue MX100 (screens drawn here), and how big:
+   (the page's own B450 screen), Philips IntelliVue MX800, MP30 or MX100 (screens drawn here), and how big:
    Full screen (the same layout stretched to the display), Actual size (the real screen's shape, letter-boxed) or Life
    size (the real screen's physical size, calibrated against a bank card). Only the monitor and its alarms change: the
    Instructor panel, the patient model and every scenario are the same on all of them.
@@ -4064,13 +4064,17 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     house:     {name: 'Default Monitor', sub: 'The original screen and alarm sounds of this simulator', w: 1280, h: 800, mm: [261, 163]},
     carescape: {name: 'CARESCAPE B450', maker: 'GE HealthCare', sub: '12" bedside / transport monitor, 1024 × 768', w: 1024, h: 768, mm: [244, 183]},
     mx800:     {name: 'IntelliVue MX800', maker: 'Philips', sub: '19" bedside monitor, 1680 × 1050', w: 1680, h: 1050, mm: [408, 255]},
+    mp30:      {name: 'IntelliVue MP30', maker: 'Philips', sub: '10.4" bedside monitor, 800 × 600', w: 800, h: 600, mm: [211, 158]},
     mx100:     {name: 'IntelliVue MX100', maker: 'Philips', sub: '6.1" compact transport monitor, 1024 × 480', w: 1024, h: 480, mm: [140, 65]},
   };
-  const ORDER = ['house', 'carescape', 'mx800', 'mx100'];
+  const ORDER = ['house', 'carescape', 'mx800', 'mp30', 'mx100'];
   const SIZES = [['fill', 'Full screen', 'The same layout, stretched to fill the display'],
                  ['actual', 'Actual size', "The real monitor's screen shape (may leave black bars)"],
                  ['life', 'Life size', "The real screen's physical size (set it up once with a bank card)"]];
-  const isPh = () => S.display === 'mx800' || S.display === 'mx100';
+  const isPh = () => S.display === 'mx800' || S.display === 'mp30' || S.display === 'mx100';
+  // the Philips alarm tone set: ISO/IEC is the same on every IntelliVue; Traditional is measured per model, because the
+  // MP30's small speaker brings out the upper overtones (its own set, from a recording of a real MP30)
+  const phTones = () => S.phTones === 'iec' ? 'phIec' : S.display === 'mp30' ? 'phTrad30' : 'phTrad';
   window.isPhilips = isPh;
   if (!MON[S.display]) S.display = 'house';
   if (!S.sizeMode) S.sizeMode = 'fill';
@@ -4079,7 +4083,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   function setMonitor(id) {
     if (id === 'house') setSoundStyle('tv');
     else if (id === 'carescape') setSoundStyle('real');
-    else { S.toneSet = S.phTones === 'iec' ? 'phIec' : 'phTrad'; S.tvFlatline = false; S.display = id; }
+    else { S.display = id; S.toneSet = phTones(); S.tvFlatline = false; }
     S.monitor = id; save(); try { syncSoundPick(); } catch (e) {}
     fit(); layout(); updateTop();
   }
@@ -4189,7 +4193,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
         row(b, 'Size', choice(SIZES.map(s => [s[0], s[1]]), () => S.sizeMode || 'fill', v => { S.sizeMode = v; save(); fit(); renderMenu(); }));
         if (S.sizeMode === 'life') row(b, 'Life size set-up', button('Calibrate with a card', () => { closeMenu(); showPicker(); pickId = S.display; }));
         if (isPh()) row(b, 'Alarm sounds', choice([['trad', 'Philips Traditional'], ['iec', 'ISO / IEC 60601-1-8']], () => S.phTones === 'iec' ? 'iec' : 'trad',
-          v => { S.phTones = v; S.toneSet = v === 'iec' ? 'phIec' : 'phTrad'; save(); renderMenu(); }), button('Test', () => testAlarm('high')));
+          v => { S.phTones = v; S.toneSet = phTones(); save(); renderMenu(); }), button('Test', () => testAlarm('high')));
         if (S.display === 'carescape') row(b, 'Alarm sounds', choice([['carescape', 'CARESCAPE Legacy'], ['geIec', 'CARESCAPE IEC']], () => S.toneSet === 'geIec' ? 'geIec' : 'carescape',
           v => { S.toneSet = v; save(); renderMenu(); }), button('Test', () => testAlarm('high')));
         row(b, 'Start-up', button('Show the monitor picker', () => { closeMenu(); powerOff(); showPicker(); }));
@@ -4243,6 +4247,13 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
 #phHdr .gb{flex:0 0 44%;display:flex;align-items:center;gap:26px;padding:0 10px;background:#aeb2b3;color:#fff;font-size:15px;white-space:nowrap;overflow:hidden}
 #phHdr .gb .bd{cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis}
 #phHdr .gb .sp{flex:1}
+.philips.mp30 #phHdr .gb{flex:0 0 30%;background:#000;color:#e8e8e8;font-size:14px;gap:10px}
+.philips.mp30 .p30col{position:absolute;display:flex;flex-direction:column;gap:6px;padding:8px 10px;box-sizing:border-box;border-left:1px solid #1d2126;cursor:pointer}
+.philips.mp30 .p30s{font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.15;white-space:nowrap}
+.philips.mp30 .p30clk{margin-top:auto;color:#e8e8e8;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1}
+.philips.mp30 .p30clk small{display:block;font-size:13px;color:#9aa3ad}
+.philips.mp30 #menubar .mk.pk:nth-last-child(-n+2){background:linear-gradient(#3d9be9,#1767b8);color:#fff;border-color:#7cc0ff}
+.philips.mp30 .p30big [data-v="pvc"],.philips.mp30 .p30big [data-v="st"]{display:none}
 #phHdr .row{flex:1;position:relative}
 #phHdr .af{position:absolute;top:2px;bottom:2px;display:flex;align-items:center;padding:0 12px;font-size:21px;letter-spacing:.5px;white-space:pre;overflow:hidden;cursor:pointer}
 #phHdr .af.in{left:0;width:33%}#phHdr .af.yl{left:44%;width:29%}#phHdr .af.rd{left:73%;right:0}
@@ -4295,9 +4306,10 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   const phSmart = el('div'); phSmart.id = 'phSmart'; scr.appendChild(phSmart);
 
   function phGeom() {
-    const m1 = S.display === 'mx100';
-    G.left = m1 ? 190 : 0; G.head = m1 ? 64 : 78; G.status = m1 ? 0 : 22; G.keys = m1 ? 0 : 58; G.numRow = m1 ? 0 : 108;
-    G.numW = Math.round((SW - G.left) * (m1 ? 0.36 : 0.29));
+    const m1 = S.display === 'mx100', p30 = S.display === 'mp30';
+    G.left = m1 ? 190 : 0; G.head = m1 ? 64 : 78; G.status = m1 ? 0 : 22; G.keys = m1 ? 0 : 58; G.numRow = m1 ? 0 : p30 ? 72 : 108;
+    // MP30: big numerics beside the waves plus a narrow column of small ones at the right edge
+    G.numW = Math.round((SW - G.left) * (m1 ? 0.36 : p30 ? 0.36 : 0.29));
     WAVE_TOP = G.head; WAVE_W = SW - G.left - G.numW; WAVE_H = 800 - G.head - G.numRow - G.status - G.keys;
   }
   const clearSt = (sel, keys) => { const e = $(sel); if (e) for (const k of keys) e.style[k] = ''; };
@@ -4305,6 +4317,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   applyGeometry = function () {
     const ph = isPh();
     scr.classList.toggle('philips', ph); scr.classList.toggle('mx800', S.display === 'mx800'); scr.classList.toggle('mx100', S.display === 'mx100');
+    scr.classList.toggle('mp30', S.display === 'mp30');
     phSmart.classList.remove('on');
     if (!ph) {
       clearSt('#menubar', ['top', 'height', 'left']); clearSt('#waveCv', ['left']); clearSt('#menuWin', ['left', 'top']);
@@ -4324,7 +4337,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     st('#frozen', {top: (G.head + 6) + 'px'});
     st('#menuWin', {left: (G.left + 8) + 'px', top: (G.head + 40) + 'px'});
     phKeys.style.width = G.left + 'px';
-    $('#bezelBottom .brand').innerHTML = S.display === 'mx100' ? 'IntelliVue&nbsp; MX100' : 'IntelliVue&nbsp; MX800';
+    $('#bezelBottom .brand').innerHTML = S.display === 'mx100' ? 'IntelliVue&nbsp; MX100' : S.display === 'mp30' ? 'IntelliVue&nbsp; MP30' : 'IntelliVue&nbsp; MX800';
     buildMenuBar(); buildPhKeys();
   };
   // the MX100 shows one ECG; its wide, short screen holds up to four waves
@@ -4416,6 +4429,24 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
       for (const k of ids) { const h = Math.floor(WAVE_H * (wt[k] || 0.85) / tw); mk(box, k, 0, y, G.numW, h, col[k]); y += h; }
       return;
     }
+    if (S.display === 'mp30') {
+      // MP30 (as on the real screen): each big numeric beside its wave, a narrow column of small numerics at the right
+      // edge (PVC, ST, Temp, then the clock at the bottom) and NBP in a short strip under the waves
+      const bw = Math.round(G.numW * 0.62), sw2 = G.numW - bw;
+      for (const r of rows) {
+        const id = ROWPAR[r.id]; if (!id) continue;
+        let h = r.h; if (r.id === 'ecg1') { const e2 = rows.find(q => q.id === 'ecg2'); if (e2) h = e2.y + e2.h - r.y; }
+        mk(box, id, 0, r.y, bw, h, col[id]).classList.add('p30big');
+      }
+      const sc = place(el('div', 'p30col'), {left: bw + 'px', top: '0px', width: sw2 + 'px', height: WAVE_H + 'px'});
+      sc.innerHTML = `<div class="p30s" style="color:${PHC.ecg}"><span data-v="pvc"></span></div>
+        <div class="p30s" style="color:${PHC.ecg}"><span data-v="st"></span></div>` +
+        (SEN.temp === 'ok' ? `<div class="p30s" style="color:${PHC.temp}">Temp <span data-v="t1"></span></div>` : '') +
+        `<div class="p30clk"><small>Clock</small><span id="p30clock"></span></div>`;
+      sc.onclick = () => openAlarmsSetup(); box.appendChild(sc);
+      mk(br, 'nibp', 0, 0, Math.round(SW * 0.42), G.numRow, col.nibp);
+      return;
+    }
     // MX800: each numeric beside its wave (HR spans both ECG waves), NBP and Temp in the row under the waves
     for (const r of rows) {
       const id = ROWPAR[r.id]; if (!id) continue;
@@ -4443,7 +4474,8 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   function phParts(a) {
     if (isInop(a)) {
       let [src, m] = INOP[a.id]; if (a.id === 'batlow' && /Critic/.test(a.msg)) m = 'BATTERY EMPTY';
-      const ex = a.pri === 'high' ? '!!!' : a.pri === 'medium' ? '!!' : '';
+      // the MP30 shows its INOPs as cyan technical messages ("SpO2 Sensor Off" in a cyan field, as on the real screen)
+      const ex = S.display === 'mp30' && a.pri !== 'high' ? '' : a.pri === 'high' ? '!!!' : a.pri === 'medium' ? '!!' : '';
       return ex ? [ex + (src ? src + ' ' : '') + m, ''] : [src ? src + '   ' + m : m, ''];
     }
     const red = a.pri === 'high', star = red ? '*** ' : a.pri === 'medium' ? '**' : '*';
@@ -4457,7 +4489,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   }
   const phText = a => phParts(a).filter(Boolean).join('  ');
   window.philipsAlarmText = phText;
-  const fieldCls = a => a.pri === 'high' ? 'r' : a.pri === 'medium' ? 'y' : isInop(a) ? 'c' : 'y';
+  const fieldCls = a => S.display === 'mp30' && isInop(a) && a.pri !== 'high' ? 'c' : a.pri === 'high' ? 'r' : a.pri === 'medium' ? 'y' : isInop(a) ? 'c' : 'y';
   // one field: several alarms take turns every 2 s, with an arrow in front; a tick once acknowledged
   function field(slot, list, now) {
     if (!list.length) return '';
@@ -4473,13 +4505,16 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     const d = new Date(), tm = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
     const paused = simT < pauseUntil && powered, r = Math.max(0, pauseUntil - simT), pz = Math.floor(r / 60) + ':' + pad2(Math.floor(r % 60));
     const m1 = S.display === 'mx100', MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const gb = `<div class="gb"><span class="bd">${esc(S.bed)}${S.name && !m1 ? ' &nbsp;' + esc(S.name) : ''}</span><span class="sp"></span>` +
+    const p30 = S.display === 'mp30';
+    const gb = p30 ? `<div class="gb"><span class="sp"></span><span class="bd">${esc(S.name || 'Not Admitted')}</span><span class="sp"></span><span>${tm}</span><span class="sp"></span><span>${rows.length} Wave Dynamic</span></div>`
+      : `<div class="gb"><span class="bd">${esc(S.bed)}${S.name && !m1 ? ' &nbsp;' + esc(S.name) : ''}</span><span class="sp"></span>` +
       (m1 ? `<span>${tm}</span><span>&#128267; ${Math.round(battery)}%</span>`
           : `<span>${esc(S.cat)}</span><span>${d.getDate()} ${MON[d.getMonth()]} ${tm}</span><span>&#9636; Profiles</span><span>${rows.length} Waves</span>`) + '</div>';
     const red = pat.filter(a => a.pri === 'high'), yel = pat.filter(a => a.pri !== 'high');
     const off = paused ? `<div class="af rd w">&#128277; ${S.pauseTime >= 600 ? 'ALARMS OFF' : 'ALARMS PAUSED'}<span class="v">${S.pauseTime >= 600 ? '' : pz}</span></div>` : '';
     const html = gb + '<div class="row">' + field('in', inop, now) + field('yl', yel, now) + (red.length ? field('rd', red, now) : off) + '</div>';
     if (phHdr.innerHTML !== html) phHdr.innerHTML = html;
+    const ck = $('#p30clock'); if (ck && ck.textContent !== tm) ck.textContent = tm;
     const pis = phHdr.querySelector('.bd'); if (pis) pis.onclick = () => openPatientMenu();
     phHdr.querySelectorAll('.af').forEach(e => e.onclick = () => openAlarmsSetup(3));
     // status line: prompts and notices
@@ -4580,10 +4615,18 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   const PHP = {
     trY: [[1, 0, 22], [2, -14, 18], [3, 0, 33], [4, -31, 18], [5, -13, 18]],
     trR: [[1, 0, 25], [2, -30, 29], [3, -14, 20], [4, -37, 22], [5, -23, 70]],
-    isR: [[1, -15, 0], [2, -2, 0], [3, 0, 0], [4, -21, 0], [5, -7, 0]],
-    isY: [[1, 0, 0], [2, -9, 0], [3, -28, 0], [4, -32, 0]],
+    // ISO/IEC re-measured from a real IntelliVue MP30 (every pulse of 6 yellow and 10 red): red is a 480 Hz tone whose
+    // 2nd and 4th overtones (960, 1920 Hz) are the loudest; yellow is a 360 Hz tone with an equally loud 720 Hz octave
+    // (it was taken for a 720 Hz tone before: the 360 Hz fundamental is just as strong)
+    isR: [[1, -6, 0], [2, 0, 0], [3, -9, 0], [4, 0, 0], [5, -22, 0], [6, -45, 0]],
+    isY: [[1, -1, 0], [2, 0, 0], [3, -32, 0], [4, -27, 0], [5, -30, 0]],
+    // Traditional on the MP30 (same recording): the small speaker lifts the upper overtones - red's 3rd (2880 Hz) and
+    // yellow's 3rd-5th - so it sounds sharper than the MX800; decay rates as measured on the MX800
+    trY30: [[1, -1, 22], [2, -24, 18], [3, 0, 33], [4, -1, 18], [5, -6, 18]],
+    trR30: [[1, -13, 25], [2, -23, 29], [3, 0, 20], [4, -32, 22], [5, -44, 70]],
     isL: [[1, -8, 0], [2, 0, 0], [3, -8, 0], [4, -20, 0], [5, -20, 0]],
-    qrs: [[1, 0, 0], [2, -36, 0], [3, -15, 0], [4, -40, 0], [5, -20, 0]],
+    // the heartbeat (pulse) tone: nearly a pure tone, 3rd overtone -22 dB (measured from a real MP30)
+    qrs: [[1, 0, 0], [2, -38, 0], [3, -22, 0], [4, -40, 0], [5, -43, 0]],
   };
   // one struck/pulsed tone: a sine per overtone, 12 ms rise, exponential decay, 15 ms fall (no clicks)
   function phNote(f, at, dur, part, level, out) {
@@ -4613,9 +4656,14 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   };
   const pulses = (f, part, ts, d, lv) => ts.map(t => [t, f, d, part, lv]);
   const RED5 = [0, .215, .43, .85, 1.065];
+  TONESETS.phTrad30 = {
+    high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 1.02},
+    medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 2.05},
+    low:    {ph: 1, notes: [[0, 480, .97, 'trY30', .4]], repeat: 2.05},
+  };
   TONESETS.phIec = {
-    high:   {ph: 1, notes: pulses(480, 'isR', RED5.concat(RED5.map(t => t + 2.06)), .15, .45), repeat: 9.24},
-    medium: {ph: 1, notes: pulses(720, 'isY', [0, .3, .6], .22, .42), repeat: 11.3},
+    high:   {ph: 1, notes: pulses(480, 'isR', RED5.concat(RED5.map(t => t + 2.06)), .16, .45), repeat: 9.24},
+    medium: {ph: 1, notes: pulses(360, 'isY', [0, .305, .61], .22, .42), repeat: 11.3},
     low:    {ph: 1, notes: pulses(242, 'isL', [0, .43], .25, .45), repeat: 15.4},
   };
   // GE CARESCAPE tones from the CARESCAPE manual (alarm tone tables): "Legacy" medium = two 100 ms beeps of 397 + 441 Hz
@@ -4636,7 +4684,8 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     if (S.toneSet === 'classic' || !AC || !S.volQrs || standby || !powered) return origQrs(b);
     const s = clamp(M.spo2 != null ? M.spo2 : 100, 30, 100);
     if (S.display === 'carescape') return tone(920 - (100 - s) * 10, AC.currentTime + 0.005, 0.04, qrsGain, false);
-    if (isPh()) return phNote(552 * Math.pow(2, (s - 98) / 110), AC.currentTime + 0.005, 0.14, PHP.qrs, .5, qrsGain);
+    // ~90 ms (a real MP30: struck, held ~80 ms, gone by ~110 ms); 528 Hz when there is no SpO2 to modulate it
+    if (isPh()) return phNote(M.spo2 == null ? 528 : 552 * Math.pow(2, (s - 98) / 110), AC.currentTime + 0.005, 0.09, PHP.qrs, .5, qrsGain);
     return origQrs(b);
   };
 
