@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-14.2';
+var HM_BUILD = '2026-11-14.3';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4618,7 +4618,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     // ISO/IEC re-measured from a real IntelliVue MP30 (every pulse of 6 yellow and 10 red): red is a 480 Hz tone whose
     // 2nd and 4th overtones (960, 1920 Hz) are the loudest; yellow is a 360 Hz tone with an equally loud 720 Hz octave
     // (it was taken for a 720 Hz tone before: the 360 Hz fundamental is just as strong)
-    isR: [[1, -6, 0], [2, 0, 0], [3, -9, 0], [4, 0, 0], [5, -22, 0], [6, -45, 0]],
+    isR: [[1, -8, 0], [2, -3, 0], [3, -8, 0], [4, 0, 0], [5, -25, 0], [6, -35, 0], [7, -34, 0]],   // 478 Hz, 50 pulses averaged
     isY: [[1, -1, 0], [2, 0, 0], [3, -32, 0], [4, -27, 0], [5, -30, 0]],
     // Traditional on the MP30 (same recording): the small speaker lifts the upper overtones - red's 3rd (2880 Hz) and
     // yellow's 3rd-5th - so it sounds sharper than the MX800; decay rates as measured on the MX800
@@ -4628,7 +4628,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     trR30: [[1, -13, 7], [2, -23, 7], [3, 0, 7], [4, -32, 8], [5, -44, 10]],
     isL: [[1, -8, 0], [2, 0, 0], [3, -8, 0], [4, -20, 0], [5, -20, 0]],
     // the heartbeat (pulse) tone: nearly a pure tone, 3rd overtone -22 dB (measured from a real MP30)
-    qrs: [[1, 0, 0], [2, -38, 0], [3, -22, 0], [4, -40, 0], [5, -43, 0]],
+    qrs: [[1, 0, 0], [2, -44, 0], [3, -27, 0], [4, -45, 0], [5, -48, 0]],   // the body of the beep; the tick adds its own 3rd
   };
   // one struck/pulsed tone: a sine per overtone, 12 ms rise, exponential decay, 15 ms fall (no clicks)
   function phNote(f, at, dur, part, level, out) {
@@ -4651,9 +4651,17 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   // pulse swells in over ~25 ms and rings down over ~100 ms; a red pulse is loud for ~105 ms then sounds on ~10 dB
   // down until the next pulse
   const PHENV = {
-    qrs: [[0, -60], [.006, 0], [.02, -1], [.03, -6], [.036, -9], [.04, -16], [.045, -8], [.084, -7], [.093, -12], [.104, -23], [.115, -45]],
+    // pulse tone, 2 ms resolution, average of 7 beeps aligned to the sample: a hard hit, a flutter, a dip at 32 ms,
+    // ~7 dB down to 72 ms, a second dip, gone at ~87 ms
+    qrs: [[0, -60], [.001, -11], [.003, -2], [.004, 0], [.008, -4], [.012, -1], [.016, -3.6], [.02, -6], [.022, -9], [.026, -6],
+          [.028, -7], [.03, -12], [.032, -22], [.034, -13], [.038, -7.6], [.044, -5.4], [.046, -5.3], [.05, -10], [.054, -6.3],
+          [.072, -7.4], [.076, -11.8], [.08, -11.5], [.084, -16], [.087, -23], [.092, -45]],
+    // the tick: during the first ~25 ms the 3rd overtone is only 12 dB under the tone (27 dB under it afterwards)
+    tick: [[0, -60], [.003, 0], [.014, -1], [.024, -8], [.032, -30], [.04, -50]],
     isY: [[0, -45], [.006, -15], [.03, -4], [.06, -1], [.16, -1], [.2, -8], [.23, -15], [.26, -22], [.3, -30], [.33, -45]],
-    isR: [[0, -45], [.006, 0], [.105, -1], [.13, -4], [.16, -6], [.205, -8], [.215, -45]],
+    // red pulse (50 pulses averaged): ~100 ms full, ~8 dB down by 160 ms; after the 3rd and 5th pulse it fades on
+    // (-13 dB at 0.25 s, -20 at 0.3 s) instead of stopping, so each burst rings out briefly
+    isR: [[0, -45], [.004, -3], [.012, -1], [.1, -1], [.115, -3], [.13, -5], [.145, -7], [.16, -8], [.205, -8.5], [.25, -13], [.29, -19], [.33, -30], [.36, -45]],
   };
   function phShaped(f, at, part, level, out, envPts) {
     at = Math.max(at, AC.currentTime + 0.005);
@@ -4683,14 +4691,14 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     low:    {ph: 1, notes: [[0, 480, .97, 'trY', .4]], repeat: 2.04},
   };
   const pulses = (f, part, ts, d, lv) => ts.map(t => [t, f, d, part, lv]);
-  const RED5 = [0, .215, .43, .85, 1.065];
+  const RED5 = [0, .211, .425, .851, 1.06];   // measured over 5 bursts: second half 2.055 s later, every 9.236 s
   TONESETS.phTrad30 = {
     high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 1.02},
     medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 2.05},
     low:    {ph: 1, notes: [[0, 480, .97, 'trY30', .4]], repeat: 2.05},
   };
   TONESETS.phIec = {
-    high:   {ph: 1, notes: pulses(480, 'isR', RED5.concat(RED5.map(t => t + 2.06)), .16, .45), repeat: 9.24},
+    high:   {ph: 1, notes: pulses(478, 'isR', RED5.concat(RED5.map(t => t + 2.055)), .16, .45), repeat: 9.236},
     medium: {ph: 1, notes: pulses(360, 'isY', [0, .305, .61], .22, .42), repeat: 11.3},
     low:    {ph: 1, notes: pulses(242, 'isL', [0, .43], .25, .45), repeat: 15.4},
   };
@@ -4712,8 +4720,9 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     if (S.toneSet === 'classic' || !AC || !S.volQrs || standby || !powered) return origQrs(b);
     const s = clamp(M.spo2 != null ? M.spo2 : 100, 30, 100);
     if (S.display === 'carescape') return tone(920 - (100 - s) * 10, AC.currentTime + 0.005, 0.04, qrsGain, false);
-    // the measured "tick" shape (PHENV.qrs); 528 Hz when there is no SpO2 to modulate it
-    if (isPh()) return phShaped(M.spo2 == null ? 528 : 552 * Math.pow(2, (s - 98) / 110), AC.currentTime + 0.005, PHP.qrs, .5, qrsGain, PHENV.qrs);
+    // the measured "tick" shape (PHENV.qrs + PHENV.tick); 522 Hz when there is no SpO2 to modulate it
+    if (isPh()) { const f = M.spo2 == null ? 522 : 552 * Math.pow(2, (s - 98) / 110), at = AC.currentTime + 0.005;
+      phShaped(f, at, PHP.qrs, .5, qrsGain, PHENV.qrs); phShaped(f * 3, at, [[1, 0, 0]], .5 * 0.24, qrsGain, PHENV.tick); return; }
     return origQrs(b);
   };
 
