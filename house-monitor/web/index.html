@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-25.5';
+var HM_BUILD = '2026-11-25.6';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -3418,7 +3418,7 @@ if (new URLSearchParams(location.search).has('autostart')) powerOn();
 try { if (sessionStorage.getItem('hm.resume') === '1') { sessionStorage.removeItem('hm.resume'); powerOn(); } else sessionStorage.removeItem('hm.resume'); } catch (e) {}
 </script>
 <style>#instr{overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#3b5675 #121820}</style><script>canPopOut=function(){ return false }; try{ setInstrMode() }catch(e){}
-checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offline, with no internet. A newer version comes by installing the newest Patient Monitor APK (this is build "+HM_BUILD+").":"The website updates itself: reload the page for the newest version (build "+HM_BUILD+").") }; try{ buildInstructor(); setInstrMode() }catch(e){}</script>
+checkUpdate=function(){ updState(window.NativeAudio?"This app updates itself: each time it opens (with internet) it gets the newest monitor from monitorsim.vercel.app and switches to it. Offline it keeps working with the last version it saved (this is build "+HM_BUILD+").":"The website updates itself: reload the page for the newest version (build "+HM_BUILD+").") }; try{ buildInstructor(); setInstrMode() }catch(e){}</script>
 <script>/* WEBSITE ONLY (added by deploy.js): more deteriorations for the Instructor's list, in the House Monitor's own
    format. Each one runs, alarms and shows on the timeline exactly like the built-in ones. Numbers follow the usual
    textbook course of each emergency (adult). */
