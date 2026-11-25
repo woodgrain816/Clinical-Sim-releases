@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-25.3';
+var HM_BUILD = '2026-11-25.4';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4674,9 +4674,12 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     isY: [[0, -45], [.006, -15], [.03, -4], [.06, -1], [.16, -1], [.2, -8], [.23, -15], [.26, -22], [.3, -30], [.33, -45]],
     // red pulse (50 pulses averaged): ~100 ms full, ~8 dB down by 160 ms; after the 3rd and 5th pulse it fades on
     // (-13 dB at 0.25 s, -20 at 0.3 s) instead of stopping, so each burst rings out briefly
-    // Traditional red (MP30 *** Apnea, 10 tones averaged): swells in over ~45 ms, level until ~0.3 s, then fades
+    // Traditional red (MP30 *** Apnea, 8 tones aligned to 1 ms): STRUCK, not swelled - the 960 Hz tone is at full level
+    // within ~4 ms (the "ding"), the 2880 Hz overtone catches up ~10 ms later; then level until ~0.3 s and a fade of
     // ~20 dB a second to -18 dB just before the next tone
-    trR30: [[0, -40], [.01, -22], [.02, -9], [.03, -4], [.045, -1], [.06, 0], [.3, -1], [.4, -3], [.5, -5], [.6, -7.5],
+    trR30: [[0, -40], [.002, -8], [.004, -1], [.006, 0], [.3, -1], [.4, -3], [.5, -5], [.6, -7.5],
+            [.7, -10], [.8, -12.5], [.9, -15.5], [.985, -18], [1.0, -40]],
+    trR30hi: [[0, -40], [.002, -12], [.008, -10], [.012, -4], [.02, -2.5], [.04, 0], [.3, -1], [.4, -3], [.5, -5], [.6, -7.5],
             [.7, -10], [.8, -12.5], [.9, -15.5], [.985, -18], [1.0, -40]],
     isR: [[0, -45], [.004, -3], [.012, -1], [.1, -1], [.115, -3], [.13, -5], [.145, -7], [.16, -8], [.205, -8.5], [.25, -13], [.29, -19], [.33, -30], [.36, -45]],
   };
@@ -4698,7 +4701,13 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   playPattern = function (pat, t0, k) {
     if (!pat.ph) return origPlay(pat, t0, k);
     for (const [off, f, d, part, lv] of pat.notes) {
-      if (PHENV[part]) phShaped(f, t0 + off, PHP[part], lv, alarmGain, PHENV[part]);
+      if (PHENV[part + 'hi']) {
+        // the fundamental and the overtones have their own onsets: split them, keeping the overall balance
+        const P = PHP[part], amp = q => q.reduce((a, x) => a + Math.pow(10, x[1] / 20), 0), all = amp(P);
+        const lo = P.filter(x => x[0] === 1), hi = P.filter(x => x[0] !== 1);
+        phShaped(f, t0 + off, lo, lv * amp(lo) / all, alarmGain, PHENV[part]);
+        phShaped(f, t0 + off, hi, lv * amp(hi) / all, alarmGain, PHENV[part + 'hi']);
+      } else if (PHENV[part]) phShaped(f, t0 + off, PHP[part], lv, alarmGain, PHENV[part]);
       else phNote(f, t0 + off, d, PHP[part], lv, alarmGain);
     }
   };
