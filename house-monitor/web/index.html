@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-14.3';
+var HM_BUILD = '2026-11-25.1';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4065,16 +4065,20 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     carescape: {name: 'CARESCAPE B450', maker: 'GE HealthCare', sub: '12" bedside / transport monitor, 1024 × 768', w: 1024, h: 768, mm: [244, 183]},
     mx800:     {name: 'IntelliVue MX800', maker: 'Philips', sub: '19" bedside monitor, 1680 × 1050', w: 1680, h: 1050, mm: [408, 255]},
     mp30:      {name: 'IntelliVue MP30', maker: 'Philips', sub: '10.4" bedside monitor, 800 × 600', w: 800, h: 600, mm: [211, 158]},
+    mx40:      {name: 'IntelliVue MX40', maker: 'Philips', sub: '2.8" wearable telemetry monitor, 240 × 320 portrait', w: 240, h: 320, mm: [43, 57]},
     mx100:     {name: 'IntelliVue MX100', maker: 'Philips', sub: '6.1" compact transport monitor, 1024 × 480', w: 1024, h: 480, mm: [140, 65]},
   };
-  const ORDER = ['house', 'carescape', 'mx800', 'mp30', 'mx100'];
+  const ORDER = ['house', 'carescape', 'mx800', 'mp30', 'mx100', 'mx40'];
   const SIZES = [['fill', 'Full screen', 'The same layout, stretched to fill the display'],
                  ['actual', 'Actual size', "The real monitor's screen shape (may leave black bars)"],
                  ['life', 'Life size', "The real screen's physical size (set it up once with a bank card)"]];
-  const isPh = () => S.display === 'mx800' || S.display === 'mp30' || S.display === 'mx100';
+  const isPh = () => S.display === 'mx800' || S.display === 'mp30' || S.display === 'mx100' || S.display === 'mx40';
   // the Philips alarm tone set: ISO/IEC is the same on every IntelliVue; Traditional is measured per model, because the
   // MP30's small speaker brings out the upper overtones (its own set, from a recording of a real MP30)
-  const phTones = () => S.phTones === 'iec' ? 'phIec' : S.display === 'mp30' ? 'phTrad30' : 'phTrad';
+  // the MX40 times its tones differently from the bedside monitors (its own sets, defined with the Philips tones)
+  const phTones = () => S.display === 'mx40' ? (S.phTones === 'iec' ? 'phIecMX40' : 'phTradMX40')
+    : S.phTones === 'iec' ? 'phIec' : S.display === 'mp30' ? 'phTrad30' : 'phTrad';
+  window.philipsTones = phTones;
   window.isPhilips = isPh;
   if (!MON[S.display]) S.display = 'house';
   if (!S.sizeMode) S.sizeMode = 'fill';
@@ -4084,6 +4088,11 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     if (id === 'house') setSoundStyle('tv');
     else if (id === 'carescape') setSoundStyle('real');
     else { S.display = id; S.toneSet = phTones(); S.tvFlatline = false; }
+    // the MX40 measures ECG (with impedance Resp) and SpO2 only: other lines and the cuff are set aside while it is
+    // shown and put back when another monitor is picked
+    if (id === 'mx40' && !S.mx40Saved) { S.mx40Saved = {art: SEN.art, cvp: SEN.cvp, co2: SEN.co2, temp: SEN.temp, nibp: SEN.nibp};
+      SEN.art = SEN.cvp = SEN.co2 = SEN.temp = SEN.nibp = 'none'; }
+    else if (id !== 'mx40' && S.mx40Saved) { Object.assign(SEN, S.mx40Saved); S.mx40Saved = null; }
     S.monitor = id; save(); try { syncSoundPick(); } catch (e) {}
     fit(); layout(); updateTop();
   }
@@ -4093,7 +4102,8 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   const PXMM_DEFAULT = 96 / 25.4;   // CSS pixels per millimetre the browser claims; real screens differ, hence the card
   const origFit = fit;
   fit = function () {
-    const m = MON[S.display] || MON.house, mode = S.sizeMode || 'fill';
+    // the MX40 is a small upright screen: "Full screen" keeps its shape (stretching it sideways would not look like it)
+    const m = MON[S.display] || MON.house, mode = S.display === 'mx40' && (S.sizeMode || 'fill') === 'fill' ? 'actual' : S.sizeMode || 'fill';
     if (mode === 'fill') { origFit(); return; }
     const d = $('#device');
     const phone = /Android|iPhone|iPad|Mobile|; wv/.test(navigator.userAgent);
@@ -4470,6 +4480,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   const LIMNAME = {'ART Sys': 'ABPs', 'ART Dia': 'ABPd', 'ART Mean': 'ABPm', 'NIBP Sys': 'NBPs', 'NIBP Dia': 'NBPd', 'NIBP Mean': 'NBPm',
     CVP: 'CVPm', EtCO2: 'etCO2', FiCO2: 'imCO2', T1: 'Temp', SpO2: 'SpO2', HR: 'HR', RR: 'RR'};
   const isInop = a => !!INOP[a.id];
+  window.philipsIsInop = isInop;
   // [message, value]: "*** APNEA" + "10 sec", "**RR" + "7<18", "!!!ECG LEADS OFF", cyan "ECG" + "LEADS OFF" spaced apart
   function phParts(a) {
     if (isInop(a)) {
@@ -4697,8 +4708,21 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 2.05},
     low:    {ph: 1, notes: [[0, 480, .97, 'trY30', .4]], repeat: 2.05},
   };
+  // MX40 (IFU B.06.5X): Traditional - red repeated every 2 s, yellow every 4 s, short yellow the same but shorter,
+  // standard INOP tone every 4 s; ISO/IEC - red 5 pulses then a pause, yellow 3, INOP 2. The wearable's small speaker:
+  // the MP30's small-speaker spectra. Pause lengths are not published; the ISO pauses follow the IntelliVue cycle.
+  TONESETS.phTradMX40 = {
+    high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 2.0},
+    medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 4.0},
+    low:    {ph: 1, notes: [[0, 480, .45, 'trY30', .38]], repeat: 4.0},
+  };
   TONESETS.phIec = {
     high:   {ph: 1, notes: pulses(478, 'isR', RED5.concat(RED5.map(t => t + 2.055)), .16, .45), repeat: 9.236},
+    medium: {ph: 1, notes: pulses(360, 'isY', [0, .305, .61], .22, .42), repeat: 11.3},
+    low:    {ph: 1, notes: pulses(242, 'isL', [0, .43], .25, .45), repeat: 15.4},
+  };
+  TONESETS.phIecMX40 = {
+    high:   {ph: 1, notes: pulses(478, 'isR', RED5, .16, .45), repeat: 4.62},
     medium: {ph: 1, notes: pulses(360, 'isY', [0, .305, .61], .22, .42), repeat: 11.3},
     low:    {ph: 1, notes: pulses(242, 'isL', [0, .43], .25, .45), repeat: 15.4},
   };
@@ -4818,5 +4842,432 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
 })();
 </script>
 <script>if("serviceWorker" in navigator&&location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(function(){});</script>
+<style>
+/* ---------------- Philips IntelliVue MX40 (wearable telemetry monitor) ---------------- */
+#mx40{display:none;position:absolute;inset:0;z-index:8;background:#000;color:#e8e8e8;font-family:Arial,Helvetica,sans-serif;overflow:hidden;user-select:none}
+#screen.mx40on #mx40{display:block}
+#screen.mx40on #menuWin{z-index:40}
+#mx40.half{filter:brightness(.55)}
+#mx40 .hd{position:absolute;left:0;right:0;top:0;height:34px;display:flex;align-items:center;justify-content:flex-end;padding:0 18px;font-size:17px;color:#cfd3d8;letter-spacing:.3px}
+#mx40 .pl{position:absolute;left:10px;right:10px;top:36px;height:40px;display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700;border-bottom:1px solid #3a3f46;cursor:pointer}
+#mx40 .pl .bd{min-width:90px}#mx40 .pl .nm{flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mx40 .pl .tm{min-width:88px;text-align:right}
+#mx40 .ai{display:flex;gap:4px;min-width:88px;justify-content:flex-end}
+#mx40 .ai i{display:block;width:40px;height:26px;border:1px solid #555;background:#111}
+#mx40 .ai i.c{background:#5fe3ff}#mx40 .ai i.r{background:#ff2a2a}#mx40 .ai i.y{background:#ffe100}
+#mx40 .af{position:absolute;left:10px;right:10px;height:42px;display:flex;align-items:center;gap:10px;padding:0 10px;font-size:20px;font-weight:700;
+  border:2px solid #d9dde3;background:#000;color:#fff;white-space:nowrap;overflow:hidden;cursor:pointer}
+#mx40 .af .tx{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis}#mx40 .af .ts{font-size:18px}
+#mx40 .af.r{background:#ff2a2a;color:#fff;border-color:#ff2a2a}#mx40 .af.y{background:#ffe100;color:#000;border-color:#ffe100}
+#mx40 .af.c{background:#5fe3ff;color:#000;border-color:#5fe3ff}#mx40 .af.fl{animation:mx40fl 2s steps(1) infinite}
+@keyframes mx40fl{50%{opacity:.25}}
+#mx40 .mz{position:absolute;left:0;right:0;top:174px;bottom:206px}
+#mx40 .nu{position:absolute;cursor:pointer}
+#mx40 .nu .lb{position:absolute;left:10px;top:6px;font-size:22px;font-weight:700}
+#mx40 .nu .lm{position:absolute;left:10px;top:38px;font-size:17px;line-height:1.15;font-weight:700}
+#mx40 .nu .vl{position:absolute;right:12px;top:4px;font-size:92px;line-height:1;font-weight:700;font-family:'Arial Narrow',Arial,sans-serif}
+#mx40 .nu .vl.sm{font-size:58px;top:14px}
+#mx40 .nu .ht{position:absolute;left:14px;bottom:8px;font-size:26px;visibility:hidden}
+#mx40 .nu .pf{position:absolute;left:90px;top:40px;width:14px;height:44px;border:1px solid currentColor;display:flex;align-items:flex-end}
+#mx40 .nu .pf b{display:block;width:100%;background:currentColor}
+#mx40 .nu.al .vl{animation:mx40fl 1s steps(1) infinite}
+#mx40 canvas{position:absolute;left:0;width:100%}
+#mx40 .wl{position:absolute;left:12px;font-size:19px;font-weight:700}
+#mx40 .wm{position:absolute;left:0;right:0;text-align:center;font-size:19px;font-weight:700}
+#mx40 .st{position:absolute;left:14px;right:14px;bottom:160px;height:40px;display:flex;align-items:center;gap:10px;cursor:pointer}
+#mx40 .st .ld{display:flex;gap:9px}#mx40 .st .ld i{width:20px;height:20px;border-radius:50%;border:2px solid #fff;display:block}
+#mx40 .st .ld i.on{background:#fff}#mx40 .st .ld i.off{border-color:#ffe100;background:#000}
+#mx40 .st .sp{flex:1}#mx40 .st svg{height:26px;width:auto;fill:#e8e8e8}
+#mx40 .st .bat{width:50px;height:22px;border:2px solid #e8e8e8;border-radius:3px;position:relative;padding:2px}
+#mx40 .st .bat b{display:block;height:100%;background:#e8e8e8}
+#mx40 .st .bat:after{content:'';position:absolute;right:-6px;top:6px;width:4px;height:8px;background:#e8e8e8}
+#mx40 .ky{position:absolute;left:0;right:0;bottom:70px;height:84px;display:flex;justify-content:space-around;align-items:center;padding:0 24px}
+#mx40 .ky div{width:118px;height:70px;border:2px solid #8c939c;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#0c0d0f}
+#mx40 .ky div:active{background:#2a2e35}#mx40 .ky svg{width:52px;height:42px;stroke:#e8e8e8;fill:none;stroke-width:3}
+#mx40 .mf{position:absolute;left:50%;bottom:-80px;width:132px;height:132px;margin-left:-66px;border-radius:50%;border:8px solid #b9bec5;background:#1d2024;cursor:pointer}
+#mx40 .lk{position:absolute;left:12px;bottom:204px;font-size:24px;display:none}#mx40.locked .lk{display:block}
+#mx40 .dot{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;pointer-events:none;z-index:9}
+#mx40 .dot.red{background:#ff2a2a}
+#mx40 .flashtx{animation:mx40fl 1s steps(1) infinite}
+#mx40 .pan{position:absolute;left:8px;right:8px;top:174px;bottom:206px;background:#15181d;border:2px solid #8c939c;z-index:5;display:flex;flex-direction:column}
+#mx40 .pan .ph{display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;background:#2c3440;font-size:21px;font-weight:700}
+#mx40 .pan .ph .t{flex:1}#mx40 .pan .ph .x{font-size:30px;cursor:pointer;padding:0 6px}
+#mx40 .pan .pb{flex:1;overflow-y:auto;padding:10px}
+#mx40 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+#mx40 .grid div{min-height:76px;border:1px solid #8c939c;border-radius:6px;background:linear-gradient(#3d4757,#262d38);display:flex;align-items:center;justify-content:center;text-align:center;font-size:17px;font-weight:700;padding:4px;cursor:pointer}
+#mx40 .grid div.dis{color:#6d737b}#mx40 .grid div.sel{background:linear-gradient(#5b86c4,#2f5c9c)}
+#mx40 .lst div{display:flex;justify-content:space-between;gap:10px;padding:12px 8px;border-bottom:1px solid #303740;font-size:18px;cursor:pointer}
+#mx40 .lst div.sel{background:#2f5c9c}#mx40 .lst .v{color:#9fd0ff}
+#mx40 .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+#mx40 .kp div{height:58px;border:1px solid #8c939c;border-radius:6px;background:#2a313c;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer}
+#mx40 .pw{font-size:30px;text-align:center;letter-spacing:8px;height:44px;border-bottom:1px solid #8c939c}
+#mx40 .chest{position:absolute;left:0;width:330px;top:0;bottom:0}
+#mx40 .chest svg{width:100%;height:100%}
+#mx40 .tbl{width:100%;border-collapse:collapse;font-size:17px}#mx40 .tbl td,#mx40 .tbl th{padding:6px 4px;border-bottom:1px solid #303740;text-align:right}
+#mx40 .tbl th{color:#9aa3ad;font-weight:400}#mx40 .tbl td:first-child,#mx40 .tbl th:first-child{text-align:left}
+#mx40 .msg{position:absolute;left:20px;right:20px;bottom:210px;background:#1f2a38;border:1px solid #8c939c;padding:8px;text-align:center;font-size:18px;z-index:6;display:none}
+#mx40 .sby,#mx40 .dark,#mx40 .splash{position:absolute;inset:0;z-index:7;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-size:26px;font-weight:700}
+#mx40 .dark{background:#000;cursor:pointer}
+</style>
+<script>
+/* Philips IntelliVue MX40, the patient-worn telemetry monitor (website copy only). Built from the MX40 Instructions for
+   Use (Release B.06.5X) and service documentation: a 2.8" portrait touch screen with, from the top, the model name,
+   the patient line (bed, name, clock - replaced by the two-part alarm indicator while anything is unacknowledged), the
+   alarm field and the INOP field, the measurement area (HR and SpO2 numerics, ECG and Pleth waves; the Main Screen
+   key steps through 1 wave + 4 numerics, 2 waves, 6 numerics and the chest diagram), the leads-off / radio / battery
+   status row, and the three keys (Silence Alarms, SmartKeys, Main Screen) above the round Multi-Function button.
+   Telemetry Mode keeps the screen dark and the speaker silent (the central station alarms); Monitor Mode shows and
+   sounds everything. Settings follow the MX40 factory defaults. It is drawn here from the shared patient model, so
+   the Instructor panel, scenarios and alarm tests all work with it. */
+(function () {
+  if (!window.MONITORS) return;
+  const scr = $('#screen'), ov = el('div'); ov.id = 'mx40'; scr.appendChild(ov);
+  const isMX = () => S.display === 'mx40';
+  const C = {ecg: '#3cff3c', spo2: '#22e8ff', resp: '#fff23a', pr: '#22e8ff'};
+  const SCREENS = [['w1', '1 Wave'], ['w2', '2 Waves'], ['n6', '6 Numerics'], ['chest', 'Chest Diagram']];
+  const COLORS = {Blue: '#1f5fbf', Green: '#1d8a3a', Purple: '#6b2fa3', Orange: '#d26a12', Aqua: '#0e9ab0'};
+  if (!S.mx40) S.mx40 = {};
+  const X = S.mx40;
+  const dflt = {screen: 'w1', defScreen: 'w1', mode: 'monitor', active: 1, color: 'Blue', touch: 4, autoLock: 1, lockOnStart: false,
+    pwOn: false, pw: '', standbyMin: 0};
+  for (const k in dflt) if (X[k] === undefined) X[k] = dflt[k];
+  const st = {locked: X.lockOnStart, last: performance.now(), panel: null, op: 'Monitoring', rot: 0, pressT: 0, bootT: 0, msgUntil: 0};
+  const hhmm = d => pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  const atClock = a => hhmm(new Date(Date.now() - Math.max(0, simT - a.since) * 1000));
+  const svg = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}">${body}</svg>`;
+  const ICON = {
+    sil: svg(52, 42, '<path d="M4 34 L18 8 L32 34 Z"/><path d="M30 24 L37 32 L49 12"/>'),
+    keys: svg(52, 42, [0, 1, 2].map(r => [0, 1, 2].map(c => `<rect x="${10 + c * 12}" y="${5 + r * 12}" width="8" height="8" fill="#e8e8e8" stroke="none"/>`).join('')).join('')),
+    main: svg(52, 42, '<rect x="6" y="7" width="40" height="28" rx="9"/>'),
+    wlan: svg(30, 26, '<rect x="2" y="18" width="5" height="6"/><rect x="10" y="12" width="5" height="12"/><rect x="18" y="6" width="5" height="18"/><rect x="26" y="0" width="4" height="24"/>'),
+    srr: svg(34, 26, '<circle cx="17" cy="13" r="4"/><path d="M8 4 Q2 13 8 22 M26 4 Q32 13 26 22" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>'),
+  };
+
+  /* ---------- the fixed parts of the screen ---------- */
+  ov.innerHTML = `<div class="hd">IntelliVue MX40</div>
+    <div class="pl"><span class="bd"></span><span class="nm"></span><span class="tm"></span></div>
+    <div class="af" id="mxAl" style="top:82px"><span class="ic"></span><span class="tx"></span><span class="ts"></span></div>
+    <div class="af" id="mxIn" style="top:128px"><span class="ic"></span><span class="tx"></span><span class="ts"></span></div>
+    <div class="mz"></div>
+    <div class="st"><span class="ld"></span><span class="sp"></span>${ICON.wlan}${ICON.srr}<span class="bat"><b></b></span></div>
+    <div class="ky"><div data-k="sil">${ICON.sil}</div><div data-k="keys">${ICON.keys}</div><div data-k="main">${ICON.main}</div></div>
+    <div class="mf" title="Multi-Function button (Nurse Call)"></div>
+    <div class="lk">&#128274;</div><div class="msg"></div>
+    <div class="sby"></div><div class="dark"></div><div class="splash"></div>`;
+  const q = s => ov.querySelector(s), mz = q('.mz');
+
+  /* ---------- the measurement area for each screen ---------- */
+  let waves = [];   // {cv, ctx, kind: 'ecg'|'pleth', h, x, lastT}
+  function numeric(id, x, y, w, h, big) {
+    const col = id === 'hr' ? C.ecg : id === 'rr' ? C.resp : C.spo2;
+    const lab = {hr: 'HR', spo2: 'SpO<sub>2</sub>', pr: 'Pulse', rr: 'RR', pvc: 'PVC', st: 'ST-II'}[id];
+    const e = place(el('div', 'nu'), {left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', color: col});
+    e.dataset.id = id;
+    e.innerHTML = `<div class="lb">${lab}</div><div class="lm"></div><div class="vl${big ? '' : ' sm'}"></div>` +
+      (id === 'hr' ? '<div class="ht">&#9829;</div>' : '') + (id === 'spo2' ? '<div class="pf"><b></b></div>' : '');
+    e.onclick = () => openPanel(id === 'hr' || id === 'pvc' || id === 'st' ? 'ecg' : id === 'rr' ? 'resp' : 'spo2');
+    mz.appendChild(e); return e;
+  }
+  function wave(kind, y, h) {
+    const cv = document.createElement('canvas'); cv.width = 600; cv.height = h; cv.style.top = y + 'px'; cv.style.height = h + 'px';
+    mz.appendChild(cv);
+    const lab = place(el('div', 'wl', kind === 'ecg' ? S.lead1 || 'II' : kind === 'pleth' ? 'Pleth' : 'Resp'), {top: (y + 4) + 'px', color: kind === 'ecg' ? C.ecg : kind === 'pleth' ? C.spo2 : C.resp});
+    const m = place(el('div', 'wm'), {top: (y + h / 2 - 12) + 'px', color: kind === 'ecg' ? C.ecg : C.spo2});
+    mz.append(lab, m);
+    cv.onclick = () => openPanel(kind === 'ecg' ? 'wave' : 'spo2');
+    const w = {cv, ctx: cv.getContext('2d'), kind, h, x: 0, lastT: simT, msg: m}; waves.push(w);
+    if (kind === 'pleth') { const g = w.ctx; g.strokeStyle = '#3a4048'; g.setLineDash([3, 5]); }
+    return w;
+  }
+  function buildArea() {
+    mz.innerHTML = ''; waves = [];
+    const H = 800 - 174 - 206, sc = X.screen;
+    if (sc === 'w1') {            // 1 wave + 4 numerics
+      numeric('hr', 0, 0, 300, 128, true); numeric('spo2', 300, 0, 300, 128, true);
+      wave('ecg', 132, 170);
+      numeric('pr', 0, 310, 300, H - 310, false); numeric('rr', 300, 310, 300, H - 310, false);
+    } else if (sc === 'w2') {     // 2 waves + 2 numerics
+      numeric('hr', 0, 0, 300, 128, true); numeric('spo2', 300, 0, 300, 128, true);
+      wave('ecg', 132, 150); wave(SEN.spo2 !== 'none' ? 'pleth' : 'ecg2', 290, H - 290);
+    } else if (sc === 'n6') {     // no waves, 6 numerics
+      const ids = ['hr', 'spo2', 'pr', 'rr', 'pvc', 'st'], hh = Math.floor(H / 3);
+      ids.forEach((id, i) => numeric(id, (i % 2) * 300, Math.floor(i / 2) * hh, 300, hh, i < 2));
+    } else {                      // chest diagram + 2 numerics
+      const ch = place(el('div', 'chest'), {}); ch.innerHTML = chestSvg(); mz.appendChild(ch);
+      numeric('hr', 330, 0, 270, Math.floor(H / 2), true); numeric('spo2', 330, Math.floor(H / 2), 270, H - Math.floor(H / 2), true);
+    }
+  }
+  // electrode positions (5-wire standard placement): filled when attached, yellow ring when off
+  const ELECT = [['RA', 70, 90], ['LA', 250, 90], ['RL', 80, 380], ['LL', 240, 380], ['V', 190, 210]];
+  function chestSvg() {
+    const off = SEN.ecg === 'leadsoff' || SEN.ecg === 'none', voff = SEN.ecg === 'vlead';
+    return `<svg viewBox="0 0 330 462"><path d="M60 30 Q165 70 270 30 L300 450 L30 450 Z" fill="none" stroke="#9aa3ad" stroke-width="3"/>` +
+      ELECT.map(([n, x, y]) => { const o = off || (voff && n === 'V');
+        return `<circle cx="${x}" cy="${y}" r="16" fill="${o ? '#000' : '#fff'}" stroke="${o ? '#ffe100' : '#fff'}" stroke-width="4"/><text x="${x}" y="${y + 40}" fill="#e8e8e8" font-size="20" text-anchor="middle" font-family="Arial">${n}</text>`; }).join('') + '</svg>';
+  }
+
+  /* ---------- drawing the waves (4.3 s across the portrait screen, as on the real one) ---------- */
+  const PXS = 600 / 4.32;
+  function drawWaves() {
+    for (const w of waves) {
+      const g = w.ctx, t1 = simT;
+      if (t1 < w.lastT || t1 - w.lastT > 2) { w.lastT = t1; w.x = (t1 * PXS) % 600; continue; }
+      const steps = Math.max(1, Math.round((t1 - w.lastT) * PXS));
+      let ok = true, msg = '';
+      if (w.kind === 'ecg' || w.kind === 'ecg2') { if (SEN.ecg === 'leadsoff') { ok = false; msg = 'ECG Leads Off'; } else if (SEN.ecg === 'none') { ok = false; msg = 'ECG Leads Off'; } }
+      if (w.kind === 'pleth' && SEN.spo2 !== 'ok') { ok = false; msg = SEN.spo2 === 'probeoff' ? 'SpO2 Sensor Off' : 'No Sensor'; }
+      if (w.msg.textContent !== msg) w.msg.textContent = msg;
+      g.lineWidth = 2.4; g.strokeStyle = w.kind === 'pleth' ? C.spo2 : C.ecg; g.setLineDash([]);
+      for (let i = 0; i < steps; i++) {
+        const t = w.lastT + (i + 1) / PXS, x = w.x;
+        g.clearRect(x, 0, 14, w.h);
+        let y;
+        if (!ok) y = w.h * 0.6;
+        else if (w.kind === 'pleth') y = w.h * 0.85 - plethAt(t) * w.h * 0.62;
+        else y = w.h * 0.62 - ecgAt(t, w.kind === 'ecg2' ? 'V' : (S.lead1 || 'II')) * w.h * 0.45 * (S.gain || 1);
+        if (w.py != null && x > 0) { g.beginPath(); g.moveTo(x - 1, w.py); g.lineTo(x, y); g.stroke(); }
+        w.py = y; w.x = (x + 1) % 600; if (w.x === 0) w.py = null;
+      }
+      w.lastT = t1;
+    }
+  }
+
+  /* ---------- live values, alarm fields, status ---------- */
+  const pausedNow = () => simT < pauseUntil;
+  function val(id) {
+    if (id === 'hr') return SEN.ecg === 'ok' || SEN.ecg === 'vlead' ? M.hr : null;
+    if (id === 'spo2') return SEN.spo2 === 'ok' ? M.spo2 : null;
+    if (id === 'pr') return SEN.spo2 === 'ok' ? M.pr : null;
+    if (id === 'rr') return SEN.ecg === 'ok' ? M.rr : null;
+    if (id === 'pvc') return SEN.ecg === 'ok' ? (M.pvc != null ? M.pvc : 0) : null;
+    if (id === 'st') return SEN.ecg === 'ok' ? (P.st || 0).toFixed(1) : null;
+  }
+  const LIM = {hr: () => S.lim.hr, spo2: () => S.lim.spo2, pr: () => S.lim.hr, rr: () => S.lim.rr};
+  function updateNums(list) {
+    for (const e of mz.querySelectorAll('.nu')) {
+      const id = e.dataset.id, v = val(id), L = LIM[id] && LIM[id]();
+      const vl = e.querySelector('.vl'), t = v == null ? '-?-' : String(v);
+      if (vl.textContent !== t) vl.textContent = t;
+      const lm = e.querySelector('.lm'), lt = L ? (L.on === false ? '&#128277;' : L.hi + '<br>' + L.lo) : '';
+      if (lm.innerHTML !== lt) lm.innerHTML = lt;
+      e.classList.toggle('al', list.some(a => !a.acked && a.param === (id === 'pr' ? 'spo2' : id) && !window.philipsIsInop(a)));
+      const ht = e.querySelector('.ht');
+      if (ht) { const lb = beats.filter(b => b.k !== 'P' && b.t <= simT).pop(); ht.style.visibility = lb && simT - lb.t < 0.15 && v != null ? 'visible' : 'hidden'; }
+      const pf = e.querySelector('.pf b'); if (pf) pf.style.height = (v == null ? 0 : Math.round(40 + 55 * Math.max(0, plethAt(simT)))) + '%';
+    }
+  }
+  const MXINOP = {leads: 'ECG Leads Off', vlead: 'V Lead Off', arrsusp: 'Cannot Analyze ECG', spo2off: 'SpO2 Sensor Off', spo2nop: 'SpO2 Non-Pulsatile',
+    spo2art: 'SpO2 Noisy Signal', batlow: 'Tele Battery Low'};
+  const inopText = a => a.id === 'batlow' && /Critic/.test(a.msg) ? 'Tele Batt Empty' : MXINOP[a.id] || window.philipsAlarmText(a).replace(/^!+/, '');
+  function field(e, list, kind, now) {
+    const ic = e.querySelector('.ic'), tx = e.querySelector('.tx'), ts = e.querySelector('.ts');
+    let cls = '', t = '', time = '', icon = '';
+    if (kind === 'al' && pausedNow()) { cls = ''; icon = '&#128277;'; const r = Math.max(0, pauseUntil - simT); t = S.pauseTime >= 600 ? 'ALARMS OFF' : 'ALARMS PAUSED ' + Math.floor(r / 60) + ':' + pad2(Math.floor(r % 60)); }
+    else if (list.length) {
+      const a = list[Math.floor(now / 3000) % list.length];
+      t = kind === 'in' ? inopText(a) : window.philipsAlarmText(a).replace(/^\*\*\*\s*/, '*** ').replace(/^\*\*(?!\*)\s*/, '** ');
+      cls = kind === 'in' ? (a.pri === 'high' ? 'r' : 'c') : a.pri === 'high' ? 'r' : 'y';
+      icon = (a.acked ? '&#10003;' : '') + (list.length > 1 ? ' &#8595;' : ''); time = atClock(a);
+    } else if (kind === 'in') {
+      // reminders the MX40 shows in the INOP field when nothing else is there
+      if (X.mode === 'telemetry') t = 'Local Audio Off';
+      if (st.op !== 'Monitoring') { t = st.op === 'Config' ? 'Config' : st.op === 'Demo' ? 'Demo' : 'Service'; cls = 'fl'; }
+    }
+    e.className = 'af' + (cls ? ' ' + cls : '');
+    if (ic.innerHTML !== icon) ic.innerHTML = icon; if (tx.textContent !== t) tx.textContent = t; if (ts.textContent !== time) ts.textContent = time;
+  }
+  function update(now) {
+    const list = powered ? sortedAlarms().filter(a => a.pri !== 'info' && !a.latched) : [];
+    const inop = list.filter(window.philipsIsInop), phys = list.filter(a => !window.philipsIsInop(a));
+    field(q('#mxAl'), phys, 'al', now); field(q('#mxIn'), inop, 'in', now);
+    // patient line: the two-part indicator replaces the clock while anything is unacknowledged
+    q('.pl .bd').textContent = S.bed || ''; q('.pl .nm').textContent = S.name || '';
+    const unP = phys.filter(a => !a.acked), unI = inop.filter(a => !a.acked), tm = q('.pl .tm');
+    if (unP.length || unI.length) {
+      const top = unP.some(a => a.pri === 'high') ? 'r' : 'y', on = Math.floor(now / 500) % 2 === 0;
+      const left = unI.length ? 'c' : unP.length && on ? top : '', right = unP.length ? (on ? top : '') : '';
+      const h = `<span class="ai"><i class="${left}"></i><i class="${right}"></i></span>`;
+      if (tm.innerHTML !== h) tm.innerHTML = h;
+    } else { const t = hhmm(new Date()); if (tm.textContent !== t) tm.textContent = t; }
+    updateNums(list);
+    // leads-off dots (RA LA LL RL V), radio and battery
+    const off = SEN.ecg === 'leadsoff' || SEN.ecg === 'none';
+    const ld = ['RA', 'LA', 'LL', 'RL', 'V'].map(n => `<i class="${off || (SEN.ecg === 'vlead' && n === 'V') ? 'off' : 'on'}"></i>`).join('');
+    const lde = q('.st .ld'); if (lde.innerHTML !== ld) lde.innerHTML = ld;
+    q('.st .bat b').style.width = Math.max(4, battery) + '%';
+    ov.classList.toggle('half', pausedNow());
+    ov.classList.toggle('locked', st.locked);
+    // Telemetry Mode: the screen sleeps after the set time without a touch (always in Monitor Mode)
+    const idle = (now - st.last) / 60000, dark = q('.dark');
+    const sleep = X.mode === 'telemetry' && !pausedNow() && (X.active === 0 ? true : X.active > 0 && idle > X.active);
+    dark.style.display = sleep ? 'flex' : 'none';
+    if (X.autoLock && !st.locked && idle > X.autoLock && !st.panel) st.locked = true;
+    // standby / start-up splash in the unit's screen colour
+    const sb = q('.sby');
+    if (standby) { sb.style.display = 'flex'; sb.style.background = COLORS[X.color] || COLORS.Blue;
+      const h = `<div>${esc(S.bed || '')}</div><div>Standby</div><div style="font-size:18px;font-weight:400">Press Main Screen to resume</div>`; if (sb.innerHTML !== h) sb.innerHTML = h; }
+    else sb.style.display = 'none';
+    const sp = q('.splash'); const boot = now - st.bootT < 2500;
+    sp.style.display = boot ? 'flex' : 'none'; if (boot) { sp.style.background = COLORS[X.color] || COLORS.Blue; sp.innerHTML = '<div>PHILIPS</div><div style="font-size:22px">IntelliVue MX40</div>'; }
+    const m = q('.msg'); m.style.display = now < st.msgUntil ? 'block' : 'none';
+  }
+  const note = (t, s = 3) => { const m = q('.msg'); m.textContent = t; st.msgUntil = performance.now() + s * 1000; };
+
+  /* ---------- touches: white dot, red dot while locked, key click ---------- */
+  function click() {
+    if (!AC || !X.touch) return;
+    try { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = 2100; g.gain.setValueAtTime(0.02 * X.touch, AC.currentTime);
+      g.gain.exponentialRampToValueAtTime(1e-4, AC.currentTime + 0.03); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + 0.04); } catch (e) {}
+  }
+  ov.addEventListener('pointerdown', e => {
+    st.last = performance.now();
+    const r = ov.getBoundingClientRect(), k = 600 / r.width, d = el('div', 'dot' + (st.locked ? ' red' : ''));
+    d.style.left = (e.clientX - r.left) * k + 'px'; d.style.top = (e.clientY - r.top) * k + 'px'; ov.appendChild(d); setTimeout(() => d.remove(), 350);
+    ensureAudio(); click();
+  }, true);
+  // while locked only the three keys and the Multi-Function button work
+  ov.addEventListener('click', e => {
+    if (!st.locked) return;
+    if (e.target.closest('.ky') || e.target.closest('.mf') || e.target.closest('.pan')) return;
+    e.stopPropagation(); e.preventDefault();
+  }, true);
+  q('[data-k="sil"]').onclick = () => { if (!powered || standby) return; for (const id in alarms) { const a = alarms[id]; a.acked = true; if (a.latched) delete alarms[id]; } };
+  q('[data-k="keys"]').onclick = () => { if (standby) return; st.panel === 'keys' ? closePanel() : openPanel('keys'); };
+  let holdT = 0;
+  const mainKey = q('[data-k="main"]');
+  mainKey.onclick = () => {
+    if (standby) { setStandby(false); return; }
+    if (q('.dark').style.display === 'flex') return;   // waking takes the 2 s hold
+    if (st.panel) { closePanel(); return; }
+    const i = SCREENS.findIndex(s => s[0] === X.screen); X.screen = SCREENS[(i + 1) % SCREENS.length][0]; save(); buildArea();
+  };
+  mainKey.onpointerdown = () => { holdT = setTimeout(() => { st.last = performance.now() + 1; if (X.active === 0) X.active = 1; }, 2000); };
+  mainKey.onpointerup = mainKey.onpointerleave = () => clearTimeout(holdT);
+  q('.dark').onclick = () => note('Hold the Main Screen key for 2 seconds to wake the display');
+  q('.mf').onclick = () => { if (!powered) return; logAlarm('medium', 'Nurse Call'); note('Nurse Call sent to the Information Center'); };
+  q('.pl').onclick = () => openPanel('patient');
+  q('#mxAl').onclick = q('#mxIn').onclick = () => openPanel('review');
+  q('.st').onclick = () => openPanel('status');
+
+  /* ---------- SmartKeys and the menus ---------- */
+  const panel = (title, body) => {
+    const p = el('div', 'pan'); p.innerHTML = `<div class="ph"><span class="t">${title}</span><span class="x">&#10005;</span></div><div class="pb"></div>`;
+    p.querySelector('.x').onclick = closePanel; const pb = p.querySelector('.pb');
+    if (typeof body === 'string') pb.innerHTML = body; else body(pb);
+    ov.appendChild(p); return p;
+  };
+  function closePanel() { ov.querySelectorAll('.pan').forEach(p => p.remove()); st.panel = null; }
+  function list(pb, items) {   // [label, value, fn, selected]
+    const l = el('div', 'lst'); for (const [a, v, fn, sel] of items) { const r = el('div', sel ? 'sel' : '', `<span>${a}</span><span class="v">${v == null ? '' : v}</span>`); r.onclick = fn; l.appendChild(r); }
+    pb.appendChild(l);
+  }
+  function choose(title, opts, cur, set) {
+    closePanel(); st.panel = 'choose';
+    panel(title, pb => list(pb, opts.map(([v, lab]) => [lab, '', () => { set(v); save(); closePanel(); }, v === cur])));
+  }
+  function keypad(title, ok) {
+    closePanel(); st.panel = 'pw'; let typed = '';
+    panel(title, pb => {
+      const d = el('div', 'pw'); pb.appendChild(d); const kp = el('div', 'kp'); pb.appendChild(kp);
+      for (const k of ['1','2','3','4','5','6','7','8','9','Clear','0','Enter']) { const b = el('div', '', k); kp.appendChild(b);
+        b.onclick = () => { if (k === 'Clear') typed = ''; else if (k === 'Enter') { const r = ok(typed); if (r === false) { typed = ''; d.textContent = 'Wrong password'; return; } } else if (typed.length < 8) typed += k; d.textContent = '*'.repeat(typed.length); }; }
+    });
+  }
+  const KEYS = () => [
+    ['Alarms', () => openPanel('alarms')],
+    ['Start SpO2', null],   // grayed: SpO2 runs continuously in this simulator
+    ['Delayed Record', () => { closePanel(); note('Delayed recording started at the Information Center'); }],
+    [X.mode === 'monitor' ? 'Mode: Monitor' : 'Mode: Telemetry', () => { X.mode = X.mode === 'monitor' ? 'telemetry' : 'monitor'; save(); closePanel(); note(X.mode === 'monitor' ? 'Monitor Mode: display and alarm sounds on' : 'Telemetry Mode: display and sounds off, alarms at the Information Center'); }],
+    ['Standby', battery < 10 ? null : () => { closePanel(); setStandby(true); }],
+    ['Add / Remove', () => { closePanel(); note('No IntelliVue monitors or Cableless Measurements in range'); }],
+    ['Print Reports', () => { closePanel(); note('Report printed at the Information Center'); }],
+    ['Vitals Trend', () => openPanel('trend')],
+    ['Setup Screen', () => openPanel('screen')],
+    [st.locked ? 'Unlock' : 'Lock', () => { if (st.locked && X.pwOn && X.pw) { keypad('Unlock', v => { if (v !== X.pw) return false; st.locked = false; closePanel(); }); return; }
+      st.locked = !st.locked; closePanel(); }],
+    ['Op Modes', () => openPanel('op')],
+    ['Monitor Setup (simulator)', () => { closePanel(); openMonitorSetup(); }],
+  ];
+  function openPanel(kind) {
+    if (!powered || standby) return;
+    closePanel(); st.panel = kind;
+    if (kind === 'keys') return panel('SmartKeys', pb => { const g = el('div', 'grid'); pb.appendChild(g);
+      for (const [lab, fn] of KEYS()) { const b = el('div', fn ? '' : 'dis', lab); if (fn) b.onclick = fn; g.appendChild(b); } });
+    if (kind === 'alarms') return panel('Alarms', pb => list(pb, [
+      ['Alarm Volume', S.volAlarm, () => choose('Alarm Volume', [...Array(11).keys()].map(v => [v, String(v)]), S.volAlarm, v => { S.volAlarm = v; applyVolumes(); })],
+      ['Review Alarms', '', () => openPanel('review')],
+      [pausedNow() ? 'Resume Alarms' : 'Pause Alarms', S.pauseTime >= 600 ? '' : Math.round((S.pauseTime || 120) / 60) + ' min', () => { closePanel(); pauseAudio(); }],
+    ]));
+    if (kind === 'review') return panel('Review Alarms', pb => {
+      const act = sortedAlarms().filter(a => a.pri !== 'info');
+      list(pb, act.map(a => [window.philipsAlarmText(a), atClock(a), () => {}]).concat(alarmHist.slice(0, 50).map(h => [h.msg, hhmm(h.time), () => {}])));
+      if (!act.length && !alarmHist.length) pb.innerHTML = '<div style="padding:10px">No alarms</div>'; });
+    if (kind === 'screen') return panel('Setup Screen', pb => list(pb, [[1, '1 min'], [2, '2 min'], [5, '5 min'], [10, '10 min'], [-1, 'Always On'], [0, 'Always Off']]
+      .map(([v, lab]) => ['Display active', lab, () => { X.active = v; save(); closePanel(); }, X.active === v]).map(r => [r[1], '', r[2], r[3]])));
+    if (kind === 'trend') return panel('Vitals Trend', pb => {
+      const rows = trends.slice(0, 60);
+      pb.innerHTML = rows.length ? `<table class="tbl"><tr><th>Time</th><th>HR</th><th>SpO2</th><th>Pulse</th><th>RR</th></tr>` +
+        rows.map(r => `<tr><td>${hhmm(r.time)}</td><td>${r.hr ?? '-'}</td><td>${r.spo2 ?? '-'}</td><td>${r.pr ?? '-'}</td><td>${r.rr ?? '-'}</td></tr>`).join('') + '</table>'
+        : '<div style="padding:10px">No trend data yet (one hour of tabular trend is stored)</div>'; });
+    if (kind === 'patient') return panel('Patient Demogr.', pb => list(pb, [['Bed Label', esc(S.bed || '')], ['Patient Name', esc(S.name || '-')], ['Patient Category', esc(S.cat || 'Adult')],
+      ['Paced Mode', R.rhythm === 'paced' ? 'On' : 'Off'], ['Lifetime ID', '-'], ['Encounter ID', '-']].map(([a, v]) => [a, v, () => {}])));
+    if (kind === 'status') return panel('Device Status', pb => list(pb, [['Network', 'Information Center - Locked'], ['Signal', 'Strong'], ['Short-Range Radio', 'No device'],
+      ['Battery', Math.round(battery) + ' %' + (SEN.ac ? '' : ' (Li-ion)')], ['Mode', X.mode === 'monitor' ? 'Monitor' : 'Telemetry'], ['Software', 'B.06.5X']].map(([a, v]) => [a, v, () => {}])));
+    if (kind === 'ecg') return panel('Setup ECG', pb => list(pb, [
+      ['HR High Limit', S.lim.hr.hi], ['HR Low Limit', S.lim.hr.lo], ['Extreme Tachy', S.xtachy], ['Extreme Brady', S.xbrady],
+      ['Primary Lead', S.lead1 || 'II'], ['Lead Placement', 'Standard'], ['Paced', R.rhythm === 'paced' ? 'On' : 'Off'], ['Asystole Threshold', '4.0 sec'],
+      ['Arrhythmia', 'On'], ['VTach HR / Run', '100 / 5'], ['SVT HR / Run', '180 / 5'], ['PVCs/min', '10'],
+      ['QRS Volume', S.volQrs, () => choose('QRS Volume', [...Array(11).keys()].map(v => [v, String(v)]), S.volQrs, v => { S.volQrs = v; applyVolumes(); })],
+    ].map(([a, v, fn]) => [a, v, fn || (() => note('Alarm limits are set at the Information Center'))])));
+    if (kind === 'spo2') return panel('Setup SpO2', pb => list(pb, [['High Limit', S.lim.spo2.hi], ['Low Limit', S.lim.spo2.lo], ['Desat Limit', S.desat || 80],
+      ['Mode', 'Continuous'], ['Pulse (SpO2)', 'On'], ['Tone Modulation', 'Off']].map(([a, v]) => [a, v, () => note('Alarm limits are set at the Information Center')])));
+    if (kind === 'resp') return panel('Setup Resp', pb => list(pb, [['RR High Limit', S.lim.rr.hi], ['RR Low Limit', S.lim.rr.lo], ['Apnea Time', (S.apnea.time || 20) + ' sec']].map(([a, v]) => [a, v, () => note('Alarm limits are set at the Information Center')])));
+    if (kind === 'wave') return panel('Change Wave', pb => list(pb, ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V'].map(l => [l, '', () => { S.lead1 = l; save(); closePanel(); buildArea(); }, (S.lead1 || 'II') === l])));
+    if (kind === 'op') return panel('Op Modes', pb => list(pb, [
+      ['Monitoring', '', () => { st.op = 'Monitoring'; closePanel(); }, st.op === 'Monitoring'],
+      ['Demo', '', () => { st.op = 'Demo'; closePanel(); }, st.op === 'Demo'],
+      ['Config', '', () => keypad('Enter Password', v => { if (v !== '71034') return false; st.op = 'Config'; openPanel('config'); }), st.op === 'Config'],
+      ['Service', '', () => keypad('Enter Password', v => { if (v !== '1345') return false; st.op = 'Service'; openPanel('service'); }), st.op === 'Service'],
+    ]));
+    if (kind === 'config') return panel('Configuration', pb => list(pb, [
+      ['Touch Tone Volume', X.touch, () => choose('Touch Tone Volume', [...Array(11).keys()].map(v => [v, String(v)]), X.touch, v => X.touch = v)],
+      ['Default Screen', SCREENS.find(s => s[0] === X.defScreen)[1], () => choose('Default Screen', SCREENS, X.defScreen, v => { X.defScreen = v; X.screen = v; buildArea(); })],
+      ['Screen Color', X.color, () => choose('Screen Color', Object.keys(COLORS).map(c => [c, c + (c === 'Orange' || c === 'Aqua' ? ' (Standby only)' : '')]), X.color, v => X.color = v)],
+      ['Alarm Sounds', S.phTones === 'iec' ? 'ISO' : 'Traditional', () => choose('Alarm Sounds', [['trad', 'Traditional'], ['iec', 'ISO']], S.phTones === 'iec' ? 'iec' : 'trad', v => { S.phTones = v; S.toneSet = window.philipsTones(); })],
+      ['Standby Time Duration', X.standbyMin ? X.standbyMin + ' min' : 'Infinite', () => choose('Standby Time Duration', [[0, 'Infinite'], [10, '10 minutes'], [20, '20 minutes'], [30, '30 minutes'], [60, '1 hour'], [120, '2 hours'], [240, '4 hours'], [480, '8 hours']], X.standbyMin, v => X.standbyMin = v)],
+      ['Auto-Lock', X.autoLock ? X.autoLock + ' min' : 'Off', () => choose('Auto-Lock after', [[0, 'Off'], [1, '1 min'], [5, '5 min'], [10, '10 min'], [30, '30 min']], X.autoLock, v => X.autoLock = v)],
+      ['Lock On Start', X.lockOnStart ? 'On' : 'Off', () => { X.lockOnStart = !X.lockOnStart; save(); openPanel('config'); }],
+      ['Lock Password', X.pwOn ? 'On' : 'Off', () => { if (X.pwOn) { X.pwOn = false; save(); openPanel('config'); } else keypad('New 3-5 digit password', v => { if (v.length < 3 || v.length > 5) return false; X.pw = v; X.pwOn = true; save(); openPanel('config'); }); }],
+      ['Unit Defaults', 'Restore', () => { Object.assign(X, dflt); S.phTones = 'trad'; S.toneSet = window.philipsTones(); save(); buildArea(); openPanel('config'); }],
+      ['Exit Config', '', () => { st.op = 'Monitoring'; closePanel(); }],
+    ]));
+    if (kind === 'service') return panel('Service', pb => list(pb, [['Model', '865351 (2.4 GHz Smart-hopping)'], ['Software', 'B.06.5X'], ['Options', 'S02 ECG + FAST SpO2, C03 Trends'],
+      ['Battery', Math.round(battery) + ' %'], ['Radio', 'Locked'], ['Speaker Test', 'Passed'], ['Exit Service', '']].map(([a, v]) => [a, v, a === 'Exit Service' ? () => { st.op = 'Monitoring'; closePanel(); } : () => {}])));
+  }
+
+  /* ---------- hooks into the shared monitor ---------- */
+  // Telemetry Mode: the speaker stays silent (the Information Center does the alarming)
+  const origAud = audibleAlarms;
+  audibleAlarms = function () { const l = origAud(); return isMX() && X.mode === 'telemetry' ? [] : l; };
+  const origQrs = qrsBeep;
+  qrsBeep = function (b) { if (isMX() && X.mode === 'telemetry') return; return origQrs(b); };
+  const origPower = powerOn;
+  powerOn = function () { const r = origPower.apply(this, arguments); if (isMX()) { st.bootT = performance.now(); st.locked = X.lockOnStart; X.screen = X.defScreen; buildArea(); } return r; };
+  // standby ends by itself after the configured time
+  setInterval(() => { if (isMX() && standby && X.standbyMin) { if (!st.sbSince) st.sbSince = Date.now(); if (Date.now() - st.sbSince > X.standbyMin * 60000) { setStandby(false); st.sbSince = 0; } } else st.sbSince = 0; }, 1000);
+  let wasMX = false;
+  function loop() {
+    requestAnimationFrame(loop);
+    const on = isMX() && powered;
+    scr.classList.toggle('mx40on', on);
+    if (!on) { wasMX = false; return; }
+    if (!wasMX) { wasMX = true; X.screen = X.screen || X.defScreen; buildArea(); st.last = performance.now(); if (X.mode !== 'telemetry') X.mode = 'monitor'; }
+    const now = performance.now();
+    try { if (q('.dark').style.display !== 'flex') drawWaves(); update(now); } catch (e) { console.error(e); }
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+
 </body>
 </html>
