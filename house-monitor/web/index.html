@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-25.1';
+var HM_BUILD = '2026-11-25.3';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4636,7 +4636,9 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     // the MP30 holds its Traditional tones (averaged over 27 yellow and 32 red tones): yellow stays nearly level for
     // ~1 s, red loses only ~7 dB over its second, so the red alarm sounds almost continuous
     trY30: [[1, -1, 4], [2, -24, 4], [3, 0, 5], [4, -1, 5], [5, -6, 6]],
-    trR30: [[1, -13, 7], [2, -23, 7], [3, 0, 7], [4, -32, 8], [5, -44, 10]],
+    // red re-measured from a second MP30 recording (*** Apnea, 10 tones averaged): 960 Hz with the 3rd overtone
+    // loudest, fundamental 4 dB under it, 4th -27, 2nd -33; one tone every 1.024 s, shaped by PHENV.trR30
+    trR30: [[1, -4, 0], [2, -33, 0], [3, 0, 0], [4, -27, 0], [5, -50, 0]],
     isL: [[1, -8, 0], [2, 0, 0], [3, -8, 0], [4, -20, 0], [5, -20, 0]],
     // the heartbeat (pulse) tone: nearly a pure tone, 3rd overtone -22 dB (measured from a real MP30)
     qrs: [[1, 0, 0], [2, -44, 0], [3, -27, 0], [4, -45, 0], [5, -48, 0]],   // the body of the beep; the tick adds its own 3rd
@@ -4672,6 +4674,10 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     isY: [[0, -45], [.006, -15], [.03, -4], [.06, -1], [.16, -1], [.2, -8], [.23, -15], [.26, -22], [.3, -30], [.33, -45]],
     // red pulse (50 pulses averaged): ~100 ms full, ~8 dB down by 160 ms; after the 3rd and 5th pulse it fades on
     // (-13 dB at 0.25 s, -20 at 0.3 s) instead of stopping, so each burst rings out briefly
+    // Traditional red (MP30 *** Apnea, 10 tones averaged): swells in over ~45 ms, level until ~0.3 s, then fades
+    // ~20 dB a second to -18 dB just before the next tone
+    trR30: [[0, -40], [.01, -22], [.02, -9], [.03, -4], [.045, -1], [.06, 0], [.3, -1], [.4, -3], [.5, -5], [.6, -7.5],
+            [.7, -10], [.8, -12.5], [.9, -15.5], [.985, -18], [1.0, -40]],
     isR: [[0, -45], [.004, -3], [.012, -1], [.1, -1], [.115, -3], [.13, -5], [.145, -7], [.16, -8], [.205, -8.5], [.25, -13], [.29, -19], [.33, -30], [.36, -45]],
   };
   function phShaped(f, at, part, level, out, envPts) {
@@ -4704,7 +4710,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   const pulses = (f, part, ts, d, lv) => ts.map(t => [t, f, d, part, lv]);
   const RED5 = [0, .211, .425, .851, 1.06];   // measured over 5 bursts: second half 2.055 s later, every 9.236 s
   TONESETS.phTrad30 = {
-    high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 1.02},
+    high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 1.024},
     medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 2.05},
     low:    {ph: 1, notes: [[0, 480, .97, 'trY30', .4]], repeat: 2.05},
   };
@@ -4848,25 +4854,30 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
 #screen.mx40on #mx40{display:block}
 #screen.mx40on #menuWin{z-index:40}
 #mx40.half{filter:brightness(.55)}
-#mx40 .hd{position:absolute;left:0;right:0;top:0;height:34px;display:flex;align-items:center;justify-content:flex-end;padding:0 18px;font-size:17px;color:#cfd3d8;letter-spacing:.3px}
-#mx40 .pl{position:absolute;left:10px;right:10px;top:36px;height:40px;display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700;border-bottom:1px solid #3a3f46;cursor:pointer}
+#mx40{background:#2a2c30}
+#mx40 .hd{position:absolute;left:0;right:0;top:0;height:40px;display:flex;align-items:center;justify-content:flex-end;padding:0 26px;font-size:17px;color:#c9ccd1;letter-spacing:.3px}
+#mx40 .glass{position:absolute;left:12px;right:12px;top:40px;height:582px;background:#000;border-radius:4px}
+#mx40 .pl{position:absolute;left:16px;right:16px;top:46px;height:36px;display:flex;align-items:center;gap:12px;padding:0 8px;font-size:19px;font-weight:700;
+  background:linear-gradient(#d6d9de,#b9bdc4);color:#111;cursor:pointer}
 #mx40 .pl .bd{min-width:90px}#mx40 .pl .nm{flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mx40 .pl .tm{min-width:88px;text-align:right}
 #mx40 .ai{display:flex;gap:4px;min-width:88px;justify-content:flex-end}
-#mx40 .ai i{display:block;width:40px;height:26px;border:1px solid #555;background:#111}
+#mx40 .ai i{display:block;width:22px;height:26px;border:1px solid #555;background:#3a3d42}
 #mx40 .ai i.c{background:#5fe3ff}#mx40 .ai i.r{background:#ff2a2a}#mx40 .ai i.y{background:#ffe100}
-#mx40 .af{position:absolute;left:10px;right:10px;height:42px;display:flex;align-items:center;gap:10px;padding:0 10px;font-size:20px;font-weight:700;
-  border:2px solid #d9dde3;background:#000;color:#fff;white-space:nowrap;overflow:hidden;cursor:pointer}
+#mx40 .af{position:absolute;left:16px;right:16px;height:36px;display:none;align-items:center;gap:10px;padding:0 10px;font-size:19px;font-weight:700;
+  background:#000;color:#fff;white-space:nowrap;overflow:hidden;cursor:pointer}
+#mx40 .af.on{display:flex}
 #mx40 .af .tx{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis}#mx40 .af .ts{font-size:18px}
 #mx40 .af.r{background:#ff2a2a;color:#fff;border-color:#ff2a2a}#mx40 .af.y{background:#ffe100;color:#000;border-color:#ffe100}
 #mx40 .af.c{background:#5fe3ff;color:#000;border-color:#5fe3ff}#mx40 .af.fl{animation:mx40fl 2s steps(1) infinite}
 @keyframes mx40fl{50%{opacity:.25}}
-#mx40 .mz{position:absolute;left:0;right:0;top:174px;bottom:206px}
+#mx40 .mz{position:absolute;left:16px;right:16px;top:86px;bottom:226px}
 #mx40 .nu{position:absolute;cursor:pointer}
 #mx40 .nu .lb{position:absolute;left:10px;top:6px;font-size:22px;font-weight:700}
 #mx40 .nu .lm{position:absolute;left:10px;top:38px;font-size:17px;line-height:1.15;font-weight:700}
 #mx40 .nu .vl{position:absolute;right:12px;top:4px;font-size:92px;line-height:1;font-weight:700;font-family:'Arial Narrow',Arial,sans-serif}
-#mx40 .nu .vl.sm{font-size:58px;top:14px}
+#mx40 .nu .vl.sm{font-size:64px;top:30px}
+#mx40 .cal{position:absolute;left:44px;font-size:14px;font-weight:700}
 #mx40 .nu .ht{position:absolute;left:14px;bottom:8px;font-size:26px;visibility:hidden}
 #mx40 .nu .pf{position:absolute;left:90px;top:40px;width:14px;height:44px;border:1px solid currentColor;display:flex;align-items:flex-end}
 #mx40 .nu .pf b{display:block;width:100%;background:currentColor}
@@ -4874,22 +4885,24 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
 #mx40 canvas{position:absolute;left:0;width:100%}
 #mx40 .wl{position:absolute;left:12px;font-size:19px;font-weight:700}
 #mx40 .wm{position:absolute;left:0;right:0;text-align:center;font-size:19px;font-weight:700}
-#mx40 .st{position:absolute;left:14px;right:14px;bottom:160px;height:40px;display:flex;align-items:center;gap:10px;cursor:pointer}
+#mx40 .st{position:absolute;left:24px;right:24px;bottom:184px;height:40px;display:flex;align-items:center;gap:10px;cursor:pointer}
 #mx40 .st .ld{display:flex;gap:9px}#mx40 .st .ld i{width:20px;height:20px;border-radius:50%;border:2px solid #fff;display:block}
-#mx40 .st .ld i.on{background:#fff}#mx40 .st .ld i.off{border-color:#ffe100;background:#000}
+#mx40 .st .ld i.off{background:#000!important;border-color:#888!important}
 #mx40 .st .sp{flex:1}#mx40 .st svg{height:26px;width:auto;fill:#e8e8e8}
 #mx40 .st .bat{width:50px;height:22px;border:2px solid #e8e8e8;border-radius:3px;position:relative;padding:2px}
-#mx40 .st .bat b{display:block;height:100%;background:#e8e8e8}
+#mx40 .st .bat b{display:block;height:100%;background:#3ddc4a}#mx40 .st .bat.lo b{background:#ffe100}#mx40 .st .bat.em b{background:#ff2a2a}
 #mx40 .st .bat:after{content:'';position:absolute;right:-6px;top:6px;width:4px;height:8px;background:#e8e8e8}
-#mx40 .ky{position:absolute;left:0;right:0;bottom:70px;height:84px;display:flex;justify-content:space-around;align-items:center;padding:0 24px}
-#mx40 .ky div{width:118px;height:70px;border:2px solid #8c939c;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#0c0d0f}
-#mx40 .ky div:active{background:#2a2e35}#mx40 .ky svg{width:52px;height:42px;stroke:#e8e8e8;fill:none;stroke-width:3}
-#mx40 .mf{position:absolute;left:50%;bottom:-80px;width:132px;height:132px;margin-left:-66px;border-radius:50%;border:8px solid #b9bec5;background:#1d2024;cursor:pointer}
-#mx40 .lk{position:absolute;left:12px;bottom:204px;font-size:24px;display:none}#mx40.locked .lk{display:block}
+#mx40 .ky{position:absolute;left:0;right:0;top:640px;height:84px;display:flex;justify-content:center;gap:46px;align-items:center}
+#mx40 .ky div{width:86px;height:80px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+#mx40 .ky [data-k="sil"]{background:#f2c418}#mx40 .ky [data-k="keys"]{background:#5b5f6a}#mx40 .ky [data-k="main"]{background:#1d8be8}
+#mx40 .ky div:active{filter:brightness(.8)}#mx40 .ky svg{width:52px;height:42px;stroke:#1a1a1a;fill:none;stroke-width:3}
+#mx40 .ky [data-k="keys"] svg rect{fill:#e8e8e8}#mx40 .ky [data-k="main"] svg{stroke:#fff}
+#mx40 .mf{position:absolute;left:50%;top:740px;width:120px;height:120px;margin-left:-60px;border-radius:50%;border:5px solid #44474d;background:radial-gradient(#2e3035,#1f2124);cursor:pointer}
+#mx40 .lk{position:absolute;left:24px;bottom:226px;font-size:24px;display:none}#mx40.locked .lk{display:block}
 #mx40 .dot{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;pointer-events:none;z-index:9}
 #mx40 .dot.red{background:#ff2a2a}
 #mx40 .flashtx{animation:mx40fl 1s steps(1) infinite}
-#mx40 .pan{position:absolute;left:8px;right:8px;top:174px;bottom:206px;background:#15181d;border:2px solid #8c939c;z-index:5;display:flex;flex-direction:column}
+#mx40 .pan{position:absolute;left:16px;right:16px;top:86px;bottom:182px;background:#15181d;border:2px solid #8c939c;z-index:5;display:flex;flex-direction:column}
 #mx40 .pan .ph{display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;background:#2c3440;font-size:21px;font-weight:700}
 #mx40 .pan .ph .t{flex:1}#mx40 .pan .ph .x{font-size:30px;cursor:pointer;padding:0 6px}
 #mx40 .pan .pb{flex:1;overflow-y:auto;padding:10px}
@@ -4905,8 +4918,8 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
 #mx40 .chest svg{width:100%;height:100%}
 #mx40 .tbl{width:100%;border-collapse:collapse;font-size:17px}#mx40 .tbl td,#mx40 .tbl th{padding:6px 4px;border-bottom:1px solid #303740;text-align:right}
 #mx40 .tbl th{color:#9aa3ad;font-weight:400}#mx40 .tbl td:first-child,#mx40 .tbl th:first-child{text-align:left}
-#mx40 .msg{position:absolute;left:20px;right:20px;bottom:210px;background:#1f2a38;border:1px solid #8c939c;padding:8px;text-align:center;font-size:18px;z-index:6;display:none}
-#mx40 .sby,#mx40 .dark,#mx40 .splash{position:absolute;inset:0;z-index:7;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-size:26px;font-weight:700}
+#mx40 .msg{position:absolute;left:24px;right:24px;bottom:232px;background:#1f2a38;border:1px solid #8c939c;padding:8px;text-align:center;font-size:18px;z-index:6;display:none}
+#mx40 .sby,#mx40 .dark,#mx40 .splash{position:absolute;left:12px;right:12px;top:40px;height:582px;z-index:7;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-size:26px;font-weight:700}
 #mx40 .dark{background:#000;cursor:pointer}
 </style>
 <script>
@@ -4944,10 +4957,10 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   };
 
   /* ---------- the fixed parts of the screen ---------- */
-  ov.innerHTML = `<div class="hd">IntelliVue MX40</div>
+  ov.innerHTML = `<div class="hd">IntelliVue MX40</div><div class="glass"></div>
     <div class="pl"><span class="bd"></span><span class="nm"></span><span class="tm"></span></div>
-    <div class="af" id="mxAl" style="top:82px"><span class="ic"></span><span class="tx"></span><span class="ts"></span></div>
-    <div class="af" id="mxIn" style="top:128px"><span class="ic"></span><span class="tx"></span><span class="ts"></span></div>
+    <div class="af" id="mxAl"><span class="ic"></span><span class="tx"></span><span class="ts"></span></div>
+    <div class="af" id="mxIn"><span class="ic"></span><span class="tx"></span><span class="ts"></span></div>
     <div class="mz"></div>
     <div class="st"><span class="ld"></span><span class="sp"></span>${ICON.wlan}${ICON.srr}<span class="bat"><b></b></span></div>
     <div class="ky"><div data-k="sil">${ICON.sil}</div><div data-k="keys">${ICON.keys}</div><div data-k="main">${ICON.main}</div></div>
@@ -4964,37 +4977,42 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     const e = place(el('div', 'nu'), {left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', color: col});
     e.dataset.id = id;
     e.innerHTML = `<div class="lb">${lab}</div><div class="lm"></div><div class="vl${big ? '' : ' sm'}"></div>` +
-      (id === 'hr' ? '<div class="ht">&#9829;</div>' : '') + (id === 'spo2' ? '<div class="pf"><b></b></div>' : '');
+      (id === 'hr' ? '<div class="ht">&#9829;</div>' : '') + (id === 'spo2' ? '<div class="pf"><b></b></div><div class="tm2" style="position:absolute;right:12px;top:-2px;font-size:14px;color:#9aa3ad"></div>' : '');
     e.onclick = () => openPanel(id === 'hr' || id === 'pvc' || id === 'st' ? 'ecg' : id === 'rr' ? 'resp' : 'spo2');
     mz.appendChild(e); return e;
   }
   function wave(kind, y, h) {
-    const cv = document.createElement('canvas'); cv.width = 600; cv.height = h; cv.style.top = y + 'px'; cv.style.height = h + 'px';
+    const cv = document.createElement('canvas'); cv.width = 568; cv.height = h; cv.style.top = y + 'px'; cv.style.height = h + 'px';
     mz.appendChild(cv);
     const lab = place(el('div', 'wl', kind === 'ecg' ? S.lead1 || 'II' : kind === 'pleth' ? 'Pleth' : 'Resp'), {top: (y + 4) + 'px', color: kind === 'ecg' ? C.ecg : kind === 'pleth' ? C.spo2 : C.resp});
     const m = place(el('div', 'wm'), {top: (y + h / 2 - 12) + 'px', color: kind === 'ecg' ? C.ecg : C.spo2});
     mz.append(lab, m);
+    if (kind === 'ecg' || kind === 'ecg2') mz.appendChild(place(el('div', 'cal', '1mV'), {top: (y + h * 0.62 + 6) + 'px', color: C.ecg}));
     cv.onclick = () => openPanel(kind === 'ecg' ? 'wave' : 'spo2');
     const w = {cv, ctx: cv.getContext('2d'), kind, h, x: 0, lastT: simT, msg: m}; waves.push(w);
     if (kind === 'pleth') { const g = w.ctx; g.strokeStyle = '#3a4048'; g.setLineDash([3, 5]); }
     return w;
   }
-  function buildArea() {
+  // the alarm lines appear under the grey patient bar only while there is something to show, and push the rest down
+  let lines = -1;
+  function buildArea(n) {
+    if (n != null) lines = n; if (lines < 0) lines = 0;
+    mz.style.top = (86 + lines * 40) + 'px';
     mz.innerHTML = ''; waves = [];
-    const H = 800 - 174 - 206, sc = X.screen;
-    if (sc === 'w1') {            // 1 wave + 4 numerics
-      numeric('hr', 0, 0, 300, 128, true); numeric('spo2', 300, 0, 300, 128, true);
-      wave('ecg', 132, 170);
-      numeric('pr', 0, 310, 300, H - 310, false); numeric('rr', 300, 310, 300, H - 310, false);
+    const H = 800 - 86 - 226 - lines * 40, W = 568, hw = W / 2, sc = X.screen, nh = Math.min(128, Math.round(H * 0.3));
+    if (sc === 'w1') {            // 1 wave + 4 numerics: HR, SpO2 / ECG / Pulse, PVC (as on the real screen)
+      numeric('hr', 0, 0, hw, nh, true); numeric('spo2', hw, 0, hw, nh, true);
+      const wh = Math.round(H * 0.42); wave('ecg', nh + 4, wh);
+      numeric('pr', 0, nh + wh + 8, hw, H - nh - wh - 8, false); numeric('pvc', hw, nh + wh + 8, hw, H - nh - wh - 8, false);
     } else if (sc === 'w2') {     // 2 waves + 2 numerics
-      numeric('hr', 0, 0, 300, 128, true); numeric('spo2', 300, 0, 300, 128, true);
-      wave('ecg', 132, 150); wave(SEN.spo2 !== 'none' ? 'pleth' : 'ecg2', 290, H - 290);
+      numeric('hr', 0, 0, hw, nh, true); numeric('spo2', hw, 0, hw, nh, true);
+      const wh = Math.floor((H - nh - 8) / 2); wave('ecg', nh + 4, wh); wave(SEN.spo2 !== 'none' ? 'pleth' : 'ecg2', nh + 8 + wh, wh);
     } else if (sc === 'n6') {     // no waves, 6 numerics
-      const ids = ['hr', 'spo2', 'pr', 'rr', 'pvc', 'st'], hh = Math.floor(H / 3);
-      ids.forEach((id, i) => numeric(id, (i % 2) * 300, Math.floor(i / 2) * hh, 300, hh, i < 2));
+      const ids = ['hr', 'spo2', 'pr', 'pvc', 'rr', 'st'], hh = Math.floor(H / 3);
+      ids.forEach((id, i) => numeric(id, (i % 2) * hw, Math.floor(i / 2) * hh, hw, hh, i < 2));
     } else {                      // chest diagram + 2 numerics
-      const ch = place(el('div', 'chest'), {}); ch.innerHTML = chestSvg(); mz.appendChild(ch);
-      numeric('hr', 330, 0, 270, Math.floor(H / 2), true); numeric('spo2', 330, Math.floor(H / 2), 270, H - Math.floor(H / 2), true);
+      const ch = place(el('div', 'chest'), {width: '300px'}); ch.innerHTML = chestSvg(); mz.appendChild(ch);
+      numeric('hr', 300, 0, W - 300, Math.floor(H / 2), true); numeric('spo2', 300, Math.floor(H / 2), W - 300, H - Math.floor(H / 2), true);
     }
   }
   // electrode positions (5-wire standard placement): filled when attached, yellow ring when off
@@ -5007,11 +5025,11 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   }
 
   /* ---------- drawing the waves (4.3 s across the portrait screen, as on the real one) ---------- */
-  const PXS = 600 / 4.32;
+  const PXS = 568 / 4.32;
   function drawWaves() {
     for (const w of waves) {
       const g = w.ctx, t1 = simT;
-      if (t1 < w.lastT || t1 - w.lastT > 2) { w.lastT = t1; w.x = (t1 * PXS) % 600; continue; }
+      if (t1 < w.lastT || t1 - w.lastT > 2) { w.lastT = t1; w.x = Math.floor((t1 * PXS) % 568); continue; }
       const steps = Math.max(1, Math.round((t1 - w.lastT) * PXS));
       let ok = true, msg = '';
       if (w.kind === 'ecg' || w.kind === 'ecg2') { if (SEN.ecg === 'leadsoff') { ok = false; msg = 'ECG Leads Off'; } else if (SEN.ecg === 'none') { ok = false; msg = 'ECG Leads Off'; } }
@@ -5026,7 +5044,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
         else if (w.kind === 'pleth') y = w.h * 0.85 - plethAt(t) * w.h * 0.62;
         else y = w.h * 0.62 - ecgAt(t, w.kind === 'ecg2' ? 'V' : (S.lead1 || 'II')) * w.h * 0.45 * (S.gain || 1);
         if (w.py != null && x > 0) { g.beginPath(); g.moveTo(x - 1, w.py); g.lineTo(x, y); g.stroke(); }
-        w.py = y; w.x = (x + 1) % 600; if (w.x === 0) w.py = null;
+        w.py = y; w.x = (x + 1) % 568; if (w.x === 0) w.py = null;
       }
       w.lastT = t1;
     }
@@ -5073,13 +5091,16 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
       if (X.mode === 'telemetry') t = 'Local Audio Off';
       if (st.op !== 'Monitoring') { t = st.op === 'Config' ? 'Config' : st.op === 'Demo' ? 'Demo' : 'Service'; cls = 'fl'; }
     }
-    e.className = 'af' + (cls ? ' ' + cls : '');
+    e.className = 'af' + (cls ? ' ' + cls : '') + (t ? ' on' : '');
     if (ic.innerHTML !== icon) ic.innerHTML = icon; if (tx.textContent !== t) tx.textContent = t; if (ts.textContent !== time) ts.textContent = time;
   }
   function update(now) {
     const list = powered ? sortedAlarms().filter(a => a.pri !== 'info' && !a.latched) : [];
     const inop = list.filter(window.philipsIsInop), phys = list.filter(a => !window.philipsIsInop(a));
     field(q('#mxAl'), phys, 'al', now); field(q('#mxIn'), inop, 'in', now);
+    const a1 = q('#mxAl').classList.contains('on'), a2 = q('#mxIn').classList.contains('on');
+    q('#mxAl').style.top = '86px'; q('#mxIn').style.top = (a1 ? 126 : 86) + 'px';
+    if ((a1 ? 1 : 0) + (a2 ? 1 : 0) !== lines) buildArea((a1 ? 1 : 0) + (a2 ? 1 : 0));
     // patient line: the two-part indicator replaces the clock while anything is unacknowledged
     q('.pl .bd').textContent = S.bed || ''; q('.pl .nm').textContent = S.name || '';
     const unP = phys.filter(a => !a.acked), unI = inop.filter(a => !a.acked), tm = q('.pl .tm');
@@ -5092,9 +5113,12 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     updateNums(list);
     // leads-off dots (RA LA LL RL V), radio and battery
     const off = SEN.ecg === 'leadsoff' || SEN.ecg === 'none';
-    const ld = ['RA', 'LA', 'LL', 'RL', 'V'].map(n => `<i class="${off || (SEN.ecg === 'vlead' && n === 'V') ? 'off' : 'on'}"></i>`).join('');
+    const LC = {RA: '#ffffff', RL: '#2fbf3a', V: '#8a5a2b', LA: '#000000', LL: '#ff2a2a'};
+    const ld = ['RA', 'RL', 'V', 'LA', 'LL'].map(n => `<i class="${off || (SEN.ecg === 'vlead' && n === 'V') ? 'off' : 'on'}" style="background:${LC[n]};border-color:${n === 'LA' ? '#9aa3ad' : LC[n]}" title="${n}"></i>`).join('');
     const lde = q('.st .ld'); if (lde.innerHTML !== ld) lde.innerHTML = ld;
     q('.st .bat b').style.width = Math.max(4, battery) + '%';
+    q('.st .bat').className = 'bat' + (battery < 8 ? ' em' : battery < 20 ? ' lo' : '');
+    const t2 = mz.querySelector('.tm2'); if (t2) { const tt = hhmm(new Date()); if (t2.textContent !== tt) t2.textContent = tt; }
     ov.classList.toggle('half', pausedNow());
     ov.classList.toggle('locked', st.locked);
     // Telemetry Mode: the screen sleeps after the set time without a touch (always in Monitor Mode)
@@ -5181,8 +5205,8 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     ['Standby', battery < 10 ? null : () => { closePanel(); setStandby(true); }],
     ['Add / Remove', () => { closePanel(); note('No IntelliVue monitors or Cableless Measurements in range'); }],
     ['Print Reports', () => { closePanel(); note('Report printed at the Information Center'); }],
-    ['Vitals Trend', () => openPanel('trend')],
-    ['Setup Screen', () => openPanel('screen')],
+    ['Vitals Trends', () => openPanel('trend')],
+    ['Screen Setup', () => openPanel('screen')],
     [st.locked ? 'Unlock' : 'Lock', () => { if (st.locked && X.pwOn && X.pw) { keypad('Unlock', v => { if (v !== X.pw) return false; st.locked = false; closePanel(); }); return; }
       st.locked = !st.locked; closePanel(); }],
     ['Op Modes', () => openPanel('op')],
@@ -5202,9 +5226,9 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
       const act = sortedAlarms().filter(a => a.pri !== 'info');
       list(pb, act.map(a => [window.philipsAlarmText(a), atClock(a), () => {}]).concat(alarmHist.slice(0, 50).map(h => [h.msg, hhmm(h.time), () => {}])));
       if (!act.length && !alarmHist.length) pb.innerHTML = '<div style="padding:10px">No alarms</div>'; });
-    if (kind === 'screen') return panel('Setup Screen', pb => list(pb, [[1, '1 min'], [2, '2 min'], [5, '5 min'], [10, '10 min'], [-1, 'Always On'], [0, 'Always Off']]
+    if (kind === 'screen') return panel('Screen Setup', pb => list(pb, [[1, '1 min'], [2, '2 min'], [5, '5 min'], [10, '10 min'], [-1, 'Always On'], [0, 'Always Off']]
       .map(([v, lab]) => ['Display active', lab, () => { X.active = v; save(); closePanel(); }, X.active === v]).map(r => [r[1], '', r[2], r[3]])));
-    if (kind === 'trend') return panel('Vitals Trend', pb => {
+    if (kind === 'trend') return panel('Vitals Trends', pb => {
       const rows = trends.slice(0, 60);
       pb.innerHTML = rows.length ? `<table class="tbl"><tr><th>Time</th><th>HR</th><th>SpO2</th><th>Pulse</th><th>RR</th></tr>` +
         rows.map(r => `<tr><td>${hhmm(r.time)}</td><td>${r.hr ?? '-'}</td><td>${r.spo2 ?? '-'}</td><td>${r.pr ?? '-'}</td><td>${r.rr ?? '-'}</td></tr>`).join('') + '</table>'
@@ -5261,7 +5285,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     const on = isMX() && powered;
     scr.classList.toggle('mx40on', on);
     if (!on) { wasMX = false; return; }
-    if (!wasMX) { wasMX = true; X.screen = X.screen || X.defScreen; buildArea(); st.last = performance.now(); if (X.mode !== 'telemetry') X.mode = 'monitor'; }
+ if (!wasMX) { wasMX = true; X.screen = X.screen || X.defScreen; buildArea(0); st.last = performance.now(); if (X.mode !== 'telemetry') X.mode = 'monitor'; }
     const now = performance.now();
     try { if (q('.dark').style.display !== 'flex') drawWaves(); update(now); } catch (e) { console.error(e); }
   }
