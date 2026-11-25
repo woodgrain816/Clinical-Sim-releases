@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-25.4';
+var HM_BUILD = '2026-11-25.5';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4633,9 +4633,12 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
     isY: [[1, -1, 0], [2, 0, 0], [3, -32, 0], [4, -27, 0], [5, -30, 0]],
     // Traditional on the MP30 (same recording): the small speaker lifts the upper overtones - red's 3rd (2880 Hz) and
     // yellow's 3rd-5th - so it sounds sharper than the MX800; decay rates as measured on the MX800
-    // the MP30 holds its Traditional tones (averaged over 27 yellow and 32 red tones): yellow stays nearly level for
-    // ~1 s, red loses only ~7 dB over its second, so the red alarm sounds almost continuous
-    trY30: [[1, -1, 4], [2, -24, 4], [3, 0, 5], [4, -1, 5], [5, -6, 6]],
+    // (the first MP30 recording made both tones sound held for ~1 s; two later recordings - Apnea and Extreme Tachy -
+    // agree with each other that both are struck and fade, so those are used)
+    // yellow re-measured from an MP30 "** HR High" (Extreme Tachy recording): a 480 Hz tone whose 3rd overtone (1440 Hz)
+    // is the loudest, 5th -13, 2nd -20, 4th -25; the fundamental is struck hard at the start (PHENV.trY30)
+    trY30: [[1, -20, 0], [2, -20, 0], [3, 0, 0], [4, -25, 0], [5, -13, 0], [6, -30, 0]],
+    trY30s: [[1, -20, 0], [2, -20, 0], [3, 0, 0], [4, -25, 0], [5, -13, 0], [6, -30, 0]],
     // red re-measured from a second MP30 recording (*** Apnea, 10 tones averaged): 960 Hz with the 3rd overtone
     // loudest, fundamental 4 dB under it, 4th -27, 2nd -33; one tone every 1.024 s, shaped by PHENV.trR30
     trR30: [[1, -4, 0], [2, -33, 0], [3, 0, 0], [4, -27, 0], [5, -50, 0]],
@@ -4681,6 +4684,16 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
             [.7, -10], [.8, -12.5], [.9, -15.5], [.985, -18], [1.0, -40]],
     trR30hi: [[0, -40], [.002, -12], [.008, -10], [.012, -4], [.02, -2.5], [.04, 0], [.3, -1], [.4, -3], [.5, -5], [.6, -7.5],
             [.7, -10], [.8, -12.5], [.9, -15.5], [.985, -18], [1.0, -40]],
+    // Traditional yellow (MP30 "** HR High"): the 480 Hz fundamental strikes ~16 dB over its later level for ~30 ms (the
+    // ding), the overtones rise over ~10 ms, hold ~0.3 s, then fade away by ~1.05 s (-8 dB at 0.5 s, -14 at 0.7, -25 at 1.0)
+    trY30: [[0, -40], [.002, 18], [.012, 17], [.02, 14], [.03, 10], [.05, 6], [.08, 0], [.3, -1], [.4, -3], [.5, -6], [.6, -9],
+            [.7, -11.5], [.8, -14], [.9, -18.5], [1.0, -25], [1.06, -45]],
+    trY30hi: [[0, -40], [.002, -10], [.004, -6], [.008, -3.5], [.012, -2.5], [.03, -2], [.05, -1.2], [.1, 0], [.25, 0], [.3, -1],
+            [.35, -1.4], [.4, -2.8], [.5, -5.7], [.6, -8.5], [.7, -11.4], [.8, -14.1], [.9, -18.6], [1.0, -25], [1.06, -45]],
+    // the MX40's short yellow: the same tone, ended after ~0.45 s
+    trY30s: [[0, -40], [.002, 18], [.012, 17], [.02, 14], [.03, 10], [.05, 6], [.08, 0], [.3, -1], [.4, -3], [.45, -12], [.48, -45]],
+    trY30shi: [[0, -40], [.002, -10], [.004, -6], [.008, -3.5], [.012, -2.5], [.03, -2], [.05, -1.2], [.1, 0], [.3, -1], [.4, -2.8],
+            [.45, -12], [.48, -45]],
     isR: [[0, -45], [.004, -3], [.012, -1], [.1, -1], [.115, -3], [.13, -5], [.145, -7], [.16, -8], [.205, -8.5], [.25, -13], [.29, -19], [.33, -30], [.36, -45]],
   };
   function phShaped(f, at, part, level, out, envPts) {
@@ -4729,7 +4742,7 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app runs entirely offl
   TONESETS.phTradMX40 = {
     high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 2.0},
     medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 4.0},
-    low:    {ph: 1, notes: [[0, 480, .45, 'trY30', .38]], repeat: 4.0},
+    low:    {ph: 1, notes: [[0, 480, .45, 'trY30s', .38]], repeat: 4.0},
   };
   TONESETS.phIec = {
     high:   {ph: 1, notes: pulses(478, 'isR', RED5.concat(RED5.map(t => t + 2.055)), .16, .45), repeat: 9.236},
