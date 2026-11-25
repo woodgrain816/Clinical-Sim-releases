@@ -9,7 +9,7 @@
 /* Build stamp, raised with every published change. "Check for updates" (Instructor panel) keeps a newer copy of the
    monitor in this browser; when this file starts and that copy is newer than itself, the rest of this file is
    swallowed unread and the newer copy runs in its place. A newer file (e.g. a fresh ZIP) wins over an older copy. */
-var HM_BUILD = '2026-11-25.6';
+var HM_BUILD = '2026-11-25.7';
 // builds compare by date, then by the number after the dot (so .10 is newer than .9; a plain text compare gets that wrong)
 function hmBuildNewer(a, b) { var x = String(a).split('.'), y = String(b).split('.'); return x[0] !== y[0] ? x[0] > y[0] : (+x[1] || 0) > (+y[1] || 0); }
 (function () {
@@ -4740,9 +4740,11 @@ checkUpdate=function(){ updState(window.NativeAudio?"This app updates itself: ea
   // standard INOP tone every 4 s; ISO/IEC - red 5 pulses then a pause, yellow 3, INOP 2. The wearable's small speaker:
   // the MP30's small-speaker spectra. Pause lengths are not published; the ISO pauses follow the IntelliVue cycle.
   TONESETS.phTradMX40 = {
-    high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 2.0},
-    medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 4.0},
-    low:    {ph: 1, notes: [[0, 480, .45, 'trY30s', .38]], repeat: 4.0},
+    // the IFU says red every 2 s / yellow every 4 s, but the MX40s heard on a real ward ding about once a second, like
+    // the IntelliVue bedside monitors (measured 1.024 s); yellow keeps the IntelliVue's 2 s
+    high:   {ph: 1, notes: [[0, 960, .97, 'trR30', .42]], repeat: 1.024},
+    medium: {ph: 1, notes: [[0, 480, .97, 'trY30', .45]], repeat: 2.05},
+    low:    {ph: 1, notes: [[0, 480, .45, 'trY30s', .38]], repeat: 2.05},
   };
   TONESETS.phIec = {
     high:   {ph: 1, notes: pulses(478, 'isR', RED5.concat(RED5.map(t => t + 2.055)), .16, .45), repeat: 9.236},
